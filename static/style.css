@@ -1,0 +1,47 @@
+.logo {
+    max-height: 100px; 
+    max-width: 100%;   
+}
+
+.navbar {
+    padding: 0.5rem 1rem;  /* Reduce padding inside the navbar */
+}
+
+.navbar-brand img {
+    height: 60px;  /* Adjust logo size */
+}
+
+.navbar-nav .nav-link {
+    font-size: 0.9rem;  /* Reduce the font size of navbar links */
+}
+
+main {
+    margin-top: 80px;  /* Increase margin to ensure it starts below the navbar */
+}
+html, body {
+    height: 100%;  /* Make sure the html and body are as tall as the viewport */
+    margin: 0;     /* Reset default margin */
+}
+
+body {
+    display: flex;
+    flex-direction: column;  /* Arrange body content in a column */
+    min-height: 100vh;  /* Minimum height of 100% of the viewport height */
+}
+
+main {
+    flex: 1;  /* Allows the main content to expand and fill the space */
+}
+
+footer {
+    background-color: #533100; /* Dark background for the footer */
+    color: white;  /* Text color for the footer */
+    text-align: center;  /* Center the text inside the footer */
+    padding: 1rem 0;  /* Padding inside the footer */
+    margin-top: auto;  /* Pushes the footer to the bottom of the container */
+}
+/* Custom CSS for a brown navbar */
+.navbar-brown {
+    background-color: #533100; /* A shade of brown */
+}
+
