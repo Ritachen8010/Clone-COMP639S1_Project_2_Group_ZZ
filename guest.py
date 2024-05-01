@@ -14,4 +14,4 @@ guest_blueprint = Blueprint('guest', __name__)
 
 @guest_blueprint.route('/')
 def home():
-    return render_template('guest.html')
+    return render_template('home/guest.html')
