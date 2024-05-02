@@ -18,4 +18,4 @@ hashing = Hashing()
 @manager_blueprint.route('/')
 @role_required(['manager'])
 def manager():
-    return render_template(' manager/manager_dashboard.html') 
+    return render_template('manager/manager_dashboard.html') 

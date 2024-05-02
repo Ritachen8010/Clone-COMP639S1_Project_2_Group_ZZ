@@ -1,23 +1,16 @@
-.logo {
-    max-height: 100px; 
-    max-width: 100%;   
-}
-
-.navbar {
-    padding: 0.5rem 1rem;  /* Reduce padding inside the navbar */
-}
-
-.navbar-brand img {
-    height: 60px;  /* Adjust logo size */
-}
-
-.navbar-nav .nav-link {
-    font-size: 0.9rem;  /* Reduce the font size of navbar links */
+* {
+    box-sizing: border-box;
+    font-family: -apple-system, BlinkMacSystemFont, "segoe ui", roboto, oxygen, ubuntu, cantarell, "fira sans", "droid sans", "helvetica neue", Arial, sans-serif;
+    font-size: 16px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
 }
 
 main {
     margin-top: 80px;  /* Increase margin to ensure it starts below the navbar */
+    flex: 1;  /* Allows the main content to expand and fill the space */
 }
+
 html, body {
     height: 100%;  /* Make sure the html and body are as tall as the viewport */
     margin: 0;     /* Reset default margin */
@@ -29,19 +22,79 @@ body {
     min-height: 100vh;  /* Minimum height of 100% of the viewport height */
 }
 
-main {
-    flex: 1;  /* Allows the main content to expand and fill the space */
+/* logo */
+.logo {
+    max-height: 100px; 
+    max-width: 100%;   
 }
 
-footer {
-    background-color: #533100; /* Dark background for the footer */
+/* nav bar */
+.navbar {
+    padding: 0.5rem 1rem;  /* Reduce padding inside the navbar */
+    background-color: #cc9b6d; 
+}
+
+.navbar-brand img {
+    height: 60px;  /* Adjust logo size */
+}
+
+.navbar-nav .nav-link {
+    font-size: 1rem;  /* Reduce the font size of navbar links */
+    color: white;  /* Text color for navbar links */
+}
+
+.navbar-nav .nav-link:hover {
+    color: #795b35;  /* Change color to brown when hovered */
+}
+
+/* footer */
+.footer-content {
+    background-color: #f2dac3; /* Dark background for the footer */
     color: white;  /* Text color for the footer */
     text-align: center;  /* Center the text inside the footer */
     padding: 1rem 0;  /* Padding inside the footer */
     margin-top: auto;  /* Pushes the footer to the bottom of the container */
 }
-/* Custom CSS for a brown navbar */
-.navbar-brown {
-    background-color: #533100; /* A shade of brown */
+
+/* homepage */
+.header-image {
+    padding-top: 200px;
+    padding-bottom: 300px;
+    background-color: #f2dac3;
+    background-image: url('./images/header.jpg');
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: cover;
 }
 
+.heading {
+    font-size: 60px;
+}
+
+.bottom-image {
+    background-image: url('./images/bottom.jpg');
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: cover;
+    position: relative;
+    padding: 7em 0;
+    }
+
+.bg-light {
+    background-color: #fff7ef !important;  /* Override Bootstrap's default light background color */
+}
+
+
+.room .img-wrap img {
+    -webkit-transition: .5s all ease-in-out;
+    -o-transition: .5s all ease-in-out;
+    transition: .5s all ease-in-out;
+    -webkit-transform: scale(1);
+    -ms-transform: scale(1);
+    transform: scale(1);
+}
+.room:hover .img-wrap img, .room:focus .img-wrap img {
+    -webkit-transform: scale(1.05);
+    -ms-transform: scale(1.05);
+    transform: scale(1.05); 
+}

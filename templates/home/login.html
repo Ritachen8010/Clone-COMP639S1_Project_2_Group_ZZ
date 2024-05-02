@@ -1,6 +1,12 @@
-{% extends 'home/home.html' %}
+{% extends 'base.html' %}
 
-{% block subcontent %}
+{% block title %}Login{% endblock %}
+
+{% block navbar %}
+{% include 'home/home_nav.html' %}
+{% endblock %}
+
+{% block content %}
 <div class="login-page">
     <div class="container" style="max-width: 400px; margin: 100px auto;">
         <h2 class="login-title text-center">Bruce Bay Beans & Bunks</h2>

@@ -1,6 +1,12 @@
-{% extends 'home/home.html' %}
+{% extends 'base.html' %}
 
-{% block subcontent %}
+{% block title %}Register{% endblock %}
+
+{% block navbar %}
+{% include 'home/home_nav.html' %}
+{% endblock %}
+
+{% block content %}
 <div class="register-page">
     <div class="container" style="max-width: 500px; margin: 100px auto;">
         <h3 class="register-title text-center fw-bold">Register Form</h3>
@@ -12,6 +18,14 @@
                 <label for="username" class="form-label"><strong>User Name:</strong></label>
                 <input type="text" class="form-control" id="username" name="username" required placeholder="Username">
             </div>
+            <!-- <div class="mb-3">
+                <label for="username" class="form-label"><strong>First Name:</strong></label>
+                <input type="text" class="form-control" id="username" name="username" required placeholder="First name">
+            </div>
+            <div class="mb-3">
+                <label for="username" class="form-label"><strong>Last Name:</strong></label>
+                <input type="text" class="form-control" id="username" name="username" required placeholder="Last name">
+            </div> -->
             <div class="mb-3">
                 <label for="password" class="form-label"><strong>Password:</strong></label>
                 <input type="password" class="form-control" id="password" name="password" required placeholder="Password">

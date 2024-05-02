@@ -40,7 +40,7 @@ def role_required(role):
 
 @auth_blueprint.route('/register', methods=['GET', 'POST'])
 def register():
-    return render_template('register.html')        
+    return render_template('home/register.html')        
 
 
 @auth_blueprint.route('/logout')
@@ -118,7 +118,7 @@ def login():
             # Account doesnt exist or username incorrect
             msg = 'Invalid username'
     # Render the login page with any message (if applicable)
-    return render_template('login.html', msg=msg)
+    return render_template('home/login.html', msg=msg)
 
 
 
