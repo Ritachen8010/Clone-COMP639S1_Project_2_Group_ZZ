@@ -61,7 +61,7 @@ body {
     padding-top: 200px;
     padding-bottom: 300px;
     background-color: #f2dac3;
-    background-image: url('./images/header.jpg');
+    background-image: url('./home/header.jpg');
     background-repeat: no-repeat;
     background-position: center top;
     background-size: cover;
@@ -72,7 +72,7 @@ body {
 }
 
 .bottom-image {
-    background-image: url('./images/bottom.jpg');
+    background-image: url('./home/bottom.jpg');
     background-repeat: no-repeat;
     background-position: center top;
     background-size: cover;
