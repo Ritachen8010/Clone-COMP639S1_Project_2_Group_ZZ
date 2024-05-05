@@ -79,12 +79,24 @@ CREATE TABLE inventory(
     last_updated DATETIME NOT NULL,
     FOREIGN KEY (product_id) REFERENCES product(product_id)
 );
-CREATE TABLE accommodation(
+CREATE TABLE IF NOT EXISTS accommodation (
     room_id INT AUTO_INCREMENT PRIMARY KEY,
     room_type ENUM('dorm', 'twin', 'queen') NOT NULL,
     capacity INT NOT NULL,
-    is_available BOOLEAN NOT NULL
+    space INT DEFAULT NULL,
+    room_status VARCHAR(20) DEFAULT 'Open',
+    room_prize DECIMAL(10, 2),
+    bed_prize DECIMAL(10, 2),
+    is_available BOOLEAN DEFAULT TRUE,
+    room_description TEXT
 );
+
+-- setup accommodation with default values
+INSERT INTO accommodation (room_type, capacity, space, room_prize, bed_prize, room_status, is_available, room_description) VALUES
+('dorm', 4, 4, NULL, 50.00, 'Open', TRUE, 'dorm room with four single bunks'),
+('twin', 2, 2, 100.00, NULL, 'Open', TRUE, 'twin room with two single beds – capacity two)'),
+('queen', 3, 3, 150.00, NULL, 'Open', TRUE , 'a room with a queen bed and pull out sofa (capacity three)');
+
 CREATE TABLE bookings(
     booking_id INT AUTO_INCREMENT PRIMARY KEY,
     customer_id INT NOT NULL,
@@ -92,6 +104,7 @@ CREATE TABLE bookings(
     start_date DATE NOT NULL,
     end_date DATE NOT NULL,
     status ENUM('booked', 'cancelled', 'completed') NOT NULL,
+	number_of_guests INT,
     FOREIGN KEY (customer_id) REFERENCES account(account_id),
     FOREIGN KEY (room_id) REFERENCES accommodation(room_id)
 );
