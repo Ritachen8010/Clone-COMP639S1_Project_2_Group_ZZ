@@ -17,7 +17,7 @@ def get_cursor():
     password=connect.dbpass, host=connect.dbhost,\
     database=connect.dbname, autocommit=True)
     dbconn = connection.cursor(dictionary=True)
-    return dbconn
+    return connection, dbconn  # return both connection and cursor
 
 def allowed_file(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS

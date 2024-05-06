@@ -98,3 +98,8 @@ body {
     -ms-transform: scale(1.05);
     transform: scale(1.05); 
 }
+
+.btn-theme {
+    background-color: #795b35;  /* Replace with your theme color */
+    color: #fff7ef;
+}
