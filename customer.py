@@ -15,11 +15,47 @@ from datetime import datetime,date,timedelta
 customer_blueprint = Blueprint('customer', __name__)
 hashing = Hashing()
 
+# Get customer information + account information
+def get_customer_info(email):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT customer.*
+        FROM account 
+        JOIN customer ON account.account_id = customer.account_id
+        WHERE account.email = %s
+    """, (email,))
+    customer_info = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    return customer_info
 
+# Get unread messages
+def get_unread_messages(customer_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT message.*,
+               CASE
+                   WHEN manager_id IS NOT NULL THEN 'manager'
+                   WHEN staff_id IS NOT NULL THEN 'staff'
+               END AS sender_type
+        FROM message
+        WHERE message.customer_id = %s AND message.is_read = FALSE
+    """, (customer_id,))
+    unread_messages = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return unread_messages
+
+# Dashboard
 @customer_blueprint.route('/')
 @role_required(['customer'])
 def customer():
-    return render_template('customer/customer_dashboard.html') 
+    email = session.get('email')
+    customer_info = get_customer_info(email)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    return render_template('customer/customer_dashboard.html', customer_info=customer_info, unread_messages=unread_messages)
+
+
 
 # def get_db_connection():
 #     return pymysql.connect(host=dbhost, user=dbuser, password=dbpass, 
