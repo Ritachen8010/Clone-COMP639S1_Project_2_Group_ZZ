@@ -1,6 +1,10 @@
+
 # COMP639S1_Group_ZZ
-Manager account username:
+Manager account email: aa@gmail.com
 
-Staff account username: 
+Staff account email: bb@gmail.com
 
-Customer account username: 
+Customer account email: cc@gmail.com
+
+Password: 12345
+
