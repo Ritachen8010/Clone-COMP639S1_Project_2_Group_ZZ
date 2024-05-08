@@ -326,7 +326,16 @@ INSERT INTO `staff` (`staff_id`, `account_id`, `first_name`, `last_name`, `phone
 VALUES (1, 2, 'bb', 'BB', '987-654-3210', '1990-05-15', 'Female', 'Reception', 'bb.jpg', 'active');
 
 INSERT INTO `customer` (`customer_id`, `account_id`, `first_name`, `last_name`, `phone_number`, `date_of_birth`, `gender`, `id_num`, `created_at`, `profile_image`, `status`) 
-VALUES (1, 3, 'cc', 'CC', '123-456-7890', '1985-10-25', 'Male', 'AB1234567', CURRENT_TIMESTAMP, 'cc.jpg', 'active');
+VALUES (1000, 3, 'cc', 'CC', '123-456-7890', '1985-10-25', 'Male', 'AB1234567', CURRENT_TIMESTAMP, 'cc.jpg', 'active');
+
+INSERT INTO `payment_type` (`payment_type_id`, `payment_type`)
+VALUES (1, 'gift_card');
+
+INSERT INTO `gift_card` (`gift_card_id`, `code`, `balance`, `expiration_date`, `is_active`, `purchase_amount`, `payment_type_id`)
+VALUES (1, 'GFT123456', 100.00, '2025-01-31', TRUE, 100.00, 1);
+
+INSERT INTO `message` (`message_id`, `customer_id`, `manager_id`, `staff_id`, `content`)
+VALUES (1, 1000, NULL, 1, 'This is a test message.');
 
 -- Insert into product_category
 INSERT INTO `product_category` (`name`, `description`)
