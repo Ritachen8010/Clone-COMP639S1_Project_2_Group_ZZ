@@ -194,6 +194,7 @@ CREATE TABLE `message` (
     `content` TEXT,
     `sent_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `time_responded` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `is_read` BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (`message_id`),
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
     FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`),
