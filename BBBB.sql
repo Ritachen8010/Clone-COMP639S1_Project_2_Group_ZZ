@@ -1,10 +1,11 @@
 -- Create the database
+DROP DATABASE `bbbb`;
 CREATE DATABASE `bbbb`;
 USE `bbbb`;
 
 -- 1. account 
 CREATE TABLE `account` (
-    `account_id` INT,
+    `account_id` INT NOT NULL UNIQUE,
     `email` VARCHAR(255) NOT NULL UNIQUE,
     `password` VARCHAR(255) NOT NULL,
     `role` ENUM('manager', 'staff', 'customer') NOT NULL,
@@ -15,7 +16,7 @@ CREATE TABLE `account` (
 
 -- 2. coustomer
 CREATE TABLE `customer` (
-    `customer_id` INT,
+    `customer_id` INT NOT NULL UNIQUE,
     `account_id` INT,
     `first_name` VARCHAR(100),
     `last_name` VARCHAR(100),
@@ -32,7 +33,7 @@ CREATE TABLE `customer` (
 
 -- 3. staff
 CREATE TABLE `staff` (
-	`staff_id` INT,
+	`staff_id` INT NOT NULL UNIQUE,
     `account_id` INT,
     `first_name` VARCHAR(100),
     `last_name` VARCHAR(100),
@@ -48,7 +49,7 @@ CREATE TABLE `staff` (
 
 -- 5. manager
 CREATE TABLE `manager` (
-	`manager_id` INT,
+	`manager_id` INT NOT NULL UNIQUE,
     `account_id` INT,
     `first_name` VARCHAR(100),
     `last_name` VARCHAR(100),
@@ -64,11 +65,10 @@ CREATE TABLE `manager` (
 
 -- 6 . product_category
 CREATE TABLE `product_category` (
-    `category_id` INT AUTO_INCREMENT,
-    `name` VARCHAR(225) NOT NULL,
-    `description` VARCHAR(500),
+    `category_id` INT,
+    `type` VARCHAR (225) NOT NULL,
     PRIMARY KEY (`category_id`)
-) ENGINE=InnoDB;
+)AUTO_INCREMENT=1;
 
 -- 7. product
 CREATE TABLE `product` (
@@ -85,19 +85,19 @@ CREATE TABLE `product` (
 )AUTO_INCREMENT=1;
 
 CREATE TABLE `product_option_type` (
-	`option_type_id` INT AUTO_INCREMENT,
+	`option_type_id` INT,
     `description` VARCHAR(500),
 	PRIMARY KEY (`option_type_id`) -- 描述产品选项的类型，如大小、糖浆类型、牛奶类型。
-)ENGINE=InnoDB;
+)AUTO_INCREMENT=1;
 
 CREATE TABLE `product_option` (
-    `option_id` INT AUTO_INCREMENT,
+	`option_id` INT,
     `option_type_id` INT,
     `name` VARCHAR(500),
-    `additional_cost` DECIMAL(10, 2),
+	`additional_cost` DECIMAL(10, 2),
     PRIMARY KEY (`option_id`),
     FOREIGN KEY (`option_type_id`) REFERENCES `product_option_type` (`option_type_id`)
-) ENGINE=InnoDB;
+)AUTO_INCREMENT=1;
 
 CREATE TABLE `product_option_mapping` (
 	`product_id` INT,
@@ -194,6 +194,7 @@ CREATE TABLE `message` (
     `content` TEXT,
     `sent_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `time_responded` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `is_read` BOOLEAN DEFAULT FALSE,
     PRIMARY KEY (`message_id`),
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
     FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`),
@@ -490,3 +491,5 @@ VALUES
 (44, 20), (44, 21), (44, 22), (44, 23), (44, 24), (44, 25), (44, 26), -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Sorbet
 (45, 20), (45, 21), (45, 22), (45, 23), (45, 24), (45, 25), (45, 26), -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Frozen Yogurt
 (46, 20), (46, 21), (46, 22), (46, 23), (46, 24), (46, 25), (46, 26); -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Gelato
+=======
+
