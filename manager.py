@@ -14,24 +14,8 @@ manager_blueprint = Blueprint('manager', __name__)
 #create an instance of hashing
 hashing = Hashing()
 
-# Get manager information + account information
-def get_manager_info(email):
-    connection, cursor = get_cursor()
-    cursor.execute("""
-        SELECT manager.*
-        FROM account 
-        JOIN manager ON account.account_id = manager.account_id
-        WHERE account.email = %s
-    """, (email,))
-    manager_info = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    return manager_info
 
-# Dashboard
 @manager_blueprint.route('/')
 @role_required(['manager'])
 def manager():
-    email = session.get('email')
-    manager_info = get_manager_info(email)
-    return render_template('manager/manager_dashboard.html', manager_info=manager_info) 
+    return render_template('manager/manager_dashboard.html') 

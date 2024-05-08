@@ -7,190 +7,53 @@
 }
 
 main {
-    margin-top: 80px;
-    /* Increase margin to ensure it starts below the navbar */
-    flex: 1;
-    /* Allows the main content to expand and fill the space */
+    margin-top: 80px;  /* Increase margin to ensure it starts below the navbar */
+    flex: 1;  /* Allows the main content to expand and fill the space */
 }
 
-html,
-body {
-    height: 100%;
-    /* Make sure the html and body are as tall as the viewport */
-    margin: 0;
-    /* Reset default margin */
+html, body {
+    height: 100%;  /* Make sure the html and body are as tall as the viewport */
+    margin: 0;     /* Reset default margin */
 }
 
 body {
     display: flex;
-    flex-direction: column;
-    /* Arrange body content in a column */
-    min-height: 100vh;
-    /* Minimum height of 100% of the viewport height */
+    flex-direction: column;  /* Arrange body content in a column */
+    min-height: 100vh;  /* Minimum height of 100% of the viewport height */
 }
 
 /* logo */
 .logo {
-    max-height: 100px;
-    max-width: 100%;
+    max-height: 100px; 
+    max-width: 100%;   
 }
 
-/* top nav bar */
+/* nav bar */
 .navbar {
-    padding: 0.5rem 1rem;
-    /* Reduce padding inside the navbar */
-    background-color: #cc9b6d;
+    padding: 0.5rem 1rem;  /* Reduce padding inside the navbar */
+    background-color: #cc9b6d; 
 }
 
 .navbar-brand img {
-    height: 60px;
-    /* Adjust logo size */
+    height: 60px;  /* Adjust logo size */
 }
 
 .navbar-nav .nav-link {
-    font-size: 1rem;
-    /* Reduce the font size of navbar links */
-    color: white;
-    /* Text color for navbar links */
+    font-size: 1rem;  /* Reduce the font size of navbar links */
+    color: white;  /* Text color for navbar links */
 }
 
 .navbar-nav .nav-link:hover {
-    color: #795b35;
-    /* Change color to brown when hovered */
-}
-
-/* dashboard side bar */
-.sidebar {
-    top: 0;
-    bottom: 0;
-    left: 0;
-    float: left;
-    padding: 58px 0 0;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    width: 240px;
-    background-color: #DAB88B;
-    height: 100vh;
-    overflow-y: auto;
-    z-index: 1;
-}
-
-/* side bar image profile */
-.rounded-circle-2 {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-}
-/* top bar image profile */
-.rounded-circle-1 {
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
-}
-
-/* side bar image profile */
-.rounded-circle-2 {
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-}
-
-.list-group-item.list-group-item-action {
-    background-color: #DAB88B !important;
-    color: rgb(255, 255, 255) !important;
-}
-
-.list-group-item.list-group-item-action:hover {
-    background-color: #e6d3b4 !important;
-}
-
-.list-group-item.list-group-item-action:active {
-    background-color: #ddd4c5 !important;
-}
-
-/* responsive design */
-/* tablet display */
-@media screen and (max-width: 768px) { 
-        .sidebar {
-            width: 100%;
-            height: auto;
-            position: relative;
-        }
-        .sidebar a {float: left;}
-}
-
-@media (max-width: 991.98px) {
-        .sidebar {
-            width: 100%;
-            height: auto;
-            position: relative;
-        }
-        .sidebar a {
-            float: none;
-            display: block;
-            width: 100%;
-        }
-}
-
-@media (max-width: 600px) {
-        .sidebar {
-            width: 100%;
-            height: auto;
-            position: relative;
-            display: block !important;
-        }
-        .sidebar a {
-            float: none;
-            display: block;
-            width: 100%;
-        }
-        .col-md-4 {
-            margin-bottom: 20px;
-        }
-}
-
-/* mobile display */
-@media screen and (max-width: 425px) {
-        .sidebar {
-            width: 100%;
-            height: auto;
-            position: relative;
-            display: block !important;
-            overflow-y: auto;
-        }
-        .sidebar a {
-            float: none;
-            display: block;
-            width: 100%;
-        }
-        .col-md-4 {
-            margin-bottom: 20px;
-        }
-}
-
-/* dropdown */
-.dropdown-toggle {
-    text-decoration: none;
-    color: #ffffff;
-}
-
-.dropdown-item:hover {
-    background-color: #DAB88B; 
-    color: #ffffff; 
+    color: #795b35;  /* Change color to brown when hovered */
 }
 
 /* footer */
 .footer-content {
-    background-color: #f2dac3;
-    /* Dark background for the footer */
-    color: rgb(56, 56, 56);
-    /* Text color for the footer */
-    text-align: center;
-    /* Center the text inside the footer */
-    padding: 1rem 0;
-    /* Padding inside the footer */
-    margin-top: auto;
-    /* Pushes the footer to the bottom of the container */
-    z-index: 100;
+    background-color: #f2dac3; /* Dark background for the footer */
+    color: white;  /* Text color for the footer */
+    text-align: center;  /* Center the text inside the footer */
+    padding: 1rem 0;  /* Padding inside the footer */
+    margin-top: auto;  /* Pushes the footer to the bottom of the container */
 }
 
 /* homepage */
@@ -215,12 +78,12 @@ body {
     background-size: cover;
     position: relative;
     padding: 7em 0;
-}
+    }
 
 .bg-light {
-    background-color: #fff7ef !important;
-    /* Override Bootstrap's default light background color */
+    background-color: #fff7ef !important;  /* Override Bootstrap's default light background color */
 }
+
 
 .room .img-wrap img {
     -webkit-transition: .5s all ease-in-out;
@@ -230,32 +93,86 @@ body {
     -ms-transform: scale(1);
     transform: scale(1);
 }
-
-.room:hover .img-wrap img,
-.room:focus .img-wrap img {
+.room:hover .img-wrap img, .room:focus .img-wrap img {
     -webkit-transform: scale(1.05);
     -ms-transform: scale(1.05);
-    transform: scale(1.05);
+    transform: scale(1.05); 
 }
 
-/* buttons */
 .btn-theme {
-    background-color: #795b35;
-    /* Replace with your theme color */
+    background-color: #795b35;  /* Replace with your theme color */
     color: #fff7ef;
 }
 
-.btn-theme:hover {
-    background-color: #9a7d56;
-    /* Replace with a slightly different shade when hover */
-    color: #fff7ef;
-}
+.row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center; /* Adjusts alignment of the entire row */
+    align-items: stretch; /* Ensures all children of the row stretch to the same height */
+  }
+  
+  .col-md-6.col-lg-4 {
+    display: flex;
+    flex-direction: column;
+  }
+  
+  .img-wrap img {
+    width: 100%;  /* Ensures the image takes up all horizontal space of its container */
+    height: 200px;  /* Sets a fixed height for all images */
+    object-fit: cover;  /* Ensures the image covers the area without distorting aspect ratio */
+  }
+  
+  .img-fluid {
+    width: 100%; /* Ensures the image takes up all horizontal space */
+    height: auto; /* Keeps image aspect ratio intact */
+    margin-bottom: 1rem;
+  }
+  
+  .Food-info {
+    flex-grow: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between; /* Aligns content within each food info box */
+  }
+  .Food-info {
+    padding: 20px; /* Adds padding inside each box */
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* Centers content vertically */
+    text-align: center; /* Centers text horizontally */
+  }
+  @media (max-width: 768px) {
+    .col-md-6 {
+      flex: 0 0 100%; /* Makes each column take full width on smaller screens */
+    }
+  }
 
-/* dashboard - homepage card image size */
-.da-card-img-top {
-    width: 100%;
-    /* This will make the image take the full width of the card */
-    height: 200px;
-    object-fit: cover;
-    /* This will make the image cover the whole space without distorting */
+
+  
+  .navbar {
+    z-index: 1050; /* Bootstrap 通常使用这个值，确保它高于其他内容 */
+}
+.sidebar {
+    position: fixed;
+    top: 50px; /* 导航栏的高度 */
+    left: 0;
+    width: 200px; /* 或根据你的设计调整 */
+    height: calc(100vh - 50px); /* 如果你希望侧边栏填满剩余的垂直空间 */
+    z-index: 1000; /* 确保这个值小于导航栏的z-index，如果导航栏需要在上面 */
+}
+.main-content {
+    margin-top: 50px; /* 保持与导航栏高度一致的顶部间距 */
+    margin-left: 200px; /* 侧边栏的宽度，确保内容从侧边栏之后开始 */
+    padding: 20px;
+}
+@media (max-width: 768px) {
+    .sidebar {
+        position: static; /* 可以是static，使其成为流式布局的一部分 */
+        width: 100%;
+        height: auto;
+        top: auto;
+    }
+    .main-content {
+        margin-left: 0;
+    }
 }
