@@ -1,0 +1,53 @@
+{% extends 'base.html' %}
+
+{% block title %}Manager Dashboard{% endblock %}
+
+{% block content %}
+<!-- insert manager_top_nav.html -->
+{% include 'dashboard_nav/manager_top_nav.html' %}
+<div class="container-fluid">
+    <div class="row">
+        <!-- insert manager_side_nav.html -->
+        {% include 'dashboard_nav/manager_side_nav.html' %}
+        <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
+            <h1>Welcome {{ manager_info.first_name | capitalize }} {{ manager_info.last_name | capitalize }}!</h1>
+            <p>Position: {{ manager_info.position }}</p>
+            <p>Manager ID: {{ manager_info.manager_id }}</p>
+            <div class="row mt-5">
+                <h2>Management Tools</h2>
+                <div class="col-md-4">
+                    <div class="card">
+                        <img src="{{ url_for('static', filename='images/s2.jpg') }}" class="da-card-img-top"
+                            alt="Guide 1">
+                        <div class="card-body">
+                            <h5 class="card-title">Manage Bookings</h5>
+                            <a href="#" class="btn btn-theme">Click</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <img src="{{ url_for('static', filename='images/s1.png') }}" class="da-card-img-top"
+                            alt="Guide 2">
+                        <div class="card-body">
+                            <h5 class="card-title">Manage Orders</h5>
+                            <a href="#"
+                                class="btn btn-theme">Click</a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="card">
+                        <img src="{{ url_for('static', filename='images/m3.jfif') }}" class="da-card-img-top"
+                            alt="Guide 3">
+                        <div class="card-body">
+                            <h5 class="card-title">Manage Inventory</h5>
+                            <a href="#" class="btn btn-theme">Click</a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
