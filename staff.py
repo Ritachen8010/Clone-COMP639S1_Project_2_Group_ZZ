@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for,\
     session, request, flash, jsonify
 from flask_hashing import Hashing
-from config import get_cursor, allowed_file, UPLOAD_FOLDER
+from config import get_cursor, allowed_file, MAX_FILENAME_LENGTH
 import re
 import os
 from datetime import datetime, timedelta
