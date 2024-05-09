@@ -2,7 +2,7 @@ import connect
 import mysql.connector
 import os
 #accept image type when uploading  images
-ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
+# ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 #the folder for the uploaded images, this is for the local app
 UPLOAD_FOLDER = 'static/images/'
 

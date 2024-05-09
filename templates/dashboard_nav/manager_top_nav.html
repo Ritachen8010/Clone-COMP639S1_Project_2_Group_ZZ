@@ -52,7 +52,7 @@
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLinkCustomer">
                             <li><a class="dropdown-item" href="#">Gift Card</a></li>
                             <li><a class="dropdown-item" href="#">Reward Points</a></li>
-                            <li><a class="dropdown-item" href="#">My Profile</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('manager.manager_updateprofile') }}">My Profile</a></li>
                             <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">Log Out</a></li>
                         </ul>
                     </li>

@@ -121,7 +121,7 @@ def staff_updateprofile():
         # Update password check
         if new_password and new_password != confirm_password:
             flash('New passwords do not match.', 'error')
-            return render_template('staff/staff_updateprofile.html', account=account)
+            return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info)
 
         if new_password and (len(new_password) < 8 or not any(char.isupper() for char in new_password) 
             or not any(char.islower() for char in new_password) or not any(char.isdigit() for char in new_password)):
