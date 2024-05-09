@@ -52,7 +52,7 @@
                     <!-- Nav Item - User Information -->
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLinkCustomer" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="{{ url_for('static', filename='customer/default.jpg') }}" alt="profile_image" class="rounded-circle-1">
+                            <img src="{{ url_for('static', filename='customer/%s' % customer_info.profile_image) }}" alt="profile_image" class="rounded-circle-1">
                             <span>{{ customer_info.first_name | capitalize }} {{ customer_info.last_name | capitalize }}</span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdownMenuLinkCustomer">
