@@ -69,7 +69,7 @@ body {
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     width: 240px;
     background-color: #DAB88B;
-    height: 100vh;
+    min-height: 100vh;
     overflow-y: auto;
     z-index: 1;
 }
@@ -240,10 +240,11 @@ body {
 /* footer */
 .footer-content {
     background-color: #f2dac3; /* Dark background for the footer */
-    color: white;  /* Text color for the footer */
+    color: rgb(0, 0, 0);  /* Text color for the footer */
     text-align: center;  /* Center the text inside the footer */
     padding: 1rem 0;  /* Padding inside the footer */
     margin-top: auto;  /* Pushes the footer to the bottom of the container */
+    z-index: 2;
 }
 
 .row {
@@ -289,3 +290,13 @@ body {
     }
   }
 
+.card-header {
+    padding: 0.5rem 1.35rem;
+    margin-bottom: 0;
+    background-color: #f2dac3 !important;
+}
+
+.custom-title {
+    font-size: 1rem;
+    color: #000000;
+}
