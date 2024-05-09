@@ -147,7 +147,7 @@ def logout():
     session.pop('id', None)
     session.pop('email', None)  # Updated from 'username' to 'email'
     session.pop('role', None)
-
+    flash('You have been logged out.') # Added flash
     return redirect(url_for('auth.login'))
 
 @auth_blueprint.route('/unauthorized')
