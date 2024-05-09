@@ -92,8 +92,9 @@ def handle_upload_image_profile():
 @staff_blueprint.route('/staff_updateprofile', methods=["GET", "POST"])
 @role_required(['staff'])
 def staff_updateprofile():
+    email = session.get('email')
     account_id = session.get('id')
-    
+    staff_info = get_staff_info(email)
     connection, cursor = get_cursor()
     
     # Initially fetch the staff_id and other details
@@ -148,7 +149,7 @@ def staff_updateprofile():
         connection.commit()
 
         flash('Profile updated successfully.')
-        return redirect(url_for('staff.staff'))
+        return redirect(url_for('staff.staff_updateprofile'))
 
     # Render page with current account information
-    return render_template('staff/staff_updateprofile.html', account=account)
+    return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info)
