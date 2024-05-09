@@ -19,15 +19,23 @@ def get_cursor():
     dbconn = connection.cursor(dictionary=True)
     return connection, dbconn  # return both connection and cursor
 
-def allowed_file(filename):
-    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
+# def allowed_file(filename):
+#     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
-def is_image_exist(image_name):
-    # Construct the full path to the image file
-    image_path = os.path.join(UPLOAD_FOLDER, image_name)
-    # Check if the file exists
-    if os.path.exists(image_path):
-        return True
-    else:
-        return False
-    
+# def is_image_exist(image_name):
+#     # Construct the full path to the image file
+#     image_path = os.path.join(UPLOAD_FOLDER, image_name)
+#     # Check if the file exists
+#     if os.path.exists(image_path):
+#         return True
+#     else:
+#         return False
+
+
+# Define allowed file types for image upload
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif'}
+MAX_FILENAME_LENGTH = 500
+def allowed_file(filename):
+    return '.' in filename and \
+           filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS and \
+           len(filename) <= MAX_FILENAME_LENGTH
