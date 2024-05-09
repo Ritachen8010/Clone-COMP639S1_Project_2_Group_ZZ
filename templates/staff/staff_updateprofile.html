@@ -17,13 +17,13 @@
                 <div class="row">
                     <div class="col-md-4">
                         <div class="card-body">
-                            <form method="post" enctype="multipart/form-data" onsubmit="return validateForm()"
+                            <form method="post" enctype="multipart/form-data"
                                 action="{{ url_for('staff.handle_upload_image_profile') }}">
                                 <img class="img-profile mb-2" img
                                     src="{{ url_for('static', filename='staff/' + (account.profile_image if account.profile_image else 'default.png')) }}"
                                     class="img-thumbnail mb-3" alt="Profile Image" style="width: 80%; height: auto;">
                                 <input type="file" class="form-control" id="profile_image" name="profile_image">
-                                <button type="submit" class="btn btn-primary mt-4">Update Picture</button>
+                                <button type="submit" class="btn btn-theme mt-4">Update Picture</button>
                             </form>
                         </div>
                     </div>
@@ -85,7 +85,7 @@
                                     <input type="password" class="form-control" id="confirm_password"
                                         name="confirm_password">
                                 </div>
-                                <button type="submit" class="btn btn-primary">Update Profile</button>
+                                <button type="submit" class="btn btn-theme">Update Profile</button>
                             </form>
                         </div>
                     </div>
@@ -95,11 +95,3 @@
     </div>
 </div>
 {% endblock %}
-
-<!-- <style>
-    .bordered-container {
-        border: 1px solid #ccc; 
-        padding: 20px;
-        margin-top: 20px;
-    }
-</style> -->
