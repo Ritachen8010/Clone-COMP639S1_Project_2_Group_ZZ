@@ -1,10 +1,12 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="utf-8">
     <title>{% block title %}Bruce Bay Beans & Bunks{% endblock %}</title>
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@100;200;300;400;500;600;700;800;900&display=swap"
+        rel="stylesheet">
 
     <!-- jQuery -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.0/jquery.min.js"></script>
@@ -22,6 +24,7 @@
     <!-- Bootstrap Icons -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.1/font/bootstrap-icons.css">
 </head>
+
 <body>
     <header>
         <!-- Navigation Bar Placeholder for home_nav.html to fill -->
@@ -40,12 +43,38 @@
                     <p>Copyright©2024 Bruce Bay Beans & Bunks.</p>
                 </div>
                 <div class="col-auto ml-auto" style="margin-left: auto;">
-                    <a href="https://www.facebook.com/BruceBayBeach/" class="mx-2 text-dark"><i class="fa fa-facebook"></i></a>
-                    <a href="https://www.instagram.com/explore/locations/213707592372654/bruce-bay-coffee-cart/" class="mx-2 text-dark" target="_blank"><i class="fa fa-instagram"></i></a>
+                    <a href="https://www.facebook.com/BruceBayBeach/" class="mx-2 text-dark"><i
+                            class="fa fa-facebook"></i></a>
+                    <a href="https://www.instagram.com/explore/locations/213707592372654/bruce-bay-coffee-cart/"
+                        class="mx-2 text-dark" target="_blank"><i class="fa fa-instagram"></i></a>
                 </div>
             </div>
         </div>
     </footer>
+    <!-- Flash Messages Modal -->
+    <div class="modal fade" id="flashMessagesModal" tabindex="-1" aria-labelledby="flashMessagesModalLabel"
+        aria-hidden="true">
+        <div class="modal-dialog custom-modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="flashMessagesModalLabel">Flash Messages</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <!-- Flash messages content goes here -->
+                    {% with messages = get_flashed_messages() %}
+                    {% if messages %}
+                    <ul>
+                        {% for message in messages %}
+                            {{ message }}
+                        {% endfor %}
+                    </ul>
+                    {% endif %}
+                    {% endwith %}
+                </div>
+            </div>
+        </div>
+    </div>
     <!-- Bootstrap Form Validation Script -->
     <script>
         (function () {
@@ -63,6 +92,17 @@
                 });
         })();
 
+        window.onload = function() {
+        {% if get_flashed_messages() %}
+        var flashModal = new bootstrap.Modal(document.getElementById('flashMessagesModal'));
+        flashModal.show();
+        setTimeout(function() {
+            flashModal.hide();
+        }, 2000);
+        {% endif %}
+    };
+
     </script>
 </body>
+
 </html>
