@@ -8,25 +8,20 @@
 
 main {
     margin-top: 80px;
-    /* Increase margin to ensure it starts below the navbar */
     flex: 1;
-    /* Allows the main content to expand and fill the space */
 }
 
 html,
 body {
     height: 100%;
-    /* Make sure the html and body are as tall as the viewport */
     margin: 0;
-    /* Reset default margin */
 }
 
 body {
     display: flex;
     flex-direction: column;
-    /* Arrange body content in a column */
     min-height: 100vh;
-    /* Minimum height of 100% of the viewport height */
+
 }
 
 /* logo */
@@ -224,17 +219,14 @@ body {
 
 .btn-theme:hover {
     background-color: #9a7d56;
-    /* Replace with a slightly different shade when hover */
     color: #fff7ef;
 }
 
 /* dashboard - homepage card image size */
 .da-card-img-top {
     width: 100%;
-    /* This will make the image take the full width of the card */
     height: 200px;
     object-fit: cover;
-    /* This will make the image cover the whole space without distorting */
 }
 
 /* footer */
@@ -271,23 +263,14 @@ body {
     margin-bottom: 1rem;
   }
   
+/* product section */
   .Food-info {
     flex-grow: 1;
     display: flex;
+    padding: 20px;
     flex-direction: column;
-    justify-content: space-between; /* Aligns content within each food info box */
-  }
-  .Food-info {
-    padding: 20px; /* Adds padding inside each box */
-    display: flex;
-    flex-direction: column;
-    justify-content: center; /* Centers content vertically */
-    text-align: center; /* Centers text horizontally */
-  }
-  @media (max-width: 768px) {
-    .col-md-6 {
-      flex: 0 0 100%; /* Makes each column take full width on smaller screens */
-    }
+    justify-content: space-between;
+    text-align: center; 
   }
 
 .card-header {
@@ -299,4 +282,275 @@ body {
 .custom-title {
     font-size: 1rem;
     color: #000000;
+}
+
+
+/* service section */
+.services__item {
+      text-align: center; /* Center align the text under the images */
+      padding: 10px; /* Adds space inside each service item */
+      margin-bottom: 20px; /* Adds space between rows of service items */
+  }
+
+  .services__item img {
+      width: 60px; /* Adjusted width for better visibility */
+      height: auto; /* Maintain aspect ratio */
+      display: block; /* Ensures the image is block level to take full width of container */
+      margin: 0 auto 10px; /* Center image and add space between image and text */
+  }
+
+  .about__text p {
+      text-align: justify; /* Justify text for better alignment */
+      margin-bottom: 15px; /* Add space between paragraphs */
+  }
+.about {
+    background-color: #fff7ef;
+}
+.about-image {
+    padding-top: 100px;
+    padding-bottom: 200px;
+    background-color: #f2dac3;
+    background-image: url('./about/header2.jpeg');
+    background-repeat: no-repeat;
+    background-position: center top;
+    background-size: cover;
+}
+
+.about_area {
+    padding-top: 150px;
+    padding-bottom: 100px
+}
+
+@media (max-width: 767px) {
+    .about_area {
+        padding-top:40px;
+        padding-bottom: 40px
+    }
+    .about_area .about_info a {
+        margin-bottom:30px
+    }
+}
+
+.about_area .about_info p {
+    font-size: 16px;  
+    line-height: 28px;
+    margin-top: 50px;
+    margin-bottom: 47px;
+    text-align: justify; 
+    padding-left: 0px;  
+    padding-right: 20px;
+}
+
+.about_area .about_thumb {
+    -webkit-justify-content: flex-end;
+    -moz-justify-content: flex-end;
+    -ms-justify-content: flex-end;
+    justify-content: flex-end;
+    -ms-flex-pack: flex-end
+}
+
+.about_area .about_thumb img {
+    width: 100%
+}
+
+.about_area .about_thumb .img_1 {
+    width: 80%;  
+    margin-top: 0px;
+    margin-bottom:100px; 
+    margin-right: 20px; 
+}
+
+.about_area .about_thumb .img_2 {
+    width: 80%;  
+    margin-top: 50px;
+    margin-bottom:80px;  
+    margin-left: 10px;  
+}
+
+
+.carousel-item img {
+    max-width: 80%; 
+    height: auto; 
+    display: block; 
+    margin: 0 auto; 
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+    .about_area {
+        padding-top:80px;
+        padding-bottom: 80px
+    }
+    .about_area .about_thumb {
+        -webkit-justify-content:flex-start;
+        -moz-justify-content: flex-start;
+        -ms-justify-content: flex-start;
+        justify-content: flex-start;
+        -ms-flex-pack: flex-start;
+        margin-top: 30px
+    }
+    .about_area .about_thumb2 {
+        margin-bottom:30px
+    }
+}
+
+@media (min-width: 992px) and (max-width: 1200px) {
+    .about_area {
+        padding-top:100px;
+        padding-bottom: 100px
+    }
+}
+
+
+/* policy section*/
+.policy-section {
+    display: flex;
+    padding: 40px;  
+    justify-content: space-between; 
+}
+
+.policy-container {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr); 
+    gap: 50px; 
+    width: 75%; 
+    padding-top: 60px;
+    padding-bottom: 60px; /* Added padding at the bottom for vertical space */
+}
+
+.section-title {
+    width: 25%; /* Adjust width as needed */
+    padding-top: 20px; /* Reduced top padding for alignment */
+    text-align: center; /* Centers the title text */
+}
+.section-title h1 {
+    white-space: nowrap;
+}
+
+.flip-card {
+    background-color: transparent;
+    height: 250px; /* Reduced height */
+    width: 100%; /* Ensure it fills column */
+    perspective: 1000px;
+    margin: 0 auto; /* Centers the card horizontally */
+}
+
+.flip-card-inner {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.6s;
+    transform-style: preserve-3d;
+}
+
+.flip-card-front, .flip-card-back {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    backface-visibility: hidden;
+}
+
+.flip-card-front {
+    background-color: #DAB88B;
+    color: black;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.flip-card-back {
+    background-color: #ffffff;
+    color: #333;
+    transform: rotateY(180deg);
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+}
+
+.flip-card:hover .flip-card-inner {
+    transform: rotateY(180deg);
+}
+@media (min-width: 768px) { /* Tablets and up */
+    .policy-section {
+        flex-direction: row; /* Horizontal layout */
+        justify-content: space-between; /* Space between title and cards */
+    }
+
+    .section-title {
+        width: 25%; /* Smaller width for side column */
+    }
+
+    .policy-container {
+        width: 75%; /* Larger width for cards */
+    }
+}
+
+@media (max-width: 767px) { /* Smaller devices */
+    .policy-container {
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); /* Adjust card size for small screens */
+    }
+}
+
+
+/* team section*/
+.team-section {
+    background-color: #f8f9fa; /* Adjust the background color to match your theme */
+    padding: 40px 0; /* Consistent vertical padding */
+}
+
+.team-member {
+    background: #ffffff; /* Use a cleaner background color if needed */
+    padding: 25px; /* Slightly increased padding */
+    border-radius: 12px; /* Smoother border radius */
+    box-shadow: 0 4px 12px rgba(0,0,0,0.05); /* Softer shadow for a more subtle depth */
+    text-align: center;
+    transition: all 0.3s ease-in-out; /* Smooth all transitions */
+}
+
+.team-member:hover {
+    transform: translateY(-10px); /* More noticeable hover effect */
+    box-shadow: 0 6px 20px rgba(0,0,0,0.1); /* Stronger shadow on hover */
+}
+
+.team-member img {
+    width: 140px; /* Larger image size */
+    height: 140px; /* Keep aspect ratio */
+    border-radius: 50%; /* Circular images */
+    margin-bottom: 20px; /* More space below the image */
+}
+
+.team-member h4 {
+    margin-top: 15px; /* More space above the name */
+    color: #333333; /* Ensuring readable text color */
+    font-size: 18px; /* Larger font size for names */
+}
+
+.team-member p {
+    color: #666666; /* Slightly darker for better readability */
+    font-size: 16px; /* Larger font size for roles */
+}
+
+
+/* get in touch section*/
+.find-container {
+    max-width: 1200px; /* Limit the maximum width */
+    margin: auto; /* Center align the container */
+    padding: 20px;
+}
+
+.find-container h2 {
+    margin-bottom: 40px; /* Space below headings */
+}
+
+.map-container {
+    margin-bottom: 20px; /* Space below the map */
+}
+
+.form-group {
+    margin-bottom: 30px;  
+}
+.form-control {
+    border: 1px solid #ccc;
+    border-radius: 4px; 
+    padding: 10px; 
+    margin-bottom: 15px; 
 }

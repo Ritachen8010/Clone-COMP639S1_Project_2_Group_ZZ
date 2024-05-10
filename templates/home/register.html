@@ -9,13 +9,6 @@
 {% block content %}
 <div class="container" style="max-width: 500px; margin: 100px auto;">
     <h3 class="text-center fw-bold">Register Form</h3>
-    {% with messages = get_flashed_messages() %}
-        {% if messages %}
-            {% for message in messages %}
-                <div class="alert alert-warning" role="alert">{{ message }}</div>
-            {% endfor %}
-        {% endif %}
-    {% endwith %}
     <form action="{{ url_for('auth.register') }}" method="post" class="needs-validation" novalidate enctype="multipart/form-data">
         <div class="mb-3">
             <label for="email" class="form-label"><strong>Email:</strong></label>

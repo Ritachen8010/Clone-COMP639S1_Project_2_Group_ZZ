@@ -54,7 +54,6 @@ def register():
         if cursor is None or connection is None:
             flash('Database connection error.')
             return redirect(url_for('auth.register'))
-
         try:
             cursor.execute("SELECT email FROM account WHERE email = %s", (email,))
             if cursor.fetchone():
@@ -71,7 +70,7 @@ def register():
             )
             connection.commit()
             flash('Registration successful. Please login.')
-            return redirect(url_for('auth.register'))
+            return redirect(url_for('auth.login'))
         except Exception as e:
             connection.rollback()
             flash(f'Error occurred during registration: {str(e)}')
@@ -97,47 +96,32 @@ def user():
 
 @auth_blueprint.route('/login/', methods=['GET', 'POST'])
 def login():
-    msg = ''  # Message to display on the login page
-    if request.method == 'POST' and 'email' in request.form and 'password' in request.form:
-        email = request.form['email']
-        user_password = request.form['password']
-        
-        # Retrieve the account details from the database
-        connection, cursor = get_cursor()  # 正确获取 cursor 和 connection
+    if request.method == 'POST':
+        email = request.form.get('email')
+        user_password = request.form.get('password')
+        connection, cursor = get_cursor()
         try:
             cursor.execute('SELECT * FROM account WHERE email = %s', (email,))
             account = cursor.fetchone()
             if account:
-                account_id, stored_password, role = account['account_id'], account['password'], account['role']
+                stored_password = account['password']
                 if hashing.check_value(stored_password, user_password, salt='S1#e2!r3@t4$'):
-                    # Retrieve the status of this account
-                    cursor.execute('SELECT status FROM customer WHERE account_id = %s \
-                                    UNION SELECT status FROM staff WHERE account_id = %s \
-                                    UNION SELECT status FROM manager WHERE account_id = %s',
-                                    (account_id, account_id, account_id))
-                    status = cursor.fetchone()
-                    if status and status['status'] == 'active':
-                        # Set session variables and redirect the user to the appropriate dashboard
-                        session['loggedin'] = True
-                        session['id'] = account_id
-                        session['email'] = email
-                        session['role'] = role
-                        # Redirect to home page
-                        return redirect(url_for('auth.user'))
-                    else:
-                        msg = 'Your account is inactive, please contact the manager for more information.'
+                    session['loggedin'] = True
+                    session['id'] = account['account_id']
+                    session['email'] = email
+                    session['role'] = account['role']
+                    flash('You have successfully logged in!', 'success') 
+                    return redirect(url_for('auth.user'))  
                 else:
-                    msg = 'Invalid password'
+                    flash('Invalid email or password.', 'error')  
             else:
-                msg = 'Invalid email'
-        except Exception as e:
-            print(f"Error during login: {e}")
-            msg = "An error occurred during login."
+                flash('Invalid email or password.', 'error')
         finally:
             cursor.close()
             connection.close()
-    
-    return render_template('home/login.html', msg=msg)
+    return render_template('home/login.html')
+
+
 
 @auth_blueprint.route('/logout')
 @login_required

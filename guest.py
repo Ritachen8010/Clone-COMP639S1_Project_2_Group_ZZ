@@ -19,13 +19,47 @@ app.config["MAIL_USE_SSL"] = True
 
 mail = Mail(app)
 
+
 @guest_blueprint.route('/')
 def home():
     return render_template('home/guest.html')
 
+
+
+
+def get_manager():
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT manager.first_name, manager.last_name, manager.profile_image, manager.position
+        FROM manager
+        JOIN account ON manager.account_id = account.account_id
+    """)
+    manager_info = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return manager_info
+
+
+def get_all_staff():
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT staff.first_name, staff.last_name, staff.profile_image, staff.position
+        FROM staff
+        JOIN account ON staff.account_id = account.account_id
+    """)
+    staff_info = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return staff_info
+
+
+
 @guest_blueprint.route('/about_us')
 def about_us():
-    return render_template('home/about_us.html')
+    manager_info = get_manager()
+    staff_info = get_all_staff()
+    return render_template('home/about_us.html', manager=manager_info, staff=staff_info)
+
 
 class ContactForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired(message="Please enter your name.")])
@@ -55,6 +89,7 @@ def contact():
         return render_template('contact_success.html', form=form, success=True)
     
     return render_template('home/about_us.html', form=form, success=False)
+
 
 @guest_blueprint.route('/get-coffee-and-hot-drinks')
 def get_coffee_and_hot_drinks():

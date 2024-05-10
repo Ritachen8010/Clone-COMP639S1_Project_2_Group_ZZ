@@ -4,7 +4,7 @@ USE `bbbb`;
 
 -- 1. account 
 CREATE TABLE `account` (
-    `account_id` INT,
+    `account_id` INT AUTO_INCREMENT,
     `email` VARCHAR(255) NOT NULL UNIQUE,
     `password` VARCHAR(255) NOT NULL,
     `role` ENUM('manager', 'staff', 'customer') NOT NULL,
@@ -15,7 +15,7 @@ CREATE TABLE `account` (
 
 -- 2. coustomer
 CREATE TABLE `customer` (
-    `customer_id` INT,
+    `customer_id` INT AUTO_INCREMENT,
     `account_id` INT,
     `first_name` VARCHAR(100),
     `last_name` VARCHAR(100),

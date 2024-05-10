@@ -10,13 +10,10 @@
 <div class="login-page">
     <div class="container" style="max-width: 400px; margin: 100px auto;">
         <h2 class="login-title text-center">Bruce Bay Beans & Bunks</h2>
-        {% if msg %}
-        <div class="alert alert-warning">{{ msg }}</div>
-        {% endif %}
         <form action="{{url_for('auth.login')}}" method="post" class="mt-4">
             <div class="form-group mb-3">
-                <label for="email">Email:</label>  <!-- Changed from Username to Email -->
-                <input type="email" id="email" name="email" class="form-control" required>  <!-- Changed type to email -->
+                <label for="email">Email:</label>
+                <input type="email" id="email" name="email" class="form-control" required>
             </div>
             <div class="form-group mb-3">
                 <label for="password">Password:</label>
