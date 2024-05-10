@@ -32,7 +32,7 @@ CREATE TABLE `customer` (
 
 -- 3. staff
 CREATE TABLE `staff` (
-	`staff_id` INT,
+	`staff_id` INT AUTO_INCREMENT,
     `account_id` INT,
     `first_name` VARCHAR(100),
     `last_name` VARCHAR(100),
@@ -48,7 +48,7 @@ CREATE TABLE `staff` (
 
 -- 5. manager
 CREATE TABLE `manager` (
-	`manager_id` INT,
+	`manager_id` INT AUTO_INCREMENT,
     `account_id` INT,
     `first_name` VARCHAR(100),
     `last_name` VARCHAR(100),
@@ -109,7 +109,7 @@ CREATE TABLE `product_option_mapping` (
 
 -- 8. orders
 CREATE TABLE `orders` (
-    `order_id` INT,
+    `order_id` INT AUTO_INCREMENT,
     `customer_id` INT,
     `total_price` DECIMAL(10,2),
     `special_requests` TEXT,
@@ -122,7 +122,7 @@ CREATE TABLE `orders` (
 
 -- 9. order_item
 CREATE TABLE `order_item` (
-    `order_item_id` INT,
+    `order_item_id` INT AUTO_INCREMENT,
     `order_id` INT,
     `product_id` INT,
     `quantity` INT,
@@ -133,7 +133,7 @@ CREATE TABLE `order_item` (
 
 -- 10. inventory
 CREATE TABLE `inventory` (
-    `inventory_id` INT,
+    `inventory_id` INT AUTO_INCREMENT,
     `staff_id` INT,
     `product_id` INT,
     `quantity` INT,
@@ -145,7 +145,7 @@ CREATE TABLE `inventory` (
 
 -- 10. accommodation
 CREATE TABLE `accommodation` (
-    `accommodation_id` INT,
+    `accommodation_id` INT AUTO_INCREMENT,
     `type` ENUM('dorm', 'twin', 'queen') NOT NULL,
     `description` TEXT,
     `capacity` INT,
@@ -156,7 +156,7 @@ CREATE TABLE `accommodation` (
 )AUTO_INCREMENT=1;
 
 CREATE TABLE `blocked_dates` (
-    `block_id` INT,
+    `block_id` INT AUTO_INCREMENT,
     `accommodation_id` INT,
     `start_date` DATE,
     `end_date` DATE,
@@ -167,7 +167,7 @@ CREATE TABLE `blocked_dates` (
 
 -- 11. booking
 CREATE TABLE `booking` (
-    `booking_id` INT,
+    `booking_id` INT AUTO_INCREMENT,
     `customer_id` INT,
     `payment_id` INT,
     `accommodation_id` INT,
@@ -187,7 +187,7 @@ CREATE TABLE `booking` (
 
 -- 12. message
 CREATE TABLE `message` (
-    `message_id` INT,
+    `message_id` INT AUTO_INCREMENT,
     `customer_id` INT,
     `manager_id` INT,
     `staff_id` INT,
@@ -203,7 +203,7 @@ CREATE TABLE `message` (
 
 -- 13. loyalty_point
 CREATE TABLE `loyalty_point` (
-	`loyalty_point_id`INT,
+	`loyalty_point_id`INT AUTO_INCREMENT,
     `order_id` INT,
     `customer_id` INT,
     `points_earned` INT NOT NULL,
@@ -217,14 +217,14 @@ CREATE TABLE `loyalty_point` (
 
 -- 14. payment_type
 CREATE TABLE `payment_type` (
-    `payment_type_id` INT,
+    `payment_type_id` INT AUTO_INCREMENT,
     `payment_type` VARCHAR(50),
     PRIMARY KEY (`payment_type_id`)
 )AUTO_INCREMENT=1;
 
 -- 15. bank_card
 CREATE TABLE `bank_Card` (
-    `bank_card_id` INT,
+    `bank_card_id` INT AUTO_INCREMENT,
     `card_num` INT,
     `expire_Date` DATE,
 	`payment_type_id` INT,
@@ -234,7 +234,7 @@ CREATE TABLE `bank_Card` (
 
 -- 16. gift_card
 CREATE TABLE `gift_card` (
-    `gift_card_id` INT,
+    `gift_card_id` INT AUTO_INCREMENT,
     `code` VARCHAR(255),
     `balance` DECIMAL(10,2),
     `expiration_date` DATE,
@@ -247,7 +247,7 @@ CREATE TABLE `gift_card` (
 
 -- 17. promotion
 CREATE TABLE `promotion` (
-    `promotion_id` INT,
+    `promotion_id` INT AUTO_INCREMENT,
     `code` VARCHAR(255),
     `description` TEXT,
     `discount_value` DECIMAL(10,2),
@@ -261,7 +261,7 @@ CREATE TABLE `promotion` (
 
 -- 18. payment
 CREATE TABLE `payment` (
-    `payment_id` INT,
+    `payment_id` INT AUTO_INCREMENT,
     `customer_id` INT,
     `payment_type_id` INT,
     `order_id` INT,
@@ -275,7 +275,7 @@ CREATE TABLE `payment` (
 
 -- 19. news
 CREATE TABLE `news` (
-    `news_id` INT,
+    `news_id` INT AUTO_INCREMENT,
     `manager_id` INT,
     `description` TEXT,
     `published_date` DATE,
