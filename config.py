@@ -1,6 +1,7 @@
 import connect
 import mysql.connector
 import os
+from datetime import datetime, date
 #accept image type when uploading  images
 # ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg'}
 #the folder for the uploaded images, this is for the local app
@@ -39,3 +40,17 @@ def allowed_file(filename):
     return '.' in filename and \
            filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS and \
            len(filename) <= MAX_FILENAME_LENGTH
+
+#define format date
+def format_date(value, format='%d/%m/%Y'):
+    """Format a date string or datetime.date object to 'DD/MM/YYYY'."""
+    if isinstance(value, date):  
+        return value.strftime(format)
+    elif isinstance(value, str):
+        try:
+            date_obj = datetime.strptime(value, '%Y-%m-%d')
+            return date_obj.strftime(format)
+        except ValueError:
+            return value 
+    else:
+        return value

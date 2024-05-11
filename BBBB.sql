@@ -146,7 +146,7 @@ CREATE TABLE `inventory` (
 -- 10. accommodation
 CREATE TABLE `accommodation` (
     `accommodation_id` INT AUTO_INCREMENT,
-    `type` ENUM('dorm', 'twin', 'queen') NOT NULL,
+    `type` ENUM('Dorm', 'Twin', 'Queen') NOT NULL,
     `description` TEXT,
     `capacity` INT,
     `price_per_night` DECIMAL(10,2),
@@ -491,3 +491,19 @@ VALUES
 (44, 20), (44, 21), (44, 22), (44, 23), (44, 24), (44, 25), (44, 26), -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Sorbet
 (45, 20), (45, 21), (45, 22), (45, 23), (45, 24), (45, 25), (45, 26), -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Frozen Yogurt
 (46, 20), (46, 21), (46, 22), (46, 23), (46, 24), (46, 25), (46, 26); -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Gelato
+
+
+
+-- 10. insert accommodation
+INSERT INTO accommodation (accommodation_id, type, description, capacity, price_per_night, is_available, image)
+VALUES
+(1, 'Dorm', 'Our dorm features four comfortable single bunks, perfect for family or friends eager to stay together. Ideal for groups of four, you can book the entire room to enjoy a private experience. Alternatively, book just one bunk and embrace the opportunity to meet and share the space with three new friends. Whether you are a solo traveler or planning a group adventure, our dorm offers a fun and affordable accommodation option.', 4, 55, TRUE, 'dorm.jpg'),
+(2, 'Twin', 'Our twin bed room is thoughtfully designed for comfort and privacy, featuring two plush single beds perfect for friends traveling together or solo travelers seeking extra space. Guests have convenient access to modern shared bathroom and kitchen facilities, which are cleaned and maintained to the highest standards. Whether you’re in town for business or leisure, our twin bed room offers a comfortable base for your adventures.', 2, 155, TRUE, 'twin.jpg'),
+(3, 'Queen', 'Perfect for couples or families, our Queen bed room features a luxurious queen-sized bed and a convenient pull-out sofa, making it ideal for up to three guests. Guests have convenient access to modern shared bathroom and kitchen facilities, which are cleaned and maintained to the highest standards. It’s more than just a place to sleep—it’s a home away from home to live, laugh, and create memories.', 3, 205, TRUE, 'queen.jpg');
+
+-- 11. insert booking table--
+INSERT INTO booking 
+VALUES
+(1, 1000, 1, 1, '2024-05-24', '2024-05-29', 1, 0, 1, 1, 'confirmed', '2024-05-11'),
+(2, 1000, 1, 2, '2024-05-25', '2024-05-30', 1, 0, 1, 1, 'confirmed', '2024-05-12'),
+(3, 1000, 1, 3, '2024-05-25', '2024-05-30', 1, 0, 1, 1, 'confirmed', '2024-05-12');
