@@ -52,7 +52,7 @@ def get_unread_messages(customer_id):
 def customer():
     email = session.get('email')
     customer_info = get_customer_info(email)
-    # unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_messages = get_unread_messages(customer_info['customer_id'])
     return render_template('customer/customer_dashboard.html', customer_info=customer_info, unread_messages=unread_messages)
 
 
