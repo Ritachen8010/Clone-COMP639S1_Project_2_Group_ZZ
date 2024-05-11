@@ -149,7 +149,7 @@ def staff_updateprofile():
         connection.commit()
 
         flash('Profile updated successfully.')
-        return redirect(url_for('staff.staff_updateprofile'))
+        return redirect(url_for('staff.staff'))
 
     # Render page with current account information
     return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info)

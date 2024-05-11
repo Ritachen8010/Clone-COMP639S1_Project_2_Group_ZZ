@@ -152,7 +152,7 @@ def manager_updateprofile():
         connection.commit()
 
         flash('Profile updated successfully.')
-        return redirect(url_for('manager.manager_updateprofile'))
+        return redirect(url_for('manager.manager'))
 
     # Render page with current account information
     return render_template('manager/manager_updateprofile.html', account=account, manager_info=manager_info)
