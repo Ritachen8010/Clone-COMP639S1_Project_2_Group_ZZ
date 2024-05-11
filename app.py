@@ -5,8 +5,12 @@ from manager import manager_blueprint
 from staff import staff_blueprint
 from customer import customer_blueprint
 from flask_hashing import Hashing
+from config import format_date
 
 app = Flask(__name__)
+
+# Register the custom filter
+app.jinja_env.filters['format_date'] = format_date
 
 app.secret_key = 'Group ZZ'
 
@@ -22,3 +26,4 @@ app.register_blueprint(customer_blueprint, url_prefix='/customer')
 if __name__=='__main__':
 
     app.run(debug=True)
+

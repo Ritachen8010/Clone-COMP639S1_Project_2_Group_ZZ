@@ -241,3 +241,42 @@ def customer_updateprofile():
 
     # Render page with current account information
     return render_template('customer/customer_updateprofile.html', account=account, customer_info=customer_info)
+
+
+#Customer view bookings
+@customer_blueprint.route('/customer_viewbookings', methods=["GET"])
+@role_required(['customer'])
+def customer_viewbookings():
+    email = session.get('email')
+    account_id = session.get('id')    
+    connection, cursor = get_cursor()
+    customer_info = get_customer_info(email)
+
+    cursor.execute(
+        'SELECT a.email, c.customer_id FROM account a INNER JOIN customer c ON a.account_id = c.account_id WHERE a.account_id = %s', 
+        (account_id,))
+    account_info = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    if not account_info:
+        flash('No customer information found.', 'error')
+        return redirect(url_for('customer.customer_dashboard'))
+
+    customer_id = account_info['customer_id']
+
+    
+    # Fetch the bookings 
+    connection, cursor = get_cursor()
+    cursor.execute(
+        'SELECT b.*, a.type, a.description, a.image, a.price_per_night FROM booking b INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id WHERE b.customer_id = %s', 
+        (customer_id,))
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+
+    if not bookings:
+        flash('No bookings found.', 'info')
+
+    return render_template('customer/customer_viewbookings.html', bookings=bookings, customer_info=customer_info)
+    
