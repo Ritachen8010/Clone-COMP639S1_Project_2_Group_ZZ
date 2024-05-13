@@ -50,6 +50,10 @@ def register():
         first_name = request.form['first_name']
         last_name = request.form['last_name']
 
+        if not phone.isdigit() or len(phone) != 10:  
+            flash('Invalid phone number. Please enter a valid 10-digit phone number.')
+            return redirect(url_for('auth.register'))
+        
         connection, cursor = get_cursor()
         if cursor is None or connection is None:
             flash('Database connection error.')
@@ -60,7 +64,7 @@ def register():
                 flash('Account already exists!')
                 return redirect(url_for('auth.register'))
             
-            hashed_password = generate_password_hash(password)
+            hashed_password = hashing.hash_value(password, salt='S1#e2!r3@t4$') 
             cursor.execute("INSERT INTO account (email, password, role) VALUES (%s, %s, %s)",
                            (email, hashed_password, role))
             account_id = cursor.lastrowid
@@ -80,6 +84,7 @@ def register():
             connection.close()
     else:
         return render_template('home/register.html')
+
 
 
 
