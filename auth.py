@@ -50,10 +50,6 @@ def register():
         first_name = request.form['first_name']
         last_name = request.form['last_name']
 
-        if not phone.isdigit() or len(phone) != 10:  
-            flash('Invalid phone number. Please enter a valid 10-digit phone number.')
-            return redirect(url_for('auth.register'))
-        
         connection, cursor = get_cursor()
         if cursor is None or connection is None:
             flash('Database connection error.')
