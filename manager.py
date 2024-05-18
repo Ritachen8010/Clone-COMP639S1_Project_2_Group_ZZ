@@ -5,7 +5,7 @@ from config import get_cursor, allowed_file, MAX_FILENAME_LENGTH
 from auth import role_required
 import re
 import os
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 from werkzeug.utils import secure_filename
 
 
@@ -99,7 +99,14 @@ def manager_updateprofile():
     account_id = session.get('id')
     manager_info = get_manager_info(email)
     connection, cursor = get_cursor()
-    
+
+    # Set the validation for birthday ages from 16-100
+    today = date.today()
+    max_date = today - timedelta(days=16*365)
+    min_date = today - timedelta(days=100*365)
+    max_date_str = (date.today() - timedelta(days=16*365)).strftime("%Y-%m-%d")
+    min_date_str = (date.today() - timedelta(days=100*365)).strftime("%Y-%m-%d")
+
     # Initially fetch the manager_id and other details
     cursor.execute(
         'SELECT a.email, m.* FROM account a INNER JOIN manager m ON a.account_id = m.account_id WHERE a.account_id = %s', 
@@ -142,6 +149,12 @@ def manager_updateprofile():
         # Commit changes to the database
         connection.commit()
 
+        #set the validation for birthday ages from 16-100
+        if date_of_birth < min_date_str or date_of_birth > max_date_str:
+            flash('Date of birth must be between 16 and 100 years ago.', 'error')
+            return render_template('manager/manager_updateprofile.html', account=account, manager_info=manager_info, max_date=max_date_str, min_date=min_date_str)
+
+
         # Update the manager table using manager_id 
         cursor.execute("""
             UPDATE manager SET first_name = %s, last_name = %s, phone_number = %s, date_of_birth = %s, 
@@ -155,4 +168,4 @@ def manager_updateprofile():
         return redirect(url_for('manager.manager'))
 
     # Render page with current account information
-    return render_template('manager/manager_updateprofile.html', account=account, manager_info=manager_info)
+    return render_template('manager/manager_updateprofile.html', account=account, manager_info=manager_info, max_date=max_date_str, min_date=min_date_str)

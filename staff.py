@@ -4,7 +4,7 @@ from flask_hashing import Hashing
 from config import get_cursor, allowed_file, MAX_FILENAME_LENGTH
 import re
 import os
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 from auth import role_required
 from werkzeug.utils import secure_filename
 
@@ -97,6 +97,13 @@ def staff_updateprofile():
     staff_info = get_staff_info(email)
     connection, cursor = get_cursor()
     
+    # Set the validation for birthday ages from 16-100
+    today = date.today()
+    max_date = today - timedelta(days=16*365)
+    min_date = today - timedelta(days=100*365)
+    max_date_str = (date.today() - timedelta(days=16*365)).strftime("%Y-%m-%d")
+    min_date_str = (date.today() - timedelta(days=100*365)).strftime("%Y-%m-%d")
+
     # Initially fetch the staff_id and other details
     cursor.execute(
         'SELECT a.email, s.* FROM account a INNER JOIN staff s ON a.account_id = s.account_id WHERE a.account_id = %s', 
@@ -139,6 +146,12 @@ def staff_updateprofile():
         # Commit changes to the database
         connection.commit()
 
+        #set the validation for birthday ages from 16-100
+        if date_of_birth < min_date_str or date_of_birth > max_date_str:
+            flash('Date of birth must be between 16 and 100 years ago.', 'error')
+            return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info, max_date=max_date_str, min_date=min_date_str)
+
+
         # Update the staff table using staff_id 
         cursor.execute("""
             UPDATE staff SET first_name = %s, last_name = %s, phone_number = %s, date_of_birth = %s, 
@@ -152,4 +165,4 @@ def staff_updateprofile():
         return redirect(url_for('staff.staff'))
 
     # Render page with current account information
-    return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info)
+    return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info, max_date=max_date_str, min_date=min_date_str)

@@ -51,12 +51,13 @@
                                 <div class="mb-3">
                                     <label for="phone_number" class="form-label">Phone Number</label>
                                     <input type="text" class="form-control" id="phone_number" name="phone_number"
-                                        value="{{ account.phone_number }}" required>
+                                        value="{{ account.phone_number }}" pattern="\d{8,11}" 
+                                        title="Phone number must be between 8 and 11 digits" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="date_of_birth" class="form-label">Date of Birth</label>
                                     <input type="date" class="form-control" id="date_of_birth" name="date_of_birth"
-                                        value="{{ account.date_of_birth}}" required>
+                                        value="{{ account.date_of_birth }}" min="{{ min_date }}" max="{{ max_date }}" required>
                                 </div>
                                 <div class="mb-3">
                                     <label for="gender" class="form-label">Gender</label>
