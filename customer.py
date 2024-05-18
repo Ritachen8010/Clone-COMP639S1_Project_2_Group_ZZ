@@ -6,7 +6,7 @@ from werkzeug.utils import secure_filename
 from zoneinfo import ZoneInfo 
 import re
 import os
-from datetime import date
+from datetime import date,timedelta
 
 
 from auth import role_required
@@ -186,6 +186,13 @@ def customer_updateprofile():
     customer_info = get_customer_info(email)
     connection, cursor = get_cursor()
     
+    # Set the validation for birthday ages from 16-100
+    today = date.today()
+    max_date = today - timedelta(days=16*365)
+    min_date = today - timedelta(days=100*365)
+    max_date_str = (date.today() - timedelta(days=16*365)).strftime("%Y-%m-%d")
+    min_date_str = (date.today() - timedelta(days=100*365)).strftime("%Y-%m-%d")
+
     # Initially fetch the customer_id and other details
     cursor.execute(
         'SELECT a.email, m.* FROM account a INNER JOIN customer m ON a.account_id = m.account_id WHERE a.account_id = %s', 
@@ -210,7 +217,7 @@ def customer_updateprofile():
         if new_password and new_password != confirm_password:
             flash('New passwords do not match.', 'error')
             return render_template('customer/customer_updateprofile.html', account=account, customer_info=customer_info)
-
+    
         if new_password and (len(new_password) < 8 or not any(char.isupper() for char in new_password) 
             or not any(char.islower() for char in new_password) or not any(char.isdigit() for char in new_password)):
             flash('Password must be at least 8 characters long and contain a mix of uppercase, lowercase, and numeric characters.', 'error')
@@ -227,6 +234,11 @@ def customer_updateprofile():
         # Commit changes to the database
         connection.commit()
 
+        #set the validation for birthday ages from 16-100
+        if date_of_birth < min_date_str or date_of_birth > max_date_str:
+            flash('Date of birth must be between 16 and 100 years ago.', 'error')
+            return render_template('customer/customer_updateprofile.html', account=account, customer_info=customer_info, max_date=max_date_str, min_date=min_date_str)
+
         # Update the customer table using customer_id 
         cursor.execute("""
             UPDATE customer SET first_name = %s, last_name = %s, phone_number = %s, date_of_birth = %s, 
@@ -240,7 +252,9 @@ def customer_updateprofile():
         return redirect(url_for('customer.customer'))
 
     # Render page with current account information
-    return render_template('customer/customer_updateprofile.html', account=account, customer_info=customer_info)
+    return render_template('customer/customer_updateprofile.html', account=account, customer_info=customer_info,max_date=max_date_str, min_date=min_date_str)
+
+
 
 
 #Customer view bookings
