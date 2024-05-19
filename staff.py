@@ -166,3 +166,23 @@ def staff_updateprofile():
 
     # Render page with current account information
     return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info, max_date=max_date_str, min_date=min_date_str)
+
+# Staff view orders
+@staff_blueprint.route('/orders')
+@role_required(['staff'])
+def view_orders():
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT o.order_id, o.customer_id, o.total_price, o.special_requests, 
+               o.scheduled_pickup_time, o.status, o.created_at, 
+               c.first_name, c.last_name
+        FROM orders o
+        JOIN customer c ON o.customer_id = c.customer_id
+        ORDER BY o.created_at DESC
+    """)
+    orders = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return render_template('staff/staff_vieworders.html', orders=orders, staff_info=staff_info) 
