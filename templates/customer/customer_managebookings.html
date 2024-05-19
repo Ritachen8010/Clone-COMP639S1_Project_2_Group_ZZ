@@ -12,7 +12,7 @@
         {% include 'dashboard_nav/customer_side_nav.html' %}
         <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
             
-            <h1>My Bookings</h1>
+            <h1>Manage My Bookings</h1>
             <div class="row">
                 {% if bookings %}
                     {% for booking in bookings %}
@@ -36,6 +36,10 @@
                                     <li class="list-group-item">Status: {{ booking.status }}</li>
                                     <li class="list-group-item">Paid: {{ 'Yes' if booking.is_paid else 'No' }}</li>
                                 </ul>
+                                <!-- Cancel Button -->
+                                <div class="text-center mt-3">
+                                    <button class="btn btn-danger" onclick="confirmCancellation({{ booking.booking_id }})">Cancel Booking</button>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -48,4 +52,13 @@
     </div>
 </div>
 
+<script>
+function confirmCancellation(bookingId) {
+    if (confirm("Are you sure you want to cancel this booking?")) {
+        window.location.href = "{{ url_for('customer.cancel_booking') }}?booking_id=" + bookingId;
+    }
+}
+</script>
+
 {% endblock %}
+
