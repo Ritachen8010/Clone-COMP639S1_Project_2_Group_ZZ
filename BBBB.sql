@@ -154,9 +154,11 @@ CREATE TABLE `accommodation` (
     `type` ENUM('Dorm', 'Twin', 'Queen') NOT NULL,
     `description` TEXT,
     `capacity` INT,
+    `space` INT,
     `price_per_night` DECIMAL(10,2),
     `is_available` BOOLEAN DEFAULT TRUE,
     `image` VARCHAR(500),
+    `room_status` ENUM('Open', 'Closed') DEFAULT 'Open'	
     PRIMARY KEY (`accommodation_id`)
 )AUTO_INCREMENT=1;
 
@@ -539,18 +541,18 @@ VALUES
 (1, 1, 50, NULL, 50);
 
 -- 13. insert accommodation
-INSERT INTO accommodation (accommodation_id, type, description, capacity, price_per_night, is_available, image)
+INSERT INTO accommodation (accommodation_id, type, description, capacity, space, price_per_night, is_available, image)
 VALUES
-(1, 'Dorm', 'Our dorm features four comfortable single bunks, perfect for family or friends eager to stay together. Ideal for groups of four, you can book the entire room to enjoy a private experience. Alternatively, book just one bunk and embrace the opportunity to meet and share the space with three new friends. Whether you are a solo traveler or planning a group adventure, our dorm offers a fun and affordable accommodation option.', 4, 55, TRUE, 'dorm.jpg'),
-(2, 'Twin', 'Our twin bed room is thoughtfully designed for comfort and privacy, featuring two single beds for friends traveling together or solo travelers seeking extra space. Guests have convenient access to modern shared bathroom and kitchen facilities, which are maintained to the highest standards. Whether you’re in town for business or leisure, our twin bed room offers a comfortable base for your adventures.', 2, 155, TRUE, 'twin.jpg'),
-(3, 'Queen', 'Perfect for couples or families, our Queen bed room features a luxurious queen-sized bed and a convenient pull-out sofa, making it ideal for up to three guests. Guests have convenient access to modern shared bathroom and kitchen facilities, which are cleaned and maintained to the highest standards. It’s more than just a place to sleep—it’s a home away from home to live, laugh, and create memories.', 3, 205, TRUE, 'queen.jpg');
+(1, 'Dorm', 'Our dorm features four comfortable single bunks, perfect for family or friends eager to stay together. Ideal for groups of four, you can book the entire room to enjoy a private experience. Alternatively, book just one bunk and embrace the opportunity to meet and share the space with three new friends. Whether you are a solo traveler or planning a group adventure, our dorm offers a fun and affordable accommodation option.', 4, 4, 55, TRUE, 'dorm.jpg'),
+(2, 'Twin', 'Our twin bed room is thoughtfully designed for comfort and privacy, featuring two single beds for friends traveling together or solo travelers seeking extra space. Guests have convenient access to modern shared bathroom and kitchen facilities, which are maintained to the highest standards. Whether you’re in town for business or leisure, our twin bed room offers a comfortable base for your adventures.', 2, 1, 155, TRUE, 'twin.jpg'),
+(3, 'Queen', 'Perfect for couples or families, our Queen bed room features a luxurious queen-sized bed and a convenient pull-out sofa, making it ideal for up to three guests. Guests have convenient access to modern shared bathroom and kitchen facilities, which are cleaned and maintained to the highest standards. It’s more than just a place to sleep—it’s a home away from home to live, laugh, and create memories.', 3, 1, 205, TRUE, 'queen.jpg');
 
 -- 15. insert booking table--
 INSERT INTO booking 
 VALUES
 (1, 1000, 1, 1, '2024-05-24', '2024-05-29', 1, 0, 1, 1, 'confirmed', '2024-05-11'),
-(2, 1000, 1, 2, '2024-05-25', '2024-05-30', 1, 0, 1, 1, 'confirmed', '2024-05-12'),
-(3, 1000, 1, 3, '2024-05-25', '2024-05-30', 1, 0, 1, 1, 'confirmed', '2024-05-12'),
+(2, 1000, 1, 2, '2024-05-21', '2024-05-22', 1, 0, 1, 1, 'confirmed', '2024-05-12'),
+(3, 1000, 1, 3, '2024-05-22', '2024-05-25', 1, 0, 1, 1, 'confirmed', '2024-05-12'),
 (4, 1000, 1, 3, '2024-02-25', '2024-02-26', 1, 0, 1, 1, 'checked out', '2024-01-12');
 
 -- 16. insert message table--
