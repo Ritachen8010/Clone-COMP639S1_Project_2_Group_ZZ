@@ -499,7 +499,21 @@ VALUES
 (45, 20), (45, 21), (45, 22), (45, 23), (45, 24), (45, 25), (45, 26), -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Frozen Yogurt
 (46, 20), (46, 21), (46, 22), (46, 23), (46, 24), (46, 25), (46, 26); -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Gelato
 
--- more talbes in between--
+-- 10. Insert into orders
+INSERT INTO `orders` (`customer_id`, `total_price`, `special_requests`, `scheduled_pickup_time`, `status`, `created_at`) VALUES 
+(1000, 20.00, 'Please add extra sugar to the Hot Chocolate.', '2024-05-19 15:00', 'ordered', '2024-05-19 14:00'),
+(1000, 13.50, 'No ice in the Sprite, please.', '2024-05-18 16:00', 'ordered', '2024-05-18 15:00');
+
+
+-- 11. Insert into order_item
+INSERT INTO `order_item` (`order_id`, `product_id`, `quantity`) VALUES 
+(1, 1, 1), -- Espresso
+(1, 6, 1), -- Hot Chocolate
+(1, 9, 2), -- Coca-Cola
+(2, 4, 1), -- Flat White
+(2, 10, 1), -- Sprite
+(2, 11, 1); -- Fanta
+
 
 -- 12. insert inventory
 INSERT INTO inventory (`staff_id`, `manager_id`, `product_id`, `option_id`, `quantity`)
