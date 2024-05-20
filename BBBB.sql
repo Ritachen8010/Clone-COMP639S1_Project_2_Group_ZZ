@@ -66,7 +66,7 @@ CREATE TABLE `product_category` (
     `name` VARCHAR(225) NOT NULL,
     `description` VARCHAR(500),
     PRIMARY KEY (`category_id`)
-) ENGINE=InnoDB;
+)AUTO_INCREMENT=1;
 
 -- 6. product
 CREATE TABLE `product` (
