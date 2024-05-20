@@ -554,3 +554,9 @@ body {
     padding: 10px; 
     margin-bottom: 15px; 
 }
+.fully-booked {
+    background-color: #ccc;
+    color: #333;
+    padding: 10px;
+    text-align: center;
+}
