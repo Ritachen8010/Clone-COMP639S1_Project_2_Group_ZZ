@@ -406,7 +406,10 @@ def cancel_booking():
     connection.commit()
     connection.close()
 
-    flash(f'Booking cancelled and {refund_amount} refunded to your {payment_type_name}.', 'success')
+    # Payment type name display fixed
+    payment_type_name = payment_type_name.replace('_', ' ').title()
+
+    flash(f'Booking cancelled and ${refund_amount} refunded to your {payment_type_name}.', 'success')
     return redirect(url_for('customer.customer_managebookings'))
 
 def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
