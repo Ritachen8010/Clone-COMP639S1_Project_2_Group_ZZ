@@ -54,7 +54,6 @@ def customer():
     return render_template('customer/customer_dashboard.html', customer_info=customer_info, unread_messages=unread_messages)
 
 @customer_blueprint.route('/booking')
-@role_required(['customer'])
 def booking_room():
     # Render the booking room page
     return render_template('customer/booking_room.html')
