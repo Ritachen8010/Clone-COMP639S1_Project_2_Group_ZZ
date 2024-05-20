@@ -158,7 +158,7 @@ CREATE TABLE `accommodation` (
     `price_per_night` DECIMAL(10,2),
     `is_available` BOOLEAN DEFAULT TRUE,
     `image` VARCHAR(500),
-    `room_status` ENUM('Open', 'Closed') DEFAULT 'Open'	
+    `room_status` ENUM('Open', 'Closed') DEFAULT 'Open',	
     PRIMARY KEY (`accommodation_id`)
 )AUTO_INCREMENT=1;
 
