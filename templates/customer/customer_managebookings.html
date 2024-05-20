@@ -3,6 +3,17 @@
 {% block title %}Customer Dashboard{% endblock %}
 
 {% block content %}
+<!-- card height adjustment the same -->
+<style>
+    .card-container {
+        display: flex;
+        flex-wrap: wrap;
+    }
+
+    .card {
+        height: 100%;
+    }
+</style>
 <div class="content">
     <!-- insert customer_top_nav.html -->
     {% include 'dashboard_nav/customer_top_nav.html' %}
@@ -14,10 +25,10 @@
             <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
 
                 <h1>Manage My Bookings</h1>
-                <div class="row">
+                <div class="row card-container">
                     {% if bookings %}
                     {% for booking in bookings %}
-                    <div class="col-md-4 mb-4">
+                    <div class="col-xl-4 col-lg-6 col-md-12 mb-4">
                         <div class="card">
                             <img class="card-img-top" src="{{ url_for('static', filename='home/' + booking.image) }}"
                                 alt="Accommodation Image" style="width: 100%; height: 200px; object-fit: cover;">
