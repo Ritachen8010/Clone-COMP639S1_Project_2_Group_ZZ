@@ -4,7 +4,7 @@
             <span class="navbar-toggler-icon"></span>
         </button>
         <!-- Profile section starts here -->
-        <div class="mx-3 mt-2 mb-3 text-center">
+        <div class="mx-3 mt-5 mb-3 text-center">
             <!-- Displaying the profile image static folder -->
             <img src="{{ url_for('static', filename='staff/%s' % staff_info.profile_image) }}" alt="profile_image" 
             class="rounded-circle-2">
@@ -22,7 +22,7 @@
                         class="dropdown-toggle ms-1 nav-text d-sm-inline">Orders</a>
                 </div>
                 <ul class="collapse list-unstyled" id="orderSubmenu">
-                    <li><a class="dropdown-item" href="#">View Orders</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('staff.view_orders')}}">View Orders</a></li>
                     <li><a class="dropdown-item" href="#">Manage Orders</a></li>
                 </ul>
             </li>
@@ -41,7 +41,7 @@
                         class="dropdown-toggle ms-1 nav-text d-sm-inline">Inventory</a>
                 </div>
                 <ul class="collapse list-unstyled" id="inventorySubmenu">
-                    <li><a class="dropdown-item" href="#">View Inventory</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('staff.monitor_inventory')}}">View Inventory</a></li>
                     <li><a class="dropdown-item" href="#">Manage Inventory</a></li>
                 </ul>
             </li>

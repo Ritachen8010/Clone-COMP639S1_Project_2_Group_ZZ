@@ -3,6 +3,7 @@
 {% block title %}Customer Dashboard{% endblock %}
 
 {% block content %}
+<div class="content">
 <!-- insert customer_top_nav.html -->
 {% include 'dashboard_nav/customer_top_nav.html' %}
 <div class="container-fluid">
@@ -14,7 +15,20 @@
             <p>Customer ID: {{ customer_info.customer_id }}</p>
             <p>Welcome back to our Bruce Bay Beans & Bunks!</p>
             <div class="row mt-5">
-                <h2>A Guided Tour To Explore Nearby Attractions</h2>
+                <h1>Click & Quickly Make Orders!</h1>
+                <div class="col-sm-12 col-md-12 col-lg-12">
+                    <a href="{{ url_for('guest.home')}}#product">
+                        <div class="card mb-5 text-white card-img">
+                            <img src="{{ url_for('static', filename='images/c4.jpg') }}" class="card-img" alt="img">
+                            <div class="card-img-overlay">
+                                <h1 class="card-title">Click & Quickly Make Orders!</h1>
+                                <p class="card-text">Order Foods & Drinks! Or anything that you
+                                    would like to.</p>
+                            </div>
+                        </div>
+                    </a>
+                </div>
+                <h1>A Guided Tour To Explore Nearby Attractions</h1>
                 <div class="col-md-4">
                     <div class="card">
                         <img src="{{ url_for('static', filename='images/c1.jpg') }}" class="da-card-img-top"

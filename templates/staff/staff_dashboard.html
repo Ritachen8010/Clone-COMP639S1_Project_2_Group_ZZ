@@ -3,46 +3,48 @@
 {% block title %}Staff Dashboard{% endblock %}
 
 {% block content %}
-<!-- insert staff_top_nav.html -->
-{% include 'dashboard_nav/staff_top_nav.html' %}
-<div class="container-fluid">
-    <div class="row">
-        <!-- insert staff_side_nav.html -->
-        {% include 'dashboard_nav/staff_side_nav.html' %}
-        <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
-            <h1>Welcome {{ staff_info.first_name | capitalize }} {{ staff_info.last_name | capitalize }}!</h1>
-            <p>Position: {{ staff_info.position }}</p>
-            <p>Staff ID: {{ staff_info.staff_id }}</p>
-            <div class="row mt-5">
-                <h2>Management Tools</h2>
-                <div class="col-md-4">
-                    <div class="card">
-                        <img src="{{ url_for('static', filename='images/s1.png') }}" class="da-card-img-top"
-                            alt="Guide 1">
-                        <div class="card-body">
-                            <h5 class="card-title">Manage Order</h5>
-                            <a href="#" class="btn btn-theme">Click</a>
+
+<div class="content">
+    <!-- insert staff_top_nav.html -->
+    {% include 'dashboard_nav/staff_top_nav.html' %}
+    <div class="container-fluid">
+        <div class="row">
+            <!-- insert staff_side_nav.html -->
+            {% include 'dashboard_nav/staff_side_nav.html' %}
+            <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
+                <h1>Welcome {{ staff_info.first_name | capitalize }} {{ staff_info.last_name | capitalize }}!</h1>
+                <p>Position: {{ staff_info.position }}</p>
+                <p>Staff ID: {{ staff_info.staff_id }}</p>
+                <div class="row mt-5">
+                    <h2>Management Tools</h2>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <img src="{{ url_for('static', filename='images/s1.png') }}" class="da-card-img-top"
+                                alt="Guide 1">
+                            <div class="card-body">
+                                <h5 class="card-title">Manage Order</h5>
+                                <a href="{{ url_for('staff.view_orders')}}" class="btn btn-theme">Click</a>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <img src="{{ url_for('static', filename='images/s2.jpg') }}" class="da-card-img-top"
-                            alt="Guide 2">
-                        <div class="card-body">
-                            <h5 class="card-title">Manage Bookings</h5>
-                            <a href="#"
-                                class="btn btn-theme">Click</a>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <img src="{{ url_for('static', filename='images/s2.jpg') }}" class="da-card-img-top"
+                                alt="Guide 2">
+                            <div class="card-body">
+                                <h5 class="card-title">Manage Bookings</h5>
+                                <a href="#" class="btn btn-theme">Click</a>
+                            </div>
                         </div>
                     </div>
-                </div>
-                <div class="col-md-4">
-                    <div class="card">
-                        <img src="{{ url_for('static', filename='images/s3.avif') }}" class="da-card-img-top"
-                            alt="Guide 3">
-                        <div class="card-body">
-                            <h5 class="card-title">Manage Customer</h5>
-                            <a href="#" class="btn btn-theme">Click</a>
+                    <div class="col-md-4">
+                        <div class="card">
+                            <img src="{{ url_for('static', filename='images/s3.avif') }}" class="da-card-img-top"
+                                alt="Guide 3">
+                            <div class="card-body">
+                                <h5 class="card-title">Manage Customer</h5>
+                                <a href="#" class="btn btn-theme">Click</a>
+                            </div>
                         </div>
                     </div>
                 </div>

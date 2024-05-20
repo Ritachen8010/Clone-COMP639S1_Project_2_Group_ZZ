@@ -59,14 +59,21 @@ body {
     top: 0;
     bottom: 0;
     left: 0;
-    float: left;
     padding: 58px 0 0;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
     width: 240px;
     background-color: #DAB88B;
-    min-height: 100vh;
+    height: 100%;
+    position: fixed;
     overflow-y: auto;
     z-index: 1;
+}
+
+div.content {
+    margin-left: 240px;
+    padding: 1px 16px;
+    height: auto;
+    min-height: 1000px;
 }
 
 /* side bar image profile */
@@ -104,19 +111,7 @@ body {
             position: relative;
         }
         .sidebar a {float: left;}
-}
-
-@media (max-width: 991.98px) {
-        .sidebar {
-            width: 100%;
-            height: auto;
-            position: relative;
-        }
-        .sidebar a {
-            float: none;
-            display: block;
-            width: 100%;
-        }
+        div.content {margin-left: 0;}
 }
 
 @media (max-width: 600px) {
@@ -138,21 +133,17 @@ body {
 
 /* mobile display */
 @media screen and (max-width: 425px) {
-        .sidebar {
-            width: 100%;
-            height: auto;
-            position: relative;
-            display: block !important;
-            overflow-y: auto;
-        }
-        .sidebar a {
-            float: none;
-            display: block;
-            width: 100%;
-        }
-        .col-md-4 {
-            margin-bottom: 20px;
-        }
+    .sidebar {
+        width: 100%;
+        height: auto;
+        position: relative;
+    }
+    .sidebar a {float: left;}
+    div.content {margin-left: 0;}
+
+    .col-md-4 {
+        margin-bottom: 20px;
+    }
 }
 
 /* dropdown */
@@ -219,6 +210,17 @@ body {
 
 .btn-theme:hover {
     background-color: #9a7d56;
+    color: #fff7ef;
+}
+
+/* buttons 2*/
+.btn-theme-2 {
+    background-color: #8ac2df;
+    color: #fff7ef;
+}
+
+.btn-theme-2:hover {
+    background-color: #99d3f0;
     color: #fff7ef;
 }
 
@@ -554,9 +556,49 @@ body {
     padding: 10px; 
     margin-bottom: 15px; 
 }
+
 .fully-booked {
     background-color: #ccc;
     color: #333;
     padding: 10px;
     text-align: center;
 }
+
+/* table style */
+.table th, .table td {
+    /* border: 1px solid #8d8d8d; */
+    padding: 8px;
+    text-align: center;
+    }
+    
+        .table th {
+        background-color: #DAB88B !important;
+        color: white !important;
+        }
+
+/* card box effect */
+.card {
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* card hover effect */
+.card-img {
+    position: relative;
+}
+
+.card-img::after {
+    content: "";
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    background-color: transparent;
+    transition: background-color 0.3s ease;
+    z-index: 1;
+}
+
+a:hover .card-img::after {
+    background-color: rgba(0, 0, 0, 0.5); /* Change this to the color you want */
+}
+

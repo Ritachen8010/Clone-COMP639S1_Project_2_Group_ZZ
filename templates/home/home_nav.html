@@ -15,17 +15,21 @@
                             href="{{ url_for('guest.home') }}">Home</a>
                     </li>
                     <li class="nav-item me-2">
+                        <a class="nav-link {% if active == 'about_us' %} active {% endif %}"
+                            href="{{ url_for('guest.about_us') }}">About Us & Our Policy</a>
+                    </li>
+                    <li class="nav-item me-2">
                         <a class="nav-link {% if active == 'register' %} active {% endif %}"
                             href="{{ url_for('auth.register') }}">Register</a>
                     </li>
                     <li class="nav-item me-2">
+                        {% if session['loggedin'] %}
+                        <a class="nav-link {% if active == 'dashboard' %} active {% endif %}"
+                            href="{{ url_for('auth.user') }}">My Dashboard</a>
+                        {% else %}
                         <a class="nav-link {% if active == 'login' %} active {% endif %}"
-                            href="{{ url_for('auth.user') }}">My Account</a>
-                    </li>
-                    <li class="nav-item me-2">
-                        <a class="nav-link {% if active == 'about_us' %} active {% endif %}"
-                            href="{{ url_for('guest.about_us') }}">About Us & Our Policy</a>
-                    </li>
+                            href="{{ url_for('auth.login') }}">Login</a>
+                        {% endif %}
                     <li class="nav-item me-2">
                         <a class="nav-link" href="#">
                             <i class="fas fa-shopping-cart fa-fw"></i>

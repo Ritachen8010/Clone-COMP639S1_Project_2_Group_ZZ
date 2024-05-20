@@ -4,7 +4,7 @@ from flask_hashing import Hashing
 from config import get_cursor, allowed_file, MAX_FILENAME_LENGTH
 import re
 import os
-from datetime import datetime, timedelta
+from datetime import date, timedelta
 from auth import role_required
 from werkzeug.utils import secure_filename
 
@@ -97,6 +97,13 @@ def staff_updateprofile():
     staff_info = get_staff_info(email)
     connection, cursor = get_cursor()
     
+    # Set the validation for birthday ages from 16-100
+    today = date.today()
+    max_date = today - timedelta(days=16*365)
+    min_date = today - timedelta(days=100*365)
+    max_date_str = (date.today() - timedelta(days=16*365)).strftime("%Y-%m-%d")
+    min_date_str = (date.today() - timedelta(days=100*365)).strftime("%Y-%m-%d")
+
     # Initially fetch the staff_id and other details
     cursor.execute(
         'SELECT a.email, s.* FROM account a INNER JOIN staff s ON a.account_id = s.account_id WHERE a.account_id = %s', 
@@ -139,6 +146,12 @@ def staff_updateprofile():
         # Commit changes to the database
         connection.commit()
 
+        #set the validation for birthday ages from 16-100
+        if date_of_birth < min_date_str or date_of_birth > max_date_str:
+            flash('Date of birth must be between 16 and 100 years ago.', 'error')
+            return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info, max_date=max_date_str, min_date=min_date_str)
+
+
         # Update the staff table using staff_id 
         cursor.execute("""
             UPDATE staff SET first_name = %s, last_name = %s, phone_number = %s, date_of_birth = %s, 
@@ -152,4 +165,99 @@ def staff_updateprofile():
         return redirect(url_for('staff.staff'))
 
     # Render page with current account information
-    return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info)
+    return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info, max_date=max_date_str, min_date=min_date_str)
+
+# Staff view orders
+@staff_blueprint.route('/orders')
+@role_required(['staff'])
+def view_orders():
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT o.order_id, o.customer_id, o.total_price, o.special_requests, 
+               o.scheduled_pickup_time, o.status, o.created_at, 
+               c.first_name, c.last_name
+        FROM orders o
+        JOIN customer c ON o.customer_id = c.customer_id
+        ORDER BY o.created_at DESC
+    """)
+    orders = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return render_template('staff/staff_vieworders.html', orders=orders, staff_info=staff_info) 
+
+# Staff monitor inventory
+@staff_blueprint.route('/monitor_inventory')
+@role_required(['staff'])
+def monitor_inventory():
+    category = request.args.get('category')
+    page = request.args.get('page', 1, type=int)
+    items_per_page = 15
+    offset = (page - 1) * items_per_page
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+    connection, cursor = get_cursor()
+
+    if category:
+        cursor.execute("""
+            SELECT
+                product_category.name AS category,
+                CONCAT(product.name, ' ', COALESCE(product_option.name, '')) AS name,
+                product.description,
+                product.unit_price,
+                inventory.quantity,
+                inventory.last_updated,
+                staff.first_name,
+                staff.last_name,
+                manager.first_name,
+                manager.last_name
+            FROM inventory 
+            INNER JOIN product ON inventory.product_id = product.product_id
+            INNER JOIN staff ON inventory.staff_id = staff.staff_id
+            INNER JOIN manager ON inventory.manager_id = manager.manager_id
+            INNER JOIN product_category ON product.category_id = product_category.category_id
+            LEFT JOIN product_option ON inventory.option_id = product_option.option_id
+            WHERE product_category.name = %s
+            ORDER BY name
+            LIMIT %s OFFSET %s
+        """, (category, items_per_page, offset))
+    else:
+        cursor.execute("""
+            SELECT
+                product_category.name AS category,
+                CONCAT(product.name, ' ', COALESCE(product_option.name, '')) AS name,
+                product.description,
+                product.unit_price,
+                inventory.quantity,
+                inventory.last_updated,
+                staff.first_name,
+                staff.last_name,
+                manager.first_name,
+                manager.last_name
+            FROM inventory 
+            INNER JOIN product ON inventory.product_id = product.product_id
+            INNER JOIN staff ON inventory.staff_id = staff.staff_id
+            INNER JOIN manager ON inventory.manager_id = manager.manager_id
+            INNER JOIN product_category ON product.category_id = product_category.category_id
+            LEFT JOIN product_option ON inventory.option_id = product_option.option_id
+            ORDER BY name
+            LIMIT %s OFFSET %s
+        """, (items_per_page, offset))
+
+    inventory = cursor.fetchall()
+
+    # Query all categories
+    cursor.execute("SELECT name FROM product_category")
+    categories = cursor.fetchall()
+    categories = [row['name'] for row in categories]
+
+    # Remove duplicates by converting the list to a set, then convert it back to a list
+    categories = list(set(categories))
+    cursor.close()
+    connection.close()
+
+    return render_template('staff/staff_inventory.html', staff_info=staff_info, 
+                           inventory=inventory, page=page, items_per_page=items_per_page,
+                           categories=categories)
+

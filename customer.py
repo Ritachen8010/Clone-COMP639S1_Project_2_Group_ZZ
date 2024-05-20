@@ -6,12 +6,9 @@ from werkzeug.utils import secure_filename
 from zoneinfo import ZoneInfo 
 import re
 import os
-from datetime import date
-from datetime import datetime
 import pandas as pd
-
+from datetime import date,timedelta,datetime
 from auth import role_required
-from datetime import datetime,date,timedelta
 
 customer_blueprint = Blueprint('customer', __name__)
 hashing = Hashing()
@@ -183,6 +180,13 @@ def customer_updateprofile():
     customer_info = get_customer_info(email)
     connection, cursor = get_cursor()
     
+    # Set the validation for birthday ages from 16-100
+    today = date.today()
+    max_date = today - timedelta(days=16*365)
+    min_date = today - timedelta(days=100*365)
+    max_date_str = (date.today() - timedelta(days=16*365)).strftime("%Y-%m-%d")
+    min_date_str = (date.today() - timedelta(days=100*365)).strftime("%Y-%m-%d")
+
     # Initially fetch the customer_id and other details
     cursor.execute(
         'SELECT a.email, m.* FROM account a INNER JOIN customer m ON a.account_id = m.account_id WHERE a.account_id = %s', 
@@ -207,7 +211,7 @@ def customer_updateprofile():
         if new_password and new_password != confirm_password:
             flash('New passwords do not match.', 'error')
             return render_template('customer/customer_updateprofile.html', account=account, customer_info=customer_info)
-
+    
         if new_password and (len(new_password) < 8 or not any(char.isupper() for char in new_password) 
             or not any(char.islower() for char in new_password) or not any(char.isdigit() for char in new_password)):
             flash('Password must be at least 8 characters long and contain a mix of uppercase, lowercase, and numeric characters.', 'error')
@@ -224,6 +228,11 @@ def customer_updateprofile():
         # Commit changes to the database
         connection.commit()
 
+        #set the validation for birthday ages from 16-100
+        if date_of_birth < min_date_str or date_of_birth > max_date_str:
+            flash('Date of birth must be between 16 and 100 years ago.', 'error')
+            return render_template('customer/customer_updateprofile.html', account=account, customer_info=customer_info, max_date=max_date_str, min_date=min_date_str)
+
         # Update the customer table using customer_id 
         cursor.execute("""
             UPDATE customer SET first_name = %s, last_name = %s, phone_number = %s, date_of_birth = %s, 
@@ -237,7 +246,9 @@ def customer_updateprofile():
         return redirect(url_for('customer.customer'))
 
     # Render page with current account information
-    return render_template('customer/customer_updateprofile.html', account=account, customer_info=customer_info)
+    return render_template('customer/customer_updateprofile.html', account=account, customer_info=customer_info,max_date=max_date_str, min_date=min_date_str)
+
+
 
 
 #Customer view bookings
@@ -276,4 +287,131 @@ def customer_viewbookings():
         flash('No bookings found.', 'info')
 
     return render_template('customer/customer_viewbookings.html', bookings=bookings, customer_info=customer_info)
-    
+
+
+#manage bookings
+@customer_blueprint.route('/customer_managebookings', methods=["GET"])
+@role_required(['customer'])
+def customer_managebookings():
+    email = session.get('email')
+    account_id = session.get('id')    
+    connection, cursor = get_cursor()
+    customer_info = get_customer_info(email)
+
+    cursor.execute(
+        'SELECT a.email, c.customer_id FROM account a INNER JOIN customer c ON a.account_id = c.account_id WHERE a.account_id = %s', 
+        (account_id,))
+    account_info = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    if not account_info:
+        flash('No customer information found.', 'error')
+        return redirect(url_for('customer.customer_dashboard'))
+
+    customer_id = account_info['customer_id']
+
+    # Fetch the bookings with date filter, excluding cancelled bookings
+    connection, cursor = get_cursor()
+    today = datetime.now().date()
+    cursor.execute(
+        'SELECT b.*, a.type, a.description, a.image, a.price_per_night FROM booking b INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id WHERE b.customer_id = %s AND b.start_date >= %s AND b.status != "cancelled"', 
+        (customer_id, today))
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    if not bookings:
+        flash('No bookings found.', 'info')
+
+    return render_template('customer/customer_managebookings.html', bookings=bookings, customer_info=customer_info)
+
+
+
+# cancel booking
+@customer_blueprint.route('/cancel_booking', methods=["GET"])
+@role_required(['customer'])
+def cancel_booking():
+    booking_id = request.args.get('booking_id')
+    if not booking_id:
+        flash('Invalid booking ID.', 'error')
+        return redirect(url_for('customer.customer_managebookings'))
+
+    connection, cursor = get_cursor()
+    cursor.execute('''
+        SELECT b.*, a.price_per_night, p.payment_type_id, p.paid_amount, pt.payment_type 
+        FROM booking b 
+        JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        JOIN payment p ON b.booking_id = p.booking_id
+        JOIN payment_type pt ON p.payment_type_id = pt.payment_type_id
+        WHERE b.booking_id = %s
+    ''', (booking_id,))
+    booking = cursor.fetchall()
+    cursor.close()
+
+    if not booking:
+        connection.close()
+        flash('Booking not found.', 'error')
+        return redirect(url_for('customer.customer_managebookings'))
+
+    booking = booking[0]  # Get the first result
+
+    # Calculate refund amount
+    payment_type_id = booking['payment_type_id']
+    paid_amount = booking['paid_amount']
+    payment_type_name = booking['payment_type']
+    price_per_night = booking['price_per_night']
+    start_date = booking['start_date']
+    end_date = booking['end_date']
+    nights = (end_date - start_date).days
+    refund_amount = calculate_refund_amount(price_per_night, nights, start_date, paid_amount)
+
+    # Use a new cursor to insert negative payment entry
+    cursor = connection.cursor()
+    cursor.execute('''
+        INSERT INTO payment (customer_id, payment_type_id, booking_id, paid_amount)
+        VALUES (%s, %s, %s, %s)
+    ''', (booking['customer_id'], payment_type_id, booking_id, -refund_amount))
+    cursor.close()
+
+    # Update gift card balance if applicable
+    if payment_type_id == 1:  # Gift card
+        cursor = connection.cursor()
+        cursor.execute('UPDATE gift_card SET balance = balance + %s WHERE gift_card_id = %s', 
+                       (refund_amount, booking['payment_id']))
+        cursor.close()
+
+    # Update the booking status to cancelled
+    cursor = connection.cursor()
+    cursor.execute('''
+        UPDATE booking 
+        SET status = 'cancelled' 
+        WHERE booking_id = %s
+    ''', (booking_id,))
+    cursor.close()
+
+    # Remove blocked dates
+    cursor = connection.cursor()
+    cursor.execute('''
+        DELETE FROM blocked_dates 
+        WHERE accommodation_id = %s AND start_date = %s AND end_date = %s
+    ''', (booking['accommodation_id'], start_date, end_date))
+    cursor.close()
+
+    connection.commit()
+    connection.close()
+
+    # Payment type name display fixed
+    payment_type_name = payment_type_name.replace('_', ' ').title()
+
+    flash(f'Booking cancelled and ${refund_amount} refunded to your {payment_type_name}.', 'success')
+    return redirect(url_for('customer.customer_managebookings'))
+
+def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
+    today = datetime.now().date()
+    days_to_start = (start_date - today).days
+
+    # Refund policy
+    if days_to_start >= 2:
+        return paid_amount  # Full refund
+    else:
+        return paid_amount * 0.5  # 50% refund

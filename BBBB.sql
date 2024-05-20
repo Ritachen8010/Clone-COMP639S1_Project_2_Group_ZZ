@@ -11,8 +11,6 @@ CREATE TABLE `account` (
     PRIMARY KEY (`account_id`)
 )AUTO_INCREMENT=1;
 
-
-
 -- 2. coustomer
 CREATE TABLE `customer` (
     `customer_id` INT AUTO_INCREMENT,
@@ -46,7 +44,7 @@ CREATE TABLE `staff` (
     FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`)
 )AUTO_INCREMENT=1;
 
--- 5. manager
+-- 4. manager
 CREATE TABLE `manager` (
 	`manager_id` INT AUTO_INCREMENT,
     `account_id` INT,
@@ -62,7 +60,7 @@ CREATE TABLE `manager` (
     FOREIGN KEY (`account_id`) REFERENCES `account` (`account_id`)
 )AUTO_INCREMENT=1;
 
--- 6 . product_category
+-- 5 . product_category
 CREATE TABLE `product_category` (
     `category_id` INT AUTO_INCREMENT,
     `name` VARCHAR(225) NOT NULL,
@@ -70,7 +68,7 @@ CREATE TABLE `product_category` (
     PRIMARY KEY (`category_id`)
 ) ENGINE=InnoDB;
 
--- 7. product
+-- 6. product
 CREATE TABLE `product` (
     `product_id` INT AUTO_INCREMENT,
     `category_id` INT,
@@ -84,12 +82,14 @@ CREATE TABLE `product` (
     FOREIGN KEY (`category_id`) REFERENCES `product_category` (`category_id`)
 )AUTO_INCREMENT=1;
 
+-- 7. product option type
 CREATE TABLE `product_option_type` (
 	`option_type_id` INT AUTO_INCREMENT,
     `description` VARCHAR(500),
-	PRIMARY KEY (`option_type_id`) -- 描述产品选项的类型，如大小、糖浆类型、牛奶类型。
-)ENGINE=InnoDB;
+	PRIMARY KEY (`option_type_id`)
+)AUTO_INCREMENT=1;
 
+-- 8. product option
 CREATE TABLE `product_option` (
     `option_id` INT AUTO_INCREMENT,
     `option_type_id` INT,
@@ -97,8 +97,9 @@ CREATE TABLE `product_option` (
     `additional_cost` DECIMAL(10, 2),
     PRIMARY KEY (`option_id`),
     FOREIGN KEY (`option_type_id`) REFERENCES `product_option_type` (`option_type_id`)
-) ENGINE=InnoDB;
+)AUTO_INCREMENT=1;
 
+-- 9. product option mapping
 CREATE TABLE `product_option_mapping` (
 	`product_id` INT,
     `option_id` INT,
@@ -107,7 +108,7 @@ CREATE TABLE `product_option_mapping` (
     FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`)
 )AUTO_INCREMENT=1;
 
--- 8. orders
+-- 10. orders
 CREATE TABLE `orders` (
     `order_id` INT AUTO_INCREMENT,
     `customer_id` INT,
@@ -120,7 +121,7 @@ CREATE TABLE `orders` (
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 )AUTO_INCREMENT=1;
 
--- 9. order_item
+-- 11. order_item
 CREATE TABLE `order_item` (
     `order_item_id` INT AUTO_INCREMENT,
     `order_id` INT,
@@ -131,19 +132,23 @@ CREATE TABLE `order_item` (
     FOREIGN KEY (`product_id`) REFERENCES `product`(`product_id`)
 )AUTO_INCREMENT=1;
 
--- 10. inventory
+-- 12. inventory
 CREATE TABLE `inventory` (
     `inventory_id` INT AUTO_INCREMENT,
     `staff_id` INT,
+    `manager_id` INT,
     `product_id` INT,
+    `option_id` INT,
     `quantity` INT,
     `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`inventory_id`),
     FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
+    FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`),
+    FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`),
     FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`)
 )AUTO_INCREMENT=1;
 
--- 10. accommodation
+-- 13. accommodation
 CREATE TABLE `accommodation` (
     `accommodation_id` INT AUTO_INCREMENT,
     `type` ENUM('Dorm', 'Twin', 'Queen') NOT NULL,
@@ -155,6 +160,7 @@ CREATE TABLE `accommodation` (
     PRIMARY KEY (`accommodation_id`)
 )AUTO_INCREMENT=1;
 
+-- 14. blocked dates
 CREATE TABLE `blocked_dates` (
     `block_id` INT AUTO_INCREMENT,
     `accommodation_id` INT,
@@ -165,7 +171,7 @@ CREATE TABLE `blocked_dates` (
     FOREIGN KEY (`accommodation_id`) REFERENCES `accommodation` (`accommodation_id`)
 )AUTO_INCREMENT=1;
 
--- 11. booking
+-- 15. booking
 CREATE TABLE `booking` (
     `booking_id` INT AUTO_INCREMENT,
     `customer_id` INT,
@@ -185,7 +191,7 @@ CREATE TABLE `booking` (
 )AUTO_INCREMENT=1;
 
 
--- 12. message
+-- 16. message
 CREATE TABLE `message` (
     `message_id` INT AUTO_INCREMENT,
     `customer_id` INT,
@@ -201,7 +207,7 @@ CREATE TABLE `message` (
     FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`)
 )AUTO_INCREMENT=1;
 
--- 13. loyalty_point
+-- 17. loyalty_point
 CREATE TABLE `loyalty_point` (
 	`loyalty_point_id`INT AUTO_INCREMENT,
     `order_id` INT,
@@ -215,24 +221,24 @@ CREATE TABLE `loyalty_point` (
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 );
 
--- 14. payment_type
+-- 18. payment_type
 CREATE TABLE `payment_type` (
     `payment_type_id` INT AUTO_INCREMENT,
     `payment_type` VARCHAR(50),
     PRIMARY KEY (`payment_type_id`)
 )AUTO_INCREMENT=1;
 
--- 15. bank_card
+-- 19. bank_card
 CREATE TABLE `bank_Card` (
     `bank_card_id` INT AUTO_INCREMENT,
-    `card_num` INT,
+    `card_num` VARCHAR(20),
     `expire_Date` DATE,
 	`payment_type_id` INT,
     PRIMARY KEY (`bank_card_id`),
     FOREIGN KEY (`payment_type_id`) REFERENCES `payment_type` (`payment_type_id`)
 )AUTO_INCREMENT=1;
 
--- 16. gift_card
+-- 20. gift_card
 CREATE TABLE `gift_card` (
     `gift_card_id` INT AUTO_INCREMENT,
     `code` VARCHAR(255),
@@ -245,7 +251,7 @@ CREATE TABLE `gift_card` (
 	FOREIGN KEY (`payment_type_id`) REFERENCES `payment_type` (`payment_type_id`)
 )AUTO_INCREMENT=1;
 
--- 17. promotion
+-- 21. promotion
 CREATE TABLE `promotion` (
     `promotion_id` INT AUTO_INCREMENT,
     `code` VARCHAR(255),
@@ -259,13 +265,14 @@ CREATE TABLE `promotion` (
     FOREIGN KEY (`payment_type_id`) REFERENCES `payment_type` (`payment_type_id`)
 )AUTO_INCREMENT=1;
 
--- 18. payment
+-- 22. payment
 CREATE TABLE `payment` (
     `payment_id` INT AUTO_INCREMENT,
     `customer_id` INT,
     `payment_type_id` INT,
     `order_id` INT,
     `booking_id` INT,
+    `paid_amount` DECIMAL(10,2),
     PRIMARY KEY (`payment_id`),
     FOREIGN KEY (`payment_type_id`) REFERENCES `payment_type` (`payment_type_id`),
     FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`),
@@ -273,7 +280,7 @@ CREATE TABLE `payment` (
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 )AUTO_INCREMENT=1;
 
--- 19. news
+-- 23. news
 CREATE TABLE `news` (
     `news_id` INT AUTO_INCREMENT,
     `manager_id` INT,
@@ -285,7 +292,7 @@ CREATE TABLE `news` (
     FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`)
 )AUTO_INCREMENT=1;
 
--- 20. order_feedback
+-- 24. order_feedback
 CREATE TABLE `order_feedback` (
     `order_item_id` INT,
     `customer_id` INT,
@@ -300,7 +307,7 @@ CREATE TABLE `order_feedback` (
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 );
 
--- 21. room_feedback
+-- 25. room_feedback
 CREATE TABLE `room_feedback` (
     `booking_id` INT,
     `customer_id` INT,
@@ -315,30 +322,26 @@ CREATE TABLE `room_feedback` (
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 );
 
+
+-- 1. Insert into account
 INSERT INTO `account` (`account_id`, `email`, `password`, `role`) VALUES 
 (1, 'aa@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'manager'),
 (2, 'bb@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'staff'),
 (3, 'cc@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'customer');
 
-INSERT INTO `manager` (`manager_id`, `account_id`, `first_name`, `last_name`, `phone_number`, `date_of_birth`, `gender`, `position`, `profile_image`, `status`) 
-VALUES (1, 1, 'aa', 'AA', '555-123-4567', '1975-08-30', 'Female', 'General Manager', 'default.jpg', 'active');
-
-INSERT INTO `staff` (`staff_id`, `account_id`, `first_name`, `last_name`, `phone_number`, `date_of_birth`, `gender`, `position`, `profile_image`, `status`) 
-VALUES (1, 2, 'bb', 'BB', '987-654-3210', '1990-05-15', 'Female', 'Reception', 'bb.jpg', 'active');
-
+-- 2. Insert into customer
 INSERT INTO `customer` (`customer_id`, `account_id`, `first_name`, `last_name`, `phone_number`, `date_of_birth`, `gender`, `id_num`, `created_at`, `profile_image`, `status`) 
-VALUES (1000, 3, 'cc', 'CC', '123-456-7890', '1985-10-25', 'Male', 'AB1234567', CURRENT_TIMESTAMP, 'cc.jpg', 'active');
+VALUES (1000, 3, 'cc', 'CC', '1234567890', '1985-10-25', 'Male', 'AB1234567', CURRENT_TIMESTAMP, 'cc.jpg', 'active');
 
-INSERT INTO `payment_type` (`payment_type_id`, `payment_type`)
-VALUES (1, 'gift_card');
+-- 3. Insert into staff
+INSERT INTO `manager` (`manager_id`, `account_id`, `first_name`, `last_name`, `phone_number`, `date_of_birth`, `gender`, `position`, `profile_image`, `status`) 
+VALUES (1, 1, 'aa', 'AA', '5551234567', '1975-08-30', 'Female', 'General Manager', 'default.jpg', 'active');
 
-INSERT INTO `gift_card` (`gift_card_id`, `code`, `balance`, `expiration_date`, `is_active`, `purchase_amount`, `payment_type_id`)
-VALUES (1, 'GFT123456', 100.00, '2025-01-31', TRUE, 100.00, 1);
+-- 4. Insert into manager
+INSERT INTO `staff` (`staff_id`, `account_id`, `first_name`, `last_name`, `phone_number`, `date_of_birth`, `gender`, `position`, `profile_image`, `status`) 
+VALUES (1, 2, 'bb', 'BB', '9876543210', '1990-05-15', 'Female', 'Reception', 'bb.jpg', 'active');
 
-INSERT INTO `message` (`message_id`, `customer_id`, `manager_id`, `staff_id`, `content`)
-VALUES (1, 1000, NULL, 1, 'This is a test message.');
-
--- Insert into product_category
+-- 5. Insert into product_category
 INSERT INTO `product_category` (`name`, `description`)
 VALUES
 ('Coffee', 'A variety of coffee drinks including espresso, latte, cappuccino, and more'),
@@ -349,7 +352,8 @@ VALUES
 ('Fast Food', 'A variety of quick and delicious meals including hotdogs, crepes, and more'),
 ('Frozen Treats', 'Delicious and refreshing frozen desserts, perfect for cooling down on a hot day'),
 ('Travel Essentials & Souvenirs', 'A curated collection of essential items and unique souvenirs, perfect for travelers seeking convenience and memorable keepsakes.');
--- Insert into product
+
+-- 6. Insert into product
 INSERT INTO `product` (`category_id`, `name`, `description`, `unit_price`, `special_requests`, `is_available`, `image`)
 VALUES 
 (1, 'Espresso', 'Strong black coffee made by forcing steam through ground coffee beans.', 4.50, '', TRUE, 'espresso.jpg'),
@@ -403,7 +407,7 @@ VALUES
 (8, 'Rain Gear', 'The region is known for its rainfall, so a waterproof jacket or umbrella is advisable.', 50.00, 'Available in various sizes and colors', TRUE, 'raingear.jpg'),
 (8, 'Greenstone Jewelry', 'A significant cultural icon in New Zealand, sourced mainly from the West Coast.', 120.00, '', TRUE, 'greenstone.jpg');
 
--- Insert into product_option_type
+-- 7. Insert into product_option_type
 INSERT INTO `product_option_type` (`description`)
 VALUES 
 ('Milk Type'), 
@@ -416,7 +420,7 @@ VALUES
 ('Cooking Style'),
 ('Fruit Flavor');
 
--- Insert into product_option (assuming Milk Type is option_type_id 1 and Syrup Type is option_type_id 2)
+-- 8. Insert into product_option (assuming Milk Type is option_type_id 1 and Syrup Type is option_type_id 2)
 INSERT INTO `product_option` (`option_type_id`, `name`, `additional_cost`)
 VALUES 
 (1, 'Soy Milk', 0.50),
@@ -448,6 +452,7 @@ VALUES
 (9, 'Blackberry', 0.00),
 (9, 'Kiwi', 0.00);
 
+-- 9. Insert into product option mapping
 INSERT INTO `product_option_mapping` (`product_id`, `option_id`)
 VALUES 
 -- Map milk and syrup options to all coffee products
@@ -492,18 +497,86 @@ VALUES
 (45, 20), (45, 21), (45, 22), (45, 23), (45, 24), (45, 25), (45, 26), -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Frozen Yogurt
 (46, 20), (46, 21), (46, 22), (46, 23), (46, 24), (46, 25), (46, 26); -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Gelato
 
+-- more talbes in between--
 
+-- 12. insert inventory
+INSERT INTO inventory (`staff_id`, `manager_id`, `product_id`, `option_id`, `quantity`)
+VALUES
+(1, 1, 9, NULL, 50),
+(1, 1, 10, NULL, 50),
+(1, 1, 11, NULL, 50),
+(1, 1, 12, NULL, 50),
+(1, 1, 13, NULL, 50),
+(1, 1, 27, NULL, 50),
+(1, 1, 28, NULL, 50),
+(1, 1, 29, NULL, 50),
+(1, 1, 30, NULL, 50),
+(1, 1, 31, NULL, 50),
+(1, 1, 32, NULL, 50),
+(1, 1, 33, NULL, 50),
+(1, 1, 34, NULL, 50),
+(1, 1, 35, NULL, 50),
+(1, 1, 36, NULL, 50),
+(1, 1, 37, NULL, 50),
+(1, 1, 38, NULL, 50),
+(1, 1, 39, NULL, 50),
+(1, 1, 40, NULL, 50),
+(1, 1, 41, NULL, 50),
+(1, 1, 42, 22, 50),
+(1, 1, 42, 23, 50),
+(1, 1, 42, 24, 50),
+(1, 1, 42, 25, 50),
+(1, 1, 42, 26, 50),
+(1, 1, 42, 27, 50),
+(1, 1, 42, 28, 50),
+(1, 1, 43, NULL, 50),
+(1, 1, 44, NULL, 50),
+(1, 1, 45, NULL, 50),
+(1, 1, 46, NULL, 50),
+(1, 1, 47, NULL, 50),
+(1, 1, 48, NULL, 50),
+(1, 1, 49, NULL, 50),
+(1, 1, 50, NULL, 50);
 
--- 10. insert accommodation
+-- 13. insert accommodation
 INSERT INTO accommodation (accommodation_id, type, description, capacity, price_per_night, is_available, image)
 VALUES
 (1, 'Dorm', 'Our dorm features four comfortable single bunks, perfect for family or friends eager to stay together. Ideal for groups of four, you can book the entire room to enjoy a private experience. Alternatively, book just one bunk and embrace the opportunity to meet and share the space with three new friends. Whether you are a solo traveler or planning a group adventure, our dorm offers a fun and affordable accommodation option.', 4, 55, TRUE, 'dorm.jpg'),
-(2, 'Twin', 'Our twin bed room is thoughtfully designed for comfort and privacy, featuring two plush single beds perfect for friends traveling together or solo travelers seeking extra space. Guests have convenient access to modern shared bathroom and kitchen facilities, which are cleaned and maintained to the highest standards. Whether you’re in town for business or leisure, our twin bed room offers a comfortable base for your adventures.', 2, 155, TRUE, 'twin.jpg'),
+(2, 'Twin', 'Our twin bed room is thoughtfully designed for comfort and privacy, featuring two single beds for friends traveling together or solo travelers seeking extra space. Guests have convenient access to modern shared bathroom and kitchen facilities, which are maintained to the highest standards. Whether you’re in town for business or leisure, our twin bed room offers a comfortable base for your adventures.', 2, 155, TRUE, 'twin.jpg'),
 (3, 'Queen', 'Perfect for couples or families, our Queen bed room features a luxurious queen-sized bed and a convenient pull-out sofa, making it ideal for up to three guests. Guests have convenient access to modern shared bathroom and kitchen facilities, which are cleaned and maintained to the highest standards. It’s more than just a place to sleep—it’s a home away from home to live, laugh, and create memories.', 3, 205, TRUE, 'queen.jpg');
 
--- 11. insert booking table--
+-- 15. insert booking table--
 INSERT INTO booking 
 VALUES
 (1, 1000, 1, 1, '2024-05-24', '2024-05-29', 1, 0, 1, 1, 'confirmed', '2024-05-11'),
 (2, 1000, 1, 2, '2024-05-25', '2024-05-30', 1, 0, 1, 1, 'confirmed', '2024-05-12'),
-(3, 1000, 1, 3, '2024-05-25', '2024-05-30', 1, 0, 1, 1, 'confirmed', '2024-05-12');
+(3, 1000, 1, 3, '2024-05-25', '2024-05-30', 1, 0, 1, 1, 'confirmed', '2024-05-12'),
+(4, 1000, 1, 3, '2024-02-25', '2024-02-26', 1, 0, 1, 1, 'checked out', '2024-01-12');
+
+-- 16. insert message table--
+INSERT INTO `message` (`message_id`, `customer_id`, `manager_id`, `staff_id`, `content`)
+VALUES (1, 1000, NULL, 1, 'This is a test message.');
+
+-- 18. insert into payment_type
+INSERT INTO `payment_type` (`payment_type_id`, `payment_type`)VALUES
+(1, 'gift_card'),
+(2, 'bank_card'),
+(3, 'promotion');
+
+-- 19. insert into bank_card
+INSERT INTO `bank_card` (`bank_card_id`, `card_num`, `expire_Date`, `payment_type_id`) VALUES
+(1, 1234567812345678, '2025-12-31', 2),
+(2, 8765432187654321, '2024-06-30', 2),
+(3, 1111222233334444, '2026-01-15', 2);
+
+-- 20. insert into gift_Card
+INSERT INTO `gift_card` (`gift_card_id`, `code`, `balance`, `expiration_date`, `is_active`, `purchase_amount`, `payment_type_id`)
+VALUES (1, 'GFT123456', 100.00, '2025-01-31', TRUE, 100.00, 1);
+
+-- 22. insert payment table--
+INSERT INTO `payment` (`customer_id`, `payment_type_id`, `order_id`, `booking_id`, `paid_amount`)
+VALUES
+(1000, 1, NULL, 1, 55.00),
+(1000, 2, NULL, 2, 155.00),
+(1000, 3, NULL, 3, 205.00),
+(1000, 3, NULL, 4, 205.00);
