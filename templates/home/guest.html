@@ -24,7 +24,7 @@
   <div class="text-center text-white" style="margin-top: 50px;">
     <h1>A Best Place To Stay for Your Journey</h1>
     <h2> Bruce Bay Beans & Bunks</h2>
-    <a href="#rooms" class="btn btn-theme-2" style="margin-right: 30px;">Reserve Now</a>
+    <a href="{{ url_for('customer.booking_room') }}" class="btn btn-theme-2">Reserve Now</a>
     <a href="#product" class="btn btn-theme">Our Product</a>
   </div>
 </div>
@@ -232,7 +232,7 @@
         <h2 class="text-white font-weight-bold">A Best Place To Stay. Reserve Now!</h2>
       </div>
       <div class="col-12 col-md-6 text-center text-md-right">
-        <a href="#" class="btn btn-theme-2">Reserve Now</a>
+        <a href="{{ url_for('customer.booking_room') }}" class="btn btn-theme-2" style="margin-right: 30px;">Reserve Now</a>
       </div>
     </div>
   </div>
