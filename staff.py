@@ -186,3 +186,78 @@ def view_orders():
     cursor.close()
     connection.close()
     return render_template('staff/staff_vieworders.html', orders=orders, staff_info=staff_info) 
+
+# Staff monitor inventory
+@staff_blueprint.route('/monitor_inventory')
+@role_required(['staff'])
+def monitor_inventory():
+    category = request.args.get('category')
+    page = request.args.get('page', 1, type=int)
+    items_per_page = 15
+    offset = (page - 1) * items_per_page
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+    connection, cursor = get_cursor()
+
+    if category:
+        cursor.execute("""
+            SELECT
+                product_category.name AS category,
+                CONCAT(product.name, ' ', COALESCE(product_option.name, '')) AS name,
+                product.description,
+                product.unit_price,
+                inventory.quantity,
+                inventory.last_updated,
+                staff.first_name,
+                staff.last_name,
+                manager.first_name,
+                manager.last_name
+            FROM inventory 
+            INNER JOIN product ON inventory.product_id = product.product_id
+            INNER JOIN staff ON inventory.staff_id = staff.staff_id
+            INNER JOIN manager ON inventory.manager_id = manager.manager_id
+            INNER JOIN product_category ON product.category_id = product_category.category_id
+            LEFT JOIN product_option ON inventory.option_id = product_option.option_id
+            WHERE product_category.name = %s
+            ORDER BY name
+            LIMIT %s OFFSET %s
+        """, (category, items_per_page, offset))
+    else:
+        cursor.execute("""
+            SELECT
+                product_category.name AS category,
+                CONCAT(product.name, ' ', COALESCE(product_option.name, '')) AS name,
+                product.description,
+                product.unit_price,
+                inventory.quantity,
+                inventory.last_updated,
+                staff.first_name,
+                staff.last_name,
+                manager.first_name,
+                manager.last_name
+            FROM inventory 
+            INNER JOIN product ON inventory.product_id = product.product_id
+            INNER JOIN staff ON inventory.staff_id = staff.staff_id
+            INNER JOIN manager ON inventory.manager_id = manager.manager_id
+            INNER JOIN product_category ON product.category_id = product_category.category_id
+            LEFT JOIN product_option ON inventory.option_id = product_option.option_id
+            ORDER BY name
+            LIMIT %s OFFSET %s
+        """, (items_per_page, offset))
+
+    inventory = cursor.fetchall()
+
+    # Query all categories
+    cursor.execute("SELECT name FROM product_category")
+    categories = cursor.fetchall()
+    categories = [row['name'] for row in categories]
+
+    # Remove duplicates by converting the list to a set, then convert it back to a list
+    categories = list(set(categories))
+    cursor.close()
+    connection.close()
+
+    return render_template('staff/staff_inventory.html', staff_info=staff_info, 
+                           inventory=inventory, page=page, items_per_page=items_per_page,
+                           categories=categories)
+
