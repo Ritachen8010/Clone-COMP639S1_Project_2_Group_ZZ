@@ -557,6 +557,13 @@ div.content {
     margin-bottom: 15px; 
 }
 
+.fully-booked {
+    background-color: #ccc;
+    color: #333;
+    padding: 10px;
+    text-align: center;
+}
+
 /* table style */
 .table th, .table td {
     /* border: 1px solid #8d8d8d; */
@@ -594,3 +601,4 @@ div.content {
 a:hover .card-img::after {
     background-color: rgba(0, 0, 0, 0.5); /* Change this to the color you want */
 }
+
