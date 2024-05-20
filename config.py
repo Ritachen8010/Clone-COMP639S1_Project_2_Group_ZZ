@@ -54,3 +54,16 @@ def format_date(value, format='%d/%m/%Y'):
             return value 
     else:
         return value
+
+def format_time(value, format='%d/%m/%Y %I:%M %p'):
+    """Format a date string or datetime.date object to 'DD/MM/YYYY HH:MM AM/PM'."""
+    if isinstance(value, datetime) or isinstance(value, date):  
+        return value.strftime(format)
+    elif isinstance(value, str):
+        try:
+            date_obj = datetime.strptime(value, '%Y-%m-%d %H:%M:%S')
+            return date_obj.strftime(format)
+        except ValueError:
+            return value 
+    else:
+        return value

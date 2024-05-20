@@ -6,11 +6,13 @@ from staff import staff_blueprint
 from customer import customer_blueprint
 from flask_hashing import Hashing
 from config import format_date
+from config import format_time
 
 app = Flask(__name__)
 
 # Register the custom filter
 app.jinja_env.filters['format_date'] = format_date
+app.jinja_env.filters['format_time'] = format_time
 
 app.secret_key = 'Group ZZ'
 

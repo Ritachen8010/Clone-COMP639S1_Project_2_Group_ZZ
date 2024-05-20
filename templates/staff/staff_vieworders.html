@@ -31,9 +31,9 @@
                             <td>{{ order.first_name | capitalize }} {{ order.last_name | capitalize }}</td>
                             <td>{{ order.total_price }}</td>
                             <td>{{ order.special_requests }}</td>
-                            <td>{{ order.scheduled_pickup_time | format_date }}</td>
+                            <td>{{ order.scheduled_pickup_time | format_time }}</td>
                             <td>{{ order.status | capitalize }}</td>
-                            <td>{{ order.created_at | format_date }}</td>
+                            <td>{{ order.created_at | format_time }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
