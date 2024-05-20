@@ -87,7 +87,7 @@ CREATE TABLE `product_option_type` (
 	`option_type_id` INT AUTO_INCREMENT,
     `description` VARCHAR(500),
 	PRIMARY KEY (`option_type_id`)
-)ENGINE=InnoDB;
+)AUTO_INCREMENT=1;
 
 -- 8. product option
 CREATE TABLE `product_option` (
@@ -97,7 +97,7 @@ CREATE TABLE `product_option` (
     `additional_cost` DECIMAL(10, 2),
     PRIMARY KEY (`option_id`),
     FOREIGN KEY (`option_type_id`) REFERENCES `product_option_type` (`option_type_id`)
-) ENGINE=InnoDB;
+)AUTO_INCREMENT=1;
 
 -- 9. product option mapping
 CREATE TABLE `product_option_mapping` (
@@ -136,11 +136,15 @@ CREATE TABLE `order_item` (
 CREATE TABLE `inventory` (
     `inventory_id` INT AUTO_INCREMENT,
     `staff_id` INT,
+    `manager_id` INT,
     `product_id` INT,
+    `option_id` INT,
     `quantity` INT,
     `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`inventory_id`),
     FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
+    FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`),
+    FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`),
     FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`)
 )AUTO_INCREMENT=1;
 
@@ -494,6 +498,45 @@ VALUES
 (46, 20), (46, 21), (46, 22), (46, 23), (46, 24), (46, 25), (46, 26); -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Gelato
 
 -- more talbes in between--
+
+-- 12. insert inventory
+INSERT INTO inventory (`staff_id`, `manager_id`, `product_id`, `option_id`, `quantity`)
+VALUES
+(1, 1, 9, NULL, 50),
+(1, 1, 10, NULL, 50),
+(1, 1, 11, NULL, 50),
+(1, 1, 12, NULL, 50),
+(1, 1, 13, NULL, 50),
+(1, 1, 27, NULL, 50),
+(1, 1, 28, NULL, 50),
+(1, 1, 29, NULL, 50),
+(1, 1, 30, NULL, 50),
+(1, 1, 31, NULL, 50),
+(1, 1, 32, NULL, 50),
+(1, 1, 33, NULL, 50),
+(1, 1, 34, NULL, 50),
+(1, 1, 35, NULL, 50),
+(1, 1, 36, NULL, 50),
+(1, 1, 37, NULL, 50),
+(1, 1, 38, NULL, 50),
+(1, 1, 39, NULL, 50),
+(1, 1, 40, NULL, 50),
+(1, 1, 41, NULL, 50),
+(1, 1, 42, 22, 50),
+(1, 1, 42, 23, 50),
+(1, 1, 42, 24, 50),
+(1, 1, 42, 25, 50),
+(1, 1, 42, 26, 50),
+(1, 1, 42, 27, 50),
+(1, 1, 42, 28, 50),
+(1, 1, 43, NULL, 50),
+(1, 1, 44, NULL, 50),
+(1, 1, 45, NULL, 50),
+(1, 1, 46, NULL, 50),
+(1, 1, 47, NULL, 50),
+(1, 1, 48, NULL, 50),
+(1, 1, 49, NULL, 50),
+(1, 1, 50, NULL, 50);
 
 -- 13. insert accommodation
 INSERT INTO accommodation (accommodation_id, type, description, capacity, price_per_night, is_available, image)
