@@ -231,7 +231,7 @@ CREATE TABLE `payment_type` (
 )AUTO_INCREMENT=1;
 
 -- 19. bank_card
-CREATE TABLE `bank_Card` (
+CREATE TABLE `bank_card` (
     `bank_card_id` INT AUTO_INCREMENT,
     `card_num` VARCHAR(20),
     `expire_Date` DATE,
