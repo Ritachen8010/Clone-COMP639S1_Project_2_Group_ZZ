@@ -213,8 +213,8 @@ def chill():
 
     return jsonify(product_list)
 
-@guest_blueprint.route('/essektials')
-def essektials():
+@guest_blueprint.route('/essentials')
+def essentials():
     _, cursor = get_cursor() 
     try:
         cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 8")
