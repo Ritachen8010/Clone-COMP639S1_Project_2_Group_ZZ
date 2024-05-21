@@ -6,6 +6,8 @@ from werkzeug.utils import secure_filename
 from zoneinfo import ZoneInfo 
 import re
 import os
+import decimal 
+from decimal import Decimal
 import pandas as pd
 from datetime import date,timedelta,datetime
 from auth import role_required
@@ -364,21 +366,20 @@ def cancel_booking():
     nights = (end_date - start_date).days
     refund_amount = calculate_refund_amount(price_per_night, nights, start_date, paid_amount)
 
-    # insert negative payment entry only if there's a refund
-    if refund_amount > 0:
-        cursor = connection.cursor()
-        cursor.execute('''
-            INSERT INTO payment (customer_id, payment_type_id, booking_id, paid_amount)
-            VALUES (%s, %s, %s, %s)
-        ''', (booking['customer_id'], payment_type_id, booking_id, -refund_amount))
-        cursor.close()
+    # Use a new cursor to insert negative payment entry
+    cursor = connection.cursor()
+    cursor.execute('''
+        INSERT INTO payment (customer_id, payment_type_id, booking_id, paid_amount)
+        VALUES (%s, %s, %s, %s)
+    ''', (booking['customer_id'], payment_type_id, booking_id, -refund_amount))
+    cursor.close()
 
-        # Update gift card balance if applicable
-        if payment_type_id == 1:  
-            cursor = connection.cursor()
-            cursor.execute('UPDATE gift_card SET balance = balance + %s WHERE gift_card_id = %s', 
-                           (refund_amount, booking['payment_id']))
-            cursor.close()
+    # Update gift card balance if applicable
+    if payment_type_id == 1:  # Gift card
+        cursor = connection.cursor()
+        cursor.execute('UPDATE gift_card SET balance = balance + %s WHERE gift_card_id = %s', 
+                       (refund_amount, booking['payment_id']))
+        cursor.close()
 
     # Update the booking status to cancelled
     cursor = connection.cursor()
@@ -403,11 +404,7 @@ def cancel_booking():
     # Payment type name display fixed
     payment_type_name = payment_type_name.replace('_', ' ').title()
 
-    if refund_amount > 0:
-        flash(f'Booking cancelled and ${refund_amount} refunded to your {payment_type_name}.', 'success')
-    else:
-        flash(f'Booking cancelled but no refund as per the cancellation policy.', 'info')
-
+    flash(f'Booking cancelled and ${refund_amount} refunded to your {payment_type_name}.', 'success')
     return redirect(url_for('customer.customer_managebookings'))
 
 def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
@@ -415,49 +412,117 @@ def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
     days_to_start = (start_date - today).days
 
     # Refund policy
-    if days_to_start >= 1:
+    if days_to_start >= 2:
         return paid_amount  # Full refund
     else:
-        return 0 #no refund
+        return paid_amount * 0.5  # 50% refund
 
-#view bookings
-# View All Bookings
-@customer_blueprint.route('/customer_viewallbookings', methods=["GET"])
+#cart
+@customer_blueprint.route('/cart', methods=["GET"])
 @role_required(['customer'])
-def customer_viewallbookings():
+def cart():
     email = session.get('email')
-    account_id = session.get('id')
-    connection, cursor = get_cursor()
     customer_info = get_customer_info(email)
+    
+    if not customer_info:
+        flash("Customer information not found.", "error")
+        return redirect(url_for('customer_dashboard'))  
 
-    cursor.execute(
-        'SELECT a.email, c.customer_id FROM account a INNER JOIN customer c ON a.account_id = c.account_id WHERE a.account_id = %s', 
-        (account_id,))
-    account_info = cursor.fetchone()
-    cursor.close()
-    connection.close()
-    if not account_info:
-        flash('No customer information found.', 'error')
-        return redirect(url_for('customer.customer_dashboard'))
-
-    customer_id = account_info['customer_id']
-
-    # Fetch all bookings including the total paid amount for each booking
+    customer_id = customer_info['customer_id']
     connection, cursor = get_cursor()
-    cursor.execute(
-        '''
-        SELECT b.*, a.type, a.description, a.image, a.price_per_night, 
-               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS total_paid 
-        FROM booking b 
-        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id 
-        WHERE b.customer_id = %s
-        ''', 
-        (customer_id,))
-    all_bookings = cursor.fetchall()
+    cursor.execute("SELECT cart_id FROM cart WHERE customer_id = %s", (customer_id,))
+    cart = cursor.fetchone()
+
+    if not cart:
+        cursor.close()
+        connection.close()
+        return render_template('customer/customer_cart.html', cart_items=[], total=0, customer_info=customer_info)
+
+    cart_id = cart['cart_id']
+    cursor.execute("""
+        SELECT 
+            ci.cart_item_id, 
+            ci.quantity, 
+            p.product_id, 
+            p.name AS product_name, 
+            p.unit_price, 
+            p.image, 
+            GROUP_CONCAT(po.name SEPARATOR ', ') AS options, 
+            GROUP_CONCAT(po.additional_cost SEPARATOR ', ') AS option_costs
+        FROM cart_item ci
+        JOIN product p ON ci.product_id = p.product_id
+        LEFT JOIN cart_item_option cio ON ci.cart_item_id = cio.cart_item_id
+        LEFT JOIN product_option po ON cio.option_id = po.option_id
+        WHERE ci.cart_id = %s
+        GROUP BY ci.cart_item_id
+    """, (cart_id,))
+    cart_items = cursor.fetchall()
+
+
+    total = Decimal('0.00')
+    subtotal = Decimal('0.00')  
+    for item in cart_items:
+        item['unit_price'] = Decimal(item['unit_price'])
+        options = item['options'].split(', ') if item['options'] else []
+        option_cost = item['option_costs'].split(', ') if item['option_costs'] else []
+        option_costs = [Decimal(cost) * item['quantity'] for cost in option_cost]
+        item['options_with_costs'] = list(zip(options, option_cost))
+        item_total = item['unit_price'] * item['quantity']
+        option_total = sum(option_costs)
+        item['subtotal'] = (item_total + option_total) * Decimal('0.85')
+        item['total'] = item_total + option_total
+        total += item['total']
+
+    if total > Decimal('0.00'):
+        subtotal = total * Decimal('0.85')  
+        total = total
+    else:
+        subtotal = Decimal('0.00')
+        total = Decimal('0.00')
+
+
+
     cursor.close()
     connection.close()
+    return render_template('customer/customer_cart.html', cart_items=cart_items, total=total, subtotal=subtotal, customer_info=customer_info)
 
-    if not all_bookings:
-        flash('No bookings found.', 'info')
 
-    return render_template('customer/customer_viewallbookings.html', all_bookings=all_bookings, customer_info=customer_info)
+
+
+
+@customer_blueprint.route('/remove_from_cart', methods=["POST"])
+@role_required(['customer'])
+def remove_from_cart():
+    cart_item_id = request.form.get('cart_item_id')
+
+    if not cart_item_id:
+        flash('Invalid cart item ID.', 'error')
+        return redirect(url_for('customer.cart'))
+
+    connection, cursor = get_cursor()
+
+    try:
+        cursor.execute("DELETE FROM cart_item_option WHERE cart_item_id = %s", (cart_item_id,))
+        cursor.execute("DELETE FROM cart_item WHERE cart_item_id = %s", (cart_item_id,))
+
+        connection.commit()
+        flash('Item removed from cart.', 'success')
+    except Exception as e:
+        connection.rollback()
+        flash(f'Failed to remove item from cart. Error: {str(e)}', 'error')
+    finally:
+        cursor.close()
+        connection.close()
+
+    return redirect(url_for('customer.cart'))
+
+@customer_blueprint.route('/checkout', methods=['GET'])
+def customer_checkout():
+    email = session.get('email')
+    customer_info = get_customer_info(email)
+    
+    if not customer_info:
+        flash("Please login to proceed to checkout.", "info")
+        return redirect(url_for('customer.login'))
+
+    return render_template('customer/customer_checkout.html', customer_info=customer_info)

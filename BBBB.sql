@@ -324,6 +324,37 @@ CREATE TABLE `room_feedback` (
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 );
 
+-- 26. cart
+CREATE TABLE `cart` (
+    `cart_id` INT AUTO_INCREMENT,
+    `customer_id` INT,
+    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (`cart_id`),
+    FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
+)AUTO_INCREMENT=1;
+
+-- 27. cart_item
+CREATE TABLE `cart_item` (
+    `cart_item_id` INT AUTO_INCREMENT,
+    `cart_id` INT,
+    `product_id` INT,
+    `quantity` INT,
+    `added_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`cart_item_id`),
+    FOREIGN KEY (`cart_id`) REFERENCES `cart` (`cart_id`),
+    FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
+)AUTO_INCREMENT=1;
+
+-- 28. cart_item_option
+CREATE TABLE `cart_item_option` (
+    `cart_item_id` INT,
+    `option_id` INT,
+    PRIMARY KEY (`cart_item_id`, `option_id`),
+    FOREIGN KEY (`cart_item_id`) REFERENCES `cart_item` (`cart_item_id`),
+    FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`)
+)AUTO_INCREMENT=1;
+
 
 -- 1. Insert into account
 INSERT INTO `account` (`account_id`, `email`, `password`, `role`) VALUES 
@@ -594,5 +625,23 @@ INSERT INTO `payment` (`customer_id`, `payment_type_id`, `order_id`, `booking_id
 VALUES
 (1000, 1, NULL, 1, 55.00),
 (1000, 2, NULL, 2, 155.00),
-(1000, 2, NULL, 3, 615.00),
-(1000, 2, NULL, 4, 205.00);
+(1000, 3, NULL, 3, 205.00),
+(1000, 3, NULL, 4, 205.00);
+
+-- 26. insert cart table--
+INSERT INTO `cart` (`customer_id`, `created_at`, `updated_at`)
+VALUES 
+(1000, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
+
+-- 27. insert cart_item table--
+INSERT INTO `cart_item` (`cart_id`, `product_id`, `quantity`, `added_at`)
+VALUES
+(1, 1, 2, CURRENT_TIMESTAMP),  
+(1, 22, 1, CURRENT_TIMESTAMP); 
+
+-- 28. insert cart_item_option table--
+INSERT INTO `cart_item_option` (`cart_item_id`, `option_id`)
+VALUES
+(1, 1), -- Soy Milk for Espresso
+(1, 4), -- Vanilla Syrup for Espresso
+(2, 7); -- Light Ice for Sprite

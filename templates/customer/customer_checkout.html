@@ -1,0 +1,136 @@
+{% extends 'base.html' %}
+
+{% block title %}customer Dashboard{% endblock %}
+
+{% block content %}
+<div class="content">
+    <!-- insert customer_top_nav.html -->
+    {% include 'dashboard_nav/customer_top_nav.html' %}
+    <div class="container-fluid">
+        <div class="row">
+            <!-- insert customer_side_nav.html -->
+            {% include 'dashboard_nav/customer_side_nav.html' %}
+            <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
+
+<div class="container up-padding">
+    <div class="row justify-content-center py-5">
+        <form action=""  method="post"  class="needs-validation col-4" novalidate>
+        
+            <div class="mb-3">
+                <label for="card_number" class="form-label">Card number:<span class="require-star">*</span></label>
+                <input type="text" class="form-control" id="card_number" name="card_number" maxlength="19" required>
+                <div class="invalid-feedback text-start">
+                    Please enter the credit card number.
+                </div> 
+            </div>
+            <div class="mb-3">
+                <label for="card_holder" class="form-label">Name on card:<span class="require-star">*</span></label>
+                <input type="text" class="form-control" id="card_holder" name="card_holder" required>
+                <div class="invalid-feedback text-start">
+                    Please enter the credit card holder name.
+                </div> 
+            </div>
+            <div class="mb-3 row justify-content-between">
+                <div class="col-5">
+                    <label for="expiry_m" class="form-label">Expire Date:<span class="require-star">*</span></label>
+                    <div class="d-flex">
+                        <div class="col-8 me-2">
+                            <select id="expiry_m"  name="expiry_m"  required class="form-select" aria-label="Default select example" >
+                                <option   disabled selected value>MM</option>
+                                <option value="01">01</option>
+                                <option value="02">02</option>
+                                <option value="03">03</option>
+                                <option value="04">04</option>
+                                <option value="05">05</option>
+                                <option value="06">06</option>
+                                <option value="07">07</option>
+                                <option value="08">08</option>
+                                <option value="09">09</option>
+                                <option value="10">10</option>
+                                <option value="11">11</option>
+                                <option value="12">12</option>
+                            </select>
+                            <div class="invalid-feedback text-start">
+                                Please select expire month.
+                            </div> 
+                        </div>
+                        <div class="col-8">
+                            <select id="expiry_y"  name="expiry_y"  required class="form-select" aria-label="Default select example" >
+                                <option   disabled selected value>YY</option>
+                                <option value="24">24</option>
+                                <option value="25">25</option>
+                                <option value="26">26</option>
+                                <option value="27">27</option>
+                                <option value="28">28</option>
+                                <option value="29">29</option>
+                                <option value="30">30</option>
+                                <option value="31">31</option>
+                                <option value="32">32</option>
+                                <option value="33">33</option>
+                                <option value="34">34</option>
+                                <option value="35">35</option>
+                            </select>
+                            <div class="invalid-feedback text-start">
+                                Please select expire year.
+                            </div>
+                        </div>
+                         
+                    </div>
+                    
+                </div>
+                
+                <div class="col-3">
+                    <label for="cvc" class="form-label">CVC:<span class="require-star">*</span></label>
+                    <input type="text" class="form-control" id="cvc" name="cvc" maxlength="3" minlength="3" required>
+                    <div class="invalid-feedback text-start">
+                        Please enter CVC number (3 digits).
+                    </div>
+                </div>
+                
+            </div>
+            <div >
+                <p style="font-size:14px;">We accept Visa, Mastercard and American Express</p>
+            </div>
+            <div class="mb-3">
+                <img src="{{url_for('static',filename='images/'+'visacard-footer.png')}}" alt="visacard" class="card-logo">
+                <img src="{{url_for('static',filename='images/'+'mastercard-footer.png')}}" alt="mastercard" class="card-logo">
+                <img src="{{url_for('static',filename='images/'+'americanexpress-footer.png')}}" alt="americanexpress" class="card-logo">
+            </div>
+
+            <div class="row mb-3 justify-content-between">
+                <div class="text-center py-3 col-5">
+                    <a href="{{ url_for('customer.cart') }}"><button type="button" class="btn btn-secondary col-12">Cancel</button></a>
+                </div>  
+                <div class="text-center py-3 col-5">
+                    <button type="button" id="submitPayment" class="btn btn-danger col-12">Submit</button>
+                </div>  
+            </div>
+
+        </form>
+        
+    </div>
+
+</div>
+<script>
+    document.getElementById('submitPayment').addEventListener('click', function() {
+        let inputs = document.querySelectorAll('input[required]');
+        let allFilled = true;
+        
+        inputs.forEach(function(input) {
+            if (input.value === '') {
+                allFilled = false;
+                input.classList.add('is-invalid'); 
+            } else {
+                input.classList.remove('is-invalid');
+            }
+        });
+
+        if (allFilled) {
+            alert('Payment Successful!');
+            window.location.href = "{{ url_for('customer.customer') }}"; 
+        } else {
+            alert('Please fill in all required fields.');
+        }
+    });
+</script>
+{% endblock %}
