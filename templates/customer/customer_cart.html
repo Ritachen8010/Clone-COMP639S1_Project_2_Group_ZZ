@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}customer Dashboard{% endblock %}
+{% block title %}Customer Dashboard{% endblock %}
 
 {% block content %}
 <div class="content">
@@ -12,22 +12,26 @@
             {% include 'dashboard_nav/customer_side_nav.html' %}
             <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
 
-<!-- Start Cart-head Section -->
-<div class="cart-head">
-    <div class="container">
-        <div class="row justify-content-between">
-            <div class="col-lg-5">
-                <div class="intro-excerpt">
-                    <h1 style="color: #795b35;">Your Cart</h1>
+                <!-- Start Cart-head Section -->
+                <div class="cart-head">
+                    <div class="container">
+                        <div class="row justify-content-between">
+                            <div class="col-lg-5">
+                                <div class="intro-excerpt">
+                                    <h1 style="color: #795b35;">Your Cart</h1>
+                                </div>
+                            </div>
+                            <div class="col-lg-7">
+                                <a href="{{ url_for('customer.product') }}" class="btn btn-custom">Keep Shopping</a>
+                                <form action="{{ url_for('customer.update_cart') }}" method="post" style="display: inline;">
+                                    <button type="submit" class="btn btn-custom">Update Cart</button>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
-            <div class="col-lg-7">
-                
-            </div>
-        </div>
-    </div>
-</div>
-<!-- End Cart-head Section -->         
+                <!-- End Cart-head Section -->
+
 
 <!-- Start Cart-item Section -->
 <div class="cart before-footer-section">
@@ -68,7 +72,7 @@
                                     <div class="input-group-prepend">
                                         <button class="btn btn-theme decrease" type="button">&minus;</button>
                                     </div>
-                                    <input type="text" class="form-control text-center quantity-amount" value="{{ item.quantity }}" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
+                                    <input type="text" class="form-control text-center quantity-amount" name="quantity_{{ item.cart_item_id }}" value="{{ item.quantity }}" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
                                     <div class="input-group-append">
                                         <button class="btn btn-theme increase" type="button">&plus;</button>
                                     </div>
@@ -86,6 +90,7 @@
                         </tr>
                         {% endfor %}
                     </tbody>
+                    
                 </table>
             </div>
         </div>
@@ -93,63 +98,86 @@
 </div>
 <!-- End Cart-item Section -->
 
-<!-- Start Cart-payment Section -->
-        <div class="row">
-            <div class="col-md-6">
-                <div class="row mb-5">
-                </div>
+
+                <!-- Start Cart-payment Section -->
                 <div class="row">
-                    <div class="col-md-12">
-                        <label class="text-black h4" for="coupon">Coupon</label>
-                        <p>Enter your coupon code if you have one.</p>
-                    </div>
-                    <div class="col-md-8 mb-3 mb-md-0">
-                        <input type="text" class="form-control py-3" id="coupon" placeholder="Coupon Code">
-                    </div>
-                    <div class="col-md-4">
-                        <button class="btn btn-custom">Apply Coupon</button>
-                    </div>
-                </div>
-            </div>
-            <div class="col-md-6 pl-5">
-                <div class="row justify-content-end">
-                    <div class="col-md-7">
-                        <div class="row">
-                            <div class="col-md-12 text-right border-bottom mb-5">
-                                <h3 class="text-black h4 text-uppercase">Cart Totals</h3>
-                            </div>
+                    <div class="col-md-6">
+                        <div class="row mb-5">
                         </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <span class="text-black">Subtotal</span>
-                            </div>
-                            <div class="col-md-6 text-right">
-                                <strong class="text-black">${{ subtotal | round(2) if subtotal is defined else '0.00' }}</strong>
-                            </div>
-                        </div>
-                        <div class="row mb-3">
-                            <div class="col-md-6">
-                                <span class="text-black">Total with GST (15%)</span>
-                            </div>
-                            <div class="col-md-6 text-right">
-                                <strong class="text-black">${{ total }}</strong>
-                            </div>
-                        </div>
-
-
                         <div class="row">
                             <div class="col-md-12">
-                                <a href="{{ url_for('customer.customer_checkout') }}" class="btn btn-custom btn-lg py-3 btn-block">Proceed To Checkout</a>
+                                <label class="text-black h4" for="coupon">Coupon</label>
+                                <p>Enter your coupon code if you have one.</p>
+                            </div>
+                            <div class="col-md-8 mb-3 mb-md-0">
+                                <input type="text" class="form-control py-3" id="coupon" placeholder="Coupon Code">
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-custom">Apply Coupon</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6 pl-5">
+                        <div class="row justify-content-end">
+                            <div class="col-md-7">
+                                <div class="row">
+                                    <div class="col-md-12 text-right border-bottom mb-5">
+                                        <h3 class="text-black h4 text-uppercase">Cart Totals</h3>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <span class="text-black">Subtotal</span>
+                                    </div>
+                                    <div class="col-md-6 text-right">
+                                        <strong class="text-black">${{ subtotal | round(2) if subtotal is defined else '0.00' }}</strong>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
+                                        <span class="text-black">Total with GST (15%)</span>
+                                    </div>
+                                    <div class="col-md-6 text-right">
+                                        <strong class="text-black">${{ total }}</strong>
+                                    </div>
+                                </div>
+
+
+                                <div class="row">
+                                    <div class="col-md-12">
+                                        <a href="{{ url_for('customer.customer_checkout') }}" class="btn btn-custom btn-lg py-3 btn-block">Proceed To Checkout</a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
+                <!-- End Cart-payment Section -->
             </div>
         </div>
     </div>
-<!-- End Cart-payment Section -->
 </div>
-</div>
-</div>
-</div>
+
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.decrease').forEach(button => {
+        button.addEventListener('click', function() {
+            let input = this.parentElement.nextElementSibling;
+            let quantity = parseInt(input.value);
+            if (quantity > 1) {
+                input.value = quantity - 1;
+            }
+        });
+    });
+    
+    document.querySelectorAll('.increase').forEach(button => {
+        button.addEventListener('click', function() {
+            let input = this.parentElement.previousElementSibling;
+            let quantity = parseInt(input.value);
+            input.value = quantity + 1;
+        });
+    });
+});
+</script>
 {% endblock %}

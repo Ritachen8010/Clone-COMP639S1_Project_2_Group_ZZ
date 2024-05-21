@@ -93,7 +93,7 @@ def contact():
 
 @guest_blueprint.route('/get-coffee-and-hot-drinks')
 def get_coffee_and_hot_drinks():
-    _, cursor = get_cursor() 
+    connection, cursor = get_cursor() 
     try:
         cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id IN (1, 2)")
         products = cursor.fetchall()
@@ -111,14 +111,15 @@ def get_coffee_and_hot_drinks():
         print(f"Error: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
     finally:
-        cursor.close() 
+        cursor.close()
+        connection.close() 
 
     return jsonify(product_list)
 
 
 @guest_blueprint.route('/get_cold_drinks')
 def get_cold_drinks():
-    _, cursor = get_cursor() 
+    connection, cursor = get_cursor() 
     try:
         cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id IN (3, 5)")
         products = cursor.fetchall()
@@ -136,14 +137,15 @@ def get_cold_drinks():
         print(f"Error: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
     finally:
-        cursor.close() 
+        cursor.close()
+        connection.close() 
 
     return jsonify(product_list)
 
 
 @guest_blueprint.route('/get_milkshake')
 def get_milkshake():
-    _, cursor = get_cursor() 
+    connection, cursor = get_cursor() 
     try:
         cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 4")
         products = cursor.fetchall()
@@ -161,13 +163,14 @@ def get_milkshake():
         print(f"Error: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
     finally:
-        cursor.close() 
+        cursor.close()
+        connection.close() 
 
     return jsonify(product_list)
 
 @guest_blueprint.route('/quicktaste')
 def quicktaste():
-    _, cursor = get_cursor() 
+    connection, cursor = get_cursor() 
     try:
         cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 6")
         products = cursor.fetchall()
@@ -185,13 +188,14 @@ def quicktaste():
         print(f"Error: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
     finally:
-        cursor.close() 
+        cursor.close()
+        connection.close() 
 
     return jsonify(product_list)
 
 @guest_blueprint.route('/chill')
 def chill():
-    _, cursor = get_cursor() 
+    connection, cursor = get_cursor() 
     try:
         cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 7")
         products = cursor.fetchall()
@@ -209,13 +213,14 @@ def chill():
         print(f"Error: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
     finally:
-        cursor.close() 
+        cursor.close()
+        connection.close() 
 
     return jsonify(product_list)
 
 @guest_blueprint.route('/essentials')
 def essentials():
-    _, cursor = get_cursor() 
+    connection, cursor = get_cursor() 
     try:
         cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 8")
         products = cursor.fetchall()
@@ -233,6 +238,7 @@ def essentials():
         print(f"Error: {e}")
         return jsonify({"error": "Failed to fetch products"}), 500
     finally:
-        cursor.close() 
+        cursor.close()
+        connection.close() 
 
     return jsonify(product_list)

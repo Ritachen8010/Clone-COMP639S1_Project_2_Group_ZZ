@@ -1,12 +1,66 @@
 {% extends 'base.html' %}
 
-{% block title %}customer Dashboard{% endblock %}
+{% block title %}Customer Dashboard{% endblock %}
 
 {% block content %}
-<div class="content">
     <!-- insert customer_top_nav.html -->
     {% include 'dashboard_nav/customer_top_nav.html' %}
-    <div class="container-fluid">
+    <div class="container-fluid custom-margin-top">
         <div class="row">
-
+                <div class="row">
+                    <div class="col-xs-12 col-sm-3">
+                        <div class="card">
+                            <div class="card-header">
+                                <h5 class="custom-title">Categories</h5>
+                            </div>
+                            <div class="list-group list-group-flush">
+                                {% for category in categories %}
+                                <a href="{{ url_for('customer.product', category_id=category.category_id) }}" class="list-group-item list-group-item-action">{{ category.name }}</a>
+                                {% endfor %}
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-xs-12 col-sm-9">
+                        <div class="row">
+                            {% for product in products %}
+                            <div class="col-md-3 mb-4 d-flex align-items-stretch">
+                                <div class="card h-100">
+                                    <img src="{{ url_for('static', filename='product/' + product.image) }}" class="card-img-top product-image" alt="{{ product.product_name }}">
+                                    <div class="card-body d-flex flex-column">
+                                        <h5 class="card-title">{{ product.name }}</h5>
+                                        <p class="card-text">${{ product.unit_price }}</p>
+                                        {% if product.out_of_stock %}
+                                        <p class="text-danger">Out of Stock</p>
+                                        {% else %}
+                                        <form method="post" action="{{ url_for('customer.order') }}" class="mt-auto">
+                                            <input type="hidden" name="product_id" value="{{ product.product_id }}">
+                                            <div class="form-group">
+                                                <label for="quantity_{{ product.product_id }}">Quantity</label>
+                                                <input type="number" name="quantity" id="quantity_{{ product.product_id }}" class="form-control" value="1" min="1" {% if product.quantity is not none %}max="{{ product.quantity }}"{% endif %}>
+                                            </div>
+                                            {% if product.product_id in product_options %}
+                                            <div class="form-group">
+                                                <label for="options_{{ product.product_id }}">Options</label>
+                                                <select name="option_id" id="options_{{ product.product_id }}" class="form-control">
+                                                    <option value="">No Option</option>
+                                                    {% for option in product_options[product.product_id] %}
+                                                    <option value="{{ option.option_id }}">{{ option.name }} (+${{ option.additional_cost }})</option>
+                                                    {% endfor %}
+                                                </select>
+                                            </div>
+                                            {% endif %}
+                                            <button type="submit" class="btn btn-theme btn-block">Add to Cart</button>
+                                        </form>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
