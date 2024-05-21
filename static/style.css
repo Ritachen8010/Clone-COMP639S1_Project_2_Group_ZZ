@@ -602,3 +602,40 @@ a:hover .card-img::after {
     background-color: rgba(0, 0, 0, 0.5); /* Change this to the color you want */
 }
 
+
+/* cart section*/
+.thumbnail {
+    width: 150px; 
+    height: 150px; 
+    object-fit: cover;
+    border-radius: 5px; 
+    padding: 5px; 
+}
+
+.btn-custom {
+    background-color: #cc9b6d; 
+    color: white; 
+    border: none; 
+}
+
+.btn-custom:hover {
+    background-color: #795b35; 
+    color: white; 
+}
+
+.quantity-container .input-group-prepend button,
+.quantity-container .input-group-append button,
+.quantity-container .form-control {
+    height: 38px; 
+    vertical-align: middle; 
+}
+
+.quantity-container .form-control {
+    text-align: center; 
+    padding: 0; 
+    line-height: 38px; 
+}
+
+.quantity-container .btn {
+    padding: 0 10px; 
+}
