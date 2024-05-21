@@ -411,7 +411,7 @@ def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
         return paid_amount  # Full refund
     else:
         return 0 #no refund
-#view bookings
+
 # View All Bookings
 @customer_blueprint.route('/customer_viewallbookings', methods=["GET"])
 @role_required(['customer'])
@@ -420,7 +420,7 @@ def customer_viewallbookings():
     account_id = session.get('id')
     connection, cursor = get_cursor()
     customer_info = get_customer_info(email)
-    
+
     cursor.execute(
         'SELECT a.email, c.customer_id FROM account a INNER JOIN customer c ON a.account_id = c.account_id WHERE a.account_id = %s', 
         (account_id,))
@@ -430,6 +430,7 @@ def customer_viewallbookings():
     if not account_info:
         flash('No customer information found.', 'error')
         return redirect(url_for('customer.customer_dashboard'))
+
     customer_id = account_info['customer_id']
 
     # Fetch all bookings including the total paid amount for each booking
@@ -449,7 +450,8 @@ def customer_viewallbookings():
 
     if not all_bookings:
         flash('No bookings found.', 'info')
-        return render_template('customer/customer_viewallbookings.html', all_bookings=all_bookings, customer_info=customer_info)
+
+    return render_template('customer/customer_viewallbookings.html', all_bookings=all_bookings, customer_info=customer_info)
 
 
 
