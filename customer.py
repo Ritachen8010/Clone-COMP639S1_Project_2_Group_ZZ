@@ -364,20 +364,21 @@ def cancel_booking():
     nights = (end_date - start_date).days
     refund_amount = calculate_refund_amount(price_per_night, nights, start_date, paid_amount)
 
-    # Use a new cursor to insert negative payment entry
-    cursor = connection.cursor()
-    cursor.execute('''
-        INSERT INTO payment (customer_id, payment_type_id, booking_id, paid_amount)
-        VALUES (%s, %s, %s, %s)
-    ''', (booking['customer_id'], payment_type_id, booking_id, -refund_amount))
-    cursor.close()
-
-    # Update gift card balance if applicable
-    if payment_type_id == 1:  # Gift card
+    # insert negative payment entry only if there's a refund
+    if refund_amount > 0:
         cursor = connection.cursor()
-        cursor.execute('UPDATE gift_card SET balance = balance + %s WHERE gift_card_id = %s', 
-                       (refund_amount, booking['payment_id']))
+        cursor.execute('''
+            INSERT INTO payment (customer_id, payment_type_id, booking_id, paid_amount)
+            VALUES (%s, %s, %s, %s)
+        ''', (booking['customer_id'], payment_type_id, booking_id, -refund_amount))
         cursor.close()
+
+        # Update gift card balance if applicable
+        if payment_type_id == 1:  
+            cursor = connection.cursor()
+            cursor.execute('UPDATE gift_card SET balance = balance + %s WHERE gift_card_id = %s', 
+                           (refund_amount, booking['payment_id']))
+            cursor.close()
 
     # Update the booking status to cancelled
     cursor = connection.cursor()
@@ -402,7 +403,11 @@ def cancel_booking():
     # Payment type name display fixed
     payment_type_name = payment_type_name.replace('_', ' ').title()
 
-    flash(f'Booking cancelled and ${refund_amount} refunded to your {payment_type_name}.', 'success')
+    if refund_amount > 0:
+        flash(f'Booking cancelled and ${refund_amount} refunded to your {payment_type_name}.', 'success')
+    else:
+        flash(f'Booking cancelled but no refund as per the cancellation policy.', 'info')
+
     return redirect(url_for('customer.customer_managebookings'))
 
 def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
@@ -410,7 +415,7 @@ def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
     days_to_start = (start_date - today).days
 
     # Refund policy
-    if days_to_start >= 2:
+    if days_to_start >= 1:
         return paid_amount  # Full refund
     else:
-        return paid_amount * 0.5  # 50% refund
+        return 0 #no refund
