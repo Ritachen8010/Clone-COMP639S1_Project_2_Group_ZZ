@@ -564,3 +564,12 @@ def customer_checkout():
         return redirect(url_for('customer.login'))
 
     return render_template('customer/customer_checkout.html', customer_info=customer_info)
+
+@customer_blueprint.route('/product')
+@role_required(['customer'])
+def product():
+    email = session.get('email')
+    customer_info = get_customer_info(email)
+    
+    
+    return render_template('customer/customer_product.html', customer_info=customer_info)
