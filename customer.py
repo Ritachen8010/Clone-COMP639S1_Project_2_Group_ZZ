@@ -365,17 +365,9 @@ def cancel_booking():
     end_date = booking['end_date']
     nights = (end_date - start_date).days
     refund_amount = calculate_refund_amount(price_per_night, nights, start_date, paid_amount)
-
-    # Use a new cursor to insert negative payment entry
-    cursor = connection.cursor()
-    cursor.execute('''
-        INSERT INTO payment (customer_id, payment_type_id, booking_id, paid_amount)
-        VALUES (%s, %s, %s, %s)
-    ''', (booking['customer_id'], payment_type_id, booking_id, -refund_amount))
-    cursor.close()
-
-    # Update gift card balance if applicable
-    if payment_type_id == 1:  # Gift card
+    
+    # insert negative payment entry only if there's a refund
+    if refund_amount > 0:
         cursor = connection.cursor()
         cursor.execute('UPDATE gift_card SET balance = balance + %s WHERE gift_card_id = %s', 
                        (refund_amount, booking['payment_id']))
@@ -404,7 +396,10 @@ def cancel_booking():
     # Payment type name display fixed
     payment_type_name = payment_type_name.replace('_', ' ').title()
 
-    flash(f'Booking cancelled and ${refund_amount} refunded to your {payment_type_name}.', 'success')
+    if refund_amount > 0:
+        flash(f'Booking cancelled and ${refund_amount} refunded to your {payment_type_name}.', 'success')
+    else:
+        flash(f'Booking cancelled but no refund as per the cancellation policy.', 'info')
     return redirect(url_for('customer.customer_managebookings'))
 
 def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
@@ -412,10 +407,51 @@ def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
     days_to_start = (start_date - today).days
 
     # Refund policy
-    if days_to_start >= 2:
+    if days_to_start >= 1:
         return paid_amount  # Full refund
     else:
-        return paid_amount * 0.5  # 50% refund
+        return 0 #no refund
+#view bookings
+# View All Bookings
+@customer_blueprint.route('/customer_viewallbookings', methods=["GET"])
+@role_required(['customer'])
+def customer_viewallbookings():
+    email = session.get('email')
+    account_id = session.get('id')
+    connection, cursor = get_cursor()
+    customer_info = get_customer_info(email)
+    
+    cursor.execute(
+        'SELECT a.email, c.customer_id FROM account a INNER JOIN customer c ON a.account_id = c.account_id WHERE a.account_id = %s', 
+        (account_id,))
+    account_info = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    if not account_info:
+        flash('No customer information found.', 'error')
+        return redirect(url_for('customer.customer_dashboard'))
+    customer_id = account_info['customer_id']
+
+    # Fetch all bookings including the total paid amount for each booking
+    connection, cursor = get_cursor()
+    cursor.execute(
+        '''
+        SELECT b.*, a.type, a.description, a.image, a.price_per_night, 
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS total_paid 
+        FROM booking b 
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id 
+        WHERE b.customer_id = %s
+        ''', 
+        (customer_id,))
+    all_bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    if not all_bookings:
+        flash('No bookings found.', 'info')
+        return render_template('customer/customer_viewallbookings.html', all_bookings=all_bookings, customer_info=customer_info)
+
+
 
 #cart
 @customer_blueprint.route('/cart', methods=["GET"])
