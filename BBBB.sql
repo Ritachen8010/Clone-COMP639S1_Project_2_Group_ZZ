@@ -594,5 +594,5 @@ INSERT INTO `payment` (`customer_id`, `payment_type_id`, `order_id`, `booking_id
 VALUES
 (1000, 1, NULL, 1, 55.00),
 (1000, 2, NULL, 2, 155.00),
-(1000, 3, NULL, 3, 205.00),
-(1000, 3, NULL, 4, 205.00);
+(1000, 2, NULL, 3, 205.00),
+(1000, 2, NULL, 4, 205.00);
