@@ -13,7 +13,7 @@
             <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
 
                 <!-- Start Cart-head Section -->
-                <div class="cart-head">
+                <div class="cart-head mb-3"> 
                     <div class="container">
                         <div class="row justify-content-between">
                             <div class="col-lg-5">
@@ -21,17 +21,13 @@
                                     <h1 style="color: #795b35;">Your Cart</h1>
                                 </div>
                             </div>
-                            <div class="col-lg-7">
-                                <a href="{{ url_for('customer.product') }}" class="btn btn-custom">Keep Shopping</a>
-                                <form action="{{ url_for('customer.update_cart') }}" method="post" style="display: inline;">
-                                    <button type="submit" class="btn btn-custom">Update Cart</button>
-                                </form>
+                            <div class="col-lg-7 d-flex justify-content-end">
+                                <a href="{{ url_for('customer.product') }}" class="btn btn-custom"> Continue Shopping</a>
                             </div>
                         </div>
                     </div>
                 </div>
                 <!-- End Cart-head Section -->
-
 
 <!-- Start Cart-item Section -->
 <div class="cart before-footer-section">
@@ -69,15 +65,9 @@
                             <td>${{ item.unit_price }}</td>
                             <td>
                                 <div class="input-group mb-3 d-flex align-items-center quantity-container" style="max-width: 120px;">
-                                    <div class="input-group-prepend">
-                                        <button class="btn btn-theme decrease" type="button">&minus;</button>
-                                    </div>
-                                    <input type="text" class="form-control text-center quantity-amount" name="quantity_{{ item.cart_item_id }}" value="{{ item.quantity }}" placeholder="" aria-label="Example text with button addon" aria-describedby="button-addon1">
-                                    <div class="input-group-append">
-                                        <button class="btn btn-theme increase" type="button">&plus;</button>
-                                    </div>
+                                    <span class="form-control text-center quantity-amount">{{ item.quantity }}</span>
                                 </div>
-                            </td>
+                            </td>                            
                             <td>${{ item.total }}</td>
                             <td>
                                 <form action="{{ url_for('customer.remove_from_cart') }}" method="post" style="display: inline;">
@@ -90,14 +80,12 @@
                         </tr>
                         {% endfor %}
                     </tbody>
-                    
                 </table>
             </div>
         </div>
     </div>
 </div>
 <!-- End Cart-item Section -->
-
 
                 <!-- Start Cart-payment Section -->
                 <div class="row">
@@ -141,8 +129,6 @@
                                         <strong class="text-black">${{ total }}</strong>
                                     </div>
                                 </div>
-
-
                                 <div class="row">
                                     <div class="col-md-12">
                                         <a href="{{ url_for('customer.customer_checkout') }}" class="btn btn-custom btn-lg py-3 btn-block">Proceed To Checkout</a>
@@ -158,26 +144,4 @@
     </div>
 </div>
 
-
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.decrease').forEach(button => {
-        button.addEventListener('click', function() {
-            let input = this.parentElement.nextElementSibling;
-            let quantity = parseInt(input.value);
-            if (quantity > 1) {
-                input.value = quantity - 1;
-            }
-        });
-    });
-    
-    document.querySelectorAll('.increase').forEach(button => {
-        button.addEventListener('click', function() {
-            let input = this.parentElement.previousElementSibling;
-            let quantity = parseInt(input.value);
-            input.value = quantity + 1;
-        });
-    });
-});
-</script>
 {% endblock %}

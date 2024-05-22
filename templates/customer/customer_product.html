@@ -32,25 +32,29 @@
                                         {% if product.out_of_stock %}
                                         <p class="text-danger">Out of Stock</p>
                                         {% else %}
-                                        <form method="post" action="{{ url_for('customer.order') }}" class="mt-auto">
+                                        <form method="post" action="{{ url_for('customer.add_cart') }}">
                                             <input type="hidden" name="product_id" value="{{ product.product_id }}">
+                                            
                                             <div class="form-group">
                                                 <label for="quantity_{{ product.product_id }}">Quantity</label>
-                                                <input type="number" name="quantity" id="quantity_{{ product.product_id }}" class="form-control" value="1" min="1" {% if product.quantity is not none %}max="{{ product.quantity }}"{% endif %}>
+                                                <input type="number" name="quantity" id="quantity_{{ product.product_id }}" class="form-control" value="1" min="1">
                                             </div>
+                                        
                                             {% if product.product_id in product_options %}
-                                            <div class="form-group">
-                                                <label for="options_{{ product.product_id }}">Options</label>
-                                                <select name="option_id" id="options_{{ product.product_id }}" class="form-control">
-                                                    <option value="">No Option</option>
-                                                    {% for option in product_options[product.product_id] %}
-                                                    <option value="{{ option.option_id }}">{{ option.name }} (+${{ option.additional_cost }})</option>
-                                                    {% endfor %}
-                                                </select>
-                                            </div>
+                                                {% for option_type_id, options in product_options[product.product_id].items() %}
+                                                    <div class="form-group">
+                                                        <label>{{ options[0].description }}</label>
+                                                        <select name="option_id_{{ option_type_id }}" class="form-control">
+                                                            <option value="">Select {{ options[0].description }}</option>
+                                                            {% for option in options %}
+                                                                <option value="{{ option.option_id }}">{{ option.name }} (+${{ option.additional_cost }})</option>
+                                                            {% endfor %}
+                                                        </select>
+                                                    </div>
+                                                {% endfor %}
                                             {% endif %}
                                             <button type="submit" class="btn btn-theme btn-block">Add to Cart</button>
-                                        </form>
+                                        </form>                                        
                                         {% endif %}
                                     </div>
                                 </div>
