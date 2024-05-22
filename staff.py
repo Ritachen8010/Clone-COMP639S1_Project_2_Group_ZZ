@@ -193,7 +193,7 @@ def view_orders():
 def monitor_inventory():
     category = request.args.get('category')
     page = request.args.get('page', 1, type=int)
-    items_per_page = 15
+    items_per_page = 12
     offset = (page - 1) * items_per_page
     email = session.get('email')
     staff_info = get_staff_info(email)
@@ -213,11 +213,14 @@ def monitor_inventory():
                 manager.first_name,
                 manager.last_name
             FROM inventory 
-            INNER JOIN product ON inventory.product_id = product.product_id
-            INNER JOIN staff ON inventory.staff_id = staff.staff_id
-            INNER JOIN manager ON inventory.manager_id = manager.manager_id
-            INNER JOIN product_category ON product.category_id = product_category.category_id
-            LEFT JOIN product_option ON inventory.option_id = product_option.option_id
+            LEFT JOIN product ON inventory.product_id = product.product_id
+            LEFT JOIN staff ON inventory.staff_id = staff.staff_id
+            LEFT JOIN manager ON inventory.manager_id = manager.manager_id
+            LEFT JOIN product_category ON product.category_id = product_category.category_id
+            LEFT JOIN product_option_mapping ON inventory.product_id = product_option_mapping.product_id 
+                AND inventory.option_id = product_option_mapping.option_id 
+                AND inventory.option_type_id = product_option_mapping.option_type_id
+            LEFT JOIN product_option ON product_option_mapping.option_id = product_option.option_id
             WHERE product_category.name = %s
             ORDER BY name
             LIMIT %s OFFSET %s
@@ -236,11 +239,14 @@ def monitor_inventory():
                 manager.first_name,
                 manager.last_name
             FROM inventory 
-            INNER JOIN product ON inventory.product_id = product.product_id
-            INNER JOIN staff ON inventory.staff_id = staff.staff_id
-            INNER JOIN manager ON inventory.manager_id = manager.manager_id
-            INNER JOIN product_category ON product.category_id = product_category.category_id
-            LEFT JOIN product_option ON inventory.option_id = product_option.option_id
+            LEFT JOIN product ON inventory.product_id = product.product_id
+            LEFT JOIN staff ON inventory.staff_id = staff.staff_id
+            LEFT JOIN manager ON inventory.manager_id = manager.manager_id
+            LEFT JOIN product_category ON product.category_id = product_category.category_id
+            LEFT JOIN product_option_mapping ON inventory.product_id = product_option_mapping.product_id 
+                AND inventory.option_id = product_option_mapping.option_id 
+                AND inventory.option_type_id = product_option_mapping.option_type_id
+            LEFT JOIN product_option ON product_option_mapping.option_id = product_option.option_id
             ORDER BY name
             LIMIT %s OFFSET %s
         """, (items_per_page, offset))
@@ -259,5 +265,4 @@ def monitor_inventory():
 
     return render_template('staff/staff_inventory.html', staff_info=staff_info, 
                            inventory=inventory, page=page, items_per_page=items_per_page,
-                           categories=categories)
-
+                           categories=categories, category=category)
