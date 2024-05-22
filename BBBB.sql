@@ -101,11 +101,13 @@ CREATE TABLE `product_option` (
 
 -- 9. product option mapping
 CREATE TABLE `product_option_mapping` (
-	`product_id` INT,
+    `product_id` INT,
     `option_id` INT,
-    PRIMARY KEY (`product_id`, `option_id`),
+    `option_type_id` INT,
+    PRIMARY KEY (`product_id`, `option_id`, `option_type_id`),
     FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
-    FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`)
+    FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`),
+    FOREIGN KEY (`option_type_id`) REFERENCES `product_option_type` (`option_type_id`)
 )AUTO_INCREMENT=1;
 
 -- 10. orders
@@ -127,6 +129,7 @@ CREATE TABLE `order_item` (
     `order_id` INT,
     `product_id` INT,
     `quantity` INT,
+    `options` VARCHAR(255),
     PRIMARY KEY (`order_item_id`),
     FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`),
     FOREIGN KEY (`product_id`) REFERENCES `product`(`product_id`)
@@ -324,29 +327,20 @@ CREATE TABLE `room_feedback` (
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 );
 
--- 26. cart
-CREATE TABLE `cart` (
-    `cart_id` INT AUTO_INCREMENT,
-    `customer_id` INT,
-    `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    `updated_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`cart_id`),
-    FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
-)AUTO_INCREMENT=1;
 
--- 27. cart_item
+-- 26. cart_item
 CREATE TABLE `cart_item` (
     `cart_item_id` INT AUTO_INCREMENT,
-    `cart_id` INT,
+    `customer_id` INT,
     `product_id` INT,
     `quantity` INT,
-    `added_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`cart_item_id`),
-    FOREIGN KEY (`cart_id`) REFERENCES `cart` (`cart_id`),
+    FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
     FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
-)AUTO_INCREMENT=1;
+) AUTO_INCREMENT=1;
 
--- 28. cart_item_option
+
+-- 27. cart_item_option
 CREATE TABLE `cart_item_option` (
     `cart_item_id` INT,
     `option_id` INT,
@@ -354,6 +348,20 @@ CREATE TABLE `cart_item_option` (
     FOREIGN KEY (`cart_item_id`) REFERENCES `cart_item` (`cart_item_id`),
     FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`)
 )AUTO_INCREMENT=1;
+
+-- 28. paid_item
+CREATE TABLE `paid_item` (
+    `paid_item_id` INT AUTO_INCREMENT,
+    `customer_id` INT,
+    `product_id` INT,
+    `quantity` INT,
+    `price` DECIMAL(10,2),
+    `order_id` INT,
+    PRIMARY KEY (`paid_item_id`),
+    FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
+    FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
+    FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`)
+) AUTO_INCREMENT=1;
 
 
 -- 1. Insert into account
@@ -495,6 +503,7 @@ INSERT INTO `product_option_type` (`description`)
 VALUES 
 ('Milk Type'), 
 ('Syrup Type'),
+('Size'),
 ('Ice Level'), 
 ('Extra Flavor'),
 ('Bun Type'), 
@@ -503,110 +512,155 @@ VALUES
 ('Cooking Style'),
 ('Fruit Flavor');
 
--- 8. Insert into product_option (assuming Milk Type is option_type_id 1 and Syrup Type is option_type_id 2)
+-- 8. Insert into product_option 
+
+-- Insert into product_option 
 INSERT INTO `product_option` (`option_type_id`, `name`, `additional_cost`)
 VALUES 
-#1
-(1, 'Soy Milk', 0.50),
-#2
-(1, 'Almond Milk', 0.50),
-#3
-(1, 'Oat Milk', 0.50),
-#4
-(2, 'Vanilla Syrup', 0.50),
-#5
-(2, 'Caramel Syrup', 0.50),
-#6
-(2, 'Hazelnut Syrup', 0.50),
-#7
-(3, 'Light Ice', 0.00),
-#8
-(3, 'No Ice', 0.00),
-#9
-(4, 'Lemon Flavor', 0.50),
-#10
-(4, 'Cinnamon', 0.20),
-#11
-(4, 'Mint Flavor', 0.50),
-#12
-(5, 'Gluten-Free Bun', 0.50),
-#13
-(5, 'Sesame Bun', 0.20),
-#14
-(6, 'Extra Cheese', 0.50),
-#15
-(6, 'Bacon', 0.75),
-#16
-(6, 'Grilled Onions', 0.25),
-#17
-(7, 'BBQ Sauce', 0.00),
-#18
-(7, 'Mustard', 0.00),
-#19
-(7, 'Mayo', 0.00),
-#20
-(8, 'Well Done', 0.00),
-#21
-(8, 'Medium Well', 0.00),
-#22
-(9, 'Strawberry', 0.00),
-#23
-(9, 'Banana', 0.00),
-#24
-(9, 'Mixed Berry', 0.00),
-#25
-(9, 'Mango', 0.00),
-#26
-(9, 'Peach', 0.00),
-#27
-(9, 'Blackberry', 0.00),
-#28
-(9, 'Kiwi', 0.00);
+-- Milk Type options
+(1, 'Soy Milk', 0.50),          -- 1
+(1, 'Almond Milk', 0.50),       -- 2
+(1, 'Oat Milk', 0.50),          -- 3
 
--- 9. Insert into product option mapping
-INSERT INTO `product_option_mapping` (`product_id`, `option_id`)
+-- Syrup Type options
+(2, 'Vanilla Syrup', 0.50),     -- 4
+(2, 'Caramel Syrup', 0.50),     -- 5
+(2, 'Hazelnut Syrup', 0.50),    -- 6
+
+-- Size options
+(3, 'Small', 0.00),             -- 7
+(3, 'Medium', 0.50),            -- 8
+(3, 'Large', 1.00),             -- 9
+
+-- Ice Level options
+(4, 'Light Ice', 0.00),         -- 10
+(4, 'No Ice', 0.00),            -- 11
+
+-- Extra Flavor options
+(5, 'Lemon Flavor', 0.50),      -- 12
+(5, 'Cinnamon', 0.20),          -- 13
+(5, 'Mint Flavor', 0.50),       -- 14
+
+-- Bun Type options
+(6, 'Gluten-Free Bun', 0.50),   -- 15
+(6, 'Sesame Bun', 0.20),        -- 16
+
+-- Toppings options
+(7, 'Extra Cheese', 0.50),      -- 17
+(7, 'Bacon', 0.75),             -- 18
+(7, 'Grilled Onions', 0.25),    -- 19
+
+-- Sauce Type options
+(8, 'BBQ Sauce', 0.00),         -- 20
+(8, 'Mustard', 0.00),           -- 21
+(8, 'Mayo', 0.00),              -- 22
+
+-- Cooking Style options
+(9, 'Well Done', 0.00),         -- 23
+(9, 'Medium Well', 0.00),       -- 24
+
+-- Fruit Flavor options
+(10, 'Strawberry', 0.00),       -- 25
+(10, 'Banana', 0.00),           -- 26
+(10, 'Mixed Berry', 0.00),      -- 27
+(10, 'Mango', 0.00),            -- 28
+(10, 'Peach', 0.00),            -- 29
+(10, 'Blackberry', 0.00),       -- 30
+(10, 'Kiwi', 0.00);             -- 31
+
+-- 9. Insert into product_option_mapping
+INSERT INTO `product_option_mapping` (`product_id`, `option_id`, `option_type_id`)
 VALUES 
--- Map milk and syrup options to all coffee products
-(1, 1), (1, 2), (1, 3), -- Soy Milk, Almond Milk, Oat Milk for Espresso
-(1, 4), (1, 5), (1, 6), -- Vanilla, Caramel, Hazelnut Syrup for Espresso
-(2, 1), (2, 2), (2, 3), (2, 4), (2, 5), (2, 6), -- All milk and syrup options for Latte
-(3, 1), (3, 2), (3, 3), (3, 4), (3, 5), (3, 6), -- All milk and syrup options for Cappuccino
-(4, 1), (4, 2), (4, 3), (4, 4), (4, 5), (4, 6), -- All milk and syrup options for Flat White
-(5, 1), (5, 2), (5, 3), (5, 4), (5, 5), (5, 6), -- All milk and syrup options for Mocha
--- Map ice level options to soft drinks and iced teas
-(21, 7), (21, 8), -- Light Ice, No Ice for Coca-Cola
-(22, 7), (22, 8), -- Light Ice, No Ice for Sprite
-(23, 7), (23, 8), -- Light Ice, No Ice for Fanta
-(24, 7), (24, 8), -- Light Ice, No Ice for Pepsi
-(25, 7), (25, 8), -- Light Ice, No Ice for Ginger Ale
-(26, 7), (26, 8), -- Light Ice, No Ice for Classic Lemon Iced Tea
-(27, 7), (27, 8), -- Light Ice, No Ice for Peach Iced Tea
-(28, 7), (28, 8), -- Light Ice, No Ice for Raspberry Iced Tea
-(29, 7), (29, 8), -- Light Ice, No Ice for Green Iced Tea
-(30, 7), (30, 8), -- Light Ice, No Ice for Hibiscus Iced Tea
-(31, 7), (31, 8), -- Light Ice, No Ice for Mint Iced Tea
+-- Espresso options
+(1, 1, 1), (1, 2, 1), (1, 3, 1), (1, 7, 3), (1, 8, 3), (1, 9, 3),
+-- Latte options
+(2, 1, 1), (2, 2, 1), (2, 3, 1), (2, 7, 3), (2, 8, 3), (2, 9, 3),
+-- Cappuccino options
+(3, 1, 1), (3, 2, 1), (3, 3, 1), (3, 7, 3), (3, 8, 3), (3, 9, 3),
+-- Flat White options
+(4, 1, 1), (4, 2, 1), (4, 3, 1), (4, 7, 3), (4, 8, 3), (4, 9, 3),
+-- Mocha options
+(5, 1, 1), (5, 2, 1), (5, 3, 1), (5, 7, 3), (5, 8, 3), (5, 9, 3),
 
--- Map bun types, toppings, and sauce types to fast food items
-(32, 5), (32, 6), (32, 7), -- Gluten-Free Bun, Sesame Bun, Extra Cheese for American Hotdogs
-(33, 5), (33, 6), (33, 7), -- Gluten-Free Bun, Sesame Bun, Extra Cheese for Veggie Burger
-(34, 5), (34, 6), (34, 7), -- Gluten-Free Bun, Sesame Bun, Extra Cheese for Fish Tacos
-(32, 8), (32, 9), (32, 10), -- BBQ Sauce, Mustard, Mayo for American Hotdogs
-(33, 8), (33, 9), (33, 10), -- BBQ Sauce, Mustard, Mayo for Veggie Burger
-(34, 8), (34, 9), (34, 10), -- BBQ Sauce, Mustard, Mayo for Fish Tacos
-(35, 5), (35, 6), (35, 7), (35, 8), (35, 9), (35, 10), -- Gluten-Free Bun, Sesame Bun, Extra Cheese, BBQ Sauce, Mustard, Mayo for Smokey BBQ Pulled Pork
-(36, 5), (36, 6), (36, 7), (36, 8), (36, 9), (36, 10), -- Gluten-Free Bun, Sesame Bun, Extra Cheese, BBQ Sauce, Mustard, Mayo for Muffins
-(37, 5), (37, 6), (37, 7), (37, 8), (37, 9), (37, 10), -- Gluten-Free Bun, Sesame Bun, Extra Cheese, BBQ Sauce, Mustard, Mayo for Slices
-(38, 5), (38, 6), (38, 7), (38, 8), (38, 9), (38, 10), -- Gluten-Free Bun, Sesame Bun, Extra Cheese, BBQ Sauce, Mustard, Mayo for Chicken Tenders
-(39, 5), (39, 6), (39, 7), (39, 8), (39, 9), (39, 10), -- Gluten-Free Bun, Sesame Bun, Extra Cheese, BBQ Sauce, Mustard, Mayo for Falafel Wrap
-(40, 5), (40, 6), (40, 7), (40, 8), (40, 9), (40, 10), -- Gluten-Free Bun, Sesame Bun, Extra Cheese, BBQ Sauce, Mustard, Mayo for Cheese Nachos
-(41, 5), (41, 6), (41, 7), (41, 8), (41, 9), (41, 10), -- Gluten-Free Bun, Sesame Bun, Extra Cheese, BBQ Sauce, Mustard, Mayo for Loaded Fries
+-- Hot Chocolate options
+(6, 4, 2), (6, 5, 2), (6, 6, 2), 
 
--- Map fruit flavors to various frozen treat products
-(42, 20), (42, 21), (42, 22), (42, 23), (42, 24), (42, 25), (42, 26), -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Ice Blocks
-(43, 20), (43, 21), (43, 22), (43, 23), (43, 24), (43, 25), (43, 26), -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Real Fruit Ice Creams
-(44, 20), (44, 21), (44, 22), (44, 23), (44, 24), (44, 25), (44, 26), -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Sorbet
-(45, 20), (45, 21), (45, 22), (45, 23), (45, 24), (45, 25), (45, 26), -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Frozen Yogurt
-(46, 20), (46, 21), (46, 22), (46, 23), (46, 24), (46, 25), (46, 26); -- Strawberry, Banana, Mixed Berry, Mango, Peach, Blackberry, Kiwi for Gelato
+-- Herbal Tea options
+(7, 4, 2), (7, 5, 2), (7, 6, 2), 
+
+-- Chai Latte options
+(8, 4, 2), (8, 5, 2), (8, 6, 2), 
+
+-- Coca-Cola options
+(9, 10, 4), (9, 11, 4), 
+
+-- Sprite options
+(10, 10, 4), (10, 11, 4), 
+
+-- Fanta options
+(11, 10, 4), (11, 11, 4), 
+
+-- Pepsi options
+(12, 10, 4), (12, 11, 4), 
+
+-- Ginger Ale options
+(13, 10, 4), (13, 11, 4),
+
+-- American Hotdogs options
+(27, 17, 7), (27, 18, 7), (27, 19, 7), 
+
+-- Sweetcorn & Kumara Patties options
+(28, 17, 7), (28, 18, 7), (28, 19, 7), 
+
+-- Crepes options
+(29, 17, 7), (29, 18, 7), (29, 19, 7), 
+
+-- Smokey BBQ Pulled Pork in a Bun options
+(30, 17, 7), (30, 18, 7), (30, 19, 7),
+
+-- Chicken Tenders options
+(33, 17, 7), (33, 18, 7), (33, 19, 7),
+
+-- Veggie Burger options
+(34, 15, 6), (34, 16, 6), (34, 17, 7), (34, 18, 7), (34, 19, 7), 
+
+-- Fish Tacos options
+(35, 17, 7), (35, 18, 7), (35, 19, 7),
+
+-- Loaded Fries options
+(36, 17, 7), (36, 18, 7), (36, 19, 7),
+
+-- Falafel Wrap options
+(37, 17, 7), (37, 18, 7), (37, 19, 7),
+
+-- Cheese Nachos options
+(38, 17, 7), (38, 18, 7), (38, 19, 7),
+
+-- Spicy Ramen options
+(39, 17, 7), (39, 18, 7), (39, 19, 7),
+
+-- Stinky Tofu options
+(40, 17, 7), (40, 18, 7), (40, 19, 7),
+
+-- Grilled Cold Noodles options
+(41, 17, 7), (41, 18, 7), (41, 19, 7),
+
+-- Ice Blocks options
+(42, 25, 10), (42, 26, 10), (42, 27, 10), (42, 28, 10), (42, 29, 10), (42, 30, 10), (42, 31, 10),
+
+-- Real Fruit Ice Creams options
+(43, 25, 10), (43, 26, 10), (43, 27, 10), (43, 28, 10), (43, 29, 10), (43, 30, 10), (43, 31, 10),
+
+-- Sorbet options
+(44, 25, 10), (44, 26, 10), (44, 27, 10), (44, 28, 10), (44, 29, 10), (44, 30, 10), (44, 31, 10),
+
+-- Frozen Yogurt options
+(45, 25, 10), (45, 26, 10), (45, 27, 10), (45, 28, 10), (45, 29, 10), (45, 30, 10), (45, 31, 10),
+
+-- Gelato options
+(46, 25, 10), (46, 26, 10), (46, 27, 10), (46, 28, 10), (46, 29, 10), (46, 30, 10), (46, 31, 10);
+
+
 
 -- 10. Insert into orders
 INSERT INTO `orders` (`customer_id`, `total_price`, `special_requests`, `scheduled_pickup_time`, `status`, `created_at`) VALUES 
@@ -708,19 +762,6 @@ VALUES
 
 
 -- 26. insert cart table--
-INSERT INTO `cart` (`customer_id`, `created_at`, `updated_at`)
-VALUES 
-(1000, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP);
 
--- 27. insert cart_item table--
-INSERT INTO `cart_item` (`cart_id`, `product_id`, `quantity`, `added_at`)
-VALUES
-(1, 1, 2, CURRENT_TIMESTAMP),  
-(1, 22, 1, CURRENT_TIMESTAMP); 
 
--- 28. insert cart_item_option table--
-INSERT INTO `cart_item_option` (`cart_item_id`, `option_id`)
-VALUES
-(1, 1), -- Soy Milk for Espresso
-(1, 4), -- Vanilla Syrup for Espresso
-(2, 7); -- Light Ice for Sprite
+-- 27. insert cart_item_option table--
