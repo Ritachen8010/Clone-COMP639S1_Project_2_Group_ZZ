@@ -12,8 +12,7 @@
             {% include 'dashboard_nav/staff_side_nav.html' %}
             <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
                 <h1 class="mb-4">Inventory List</h1>
-                <form method="GET" class="mb-4" action="{{ url_for('staff.monitor_inventory') }}">
-                    <label for="category">Category:</label>
+                <form method="GET" class="mb-4" action="{{ url_for('staff.monitor_inventory') }}">                    
                     <select id="category" name="category">
                         <option value="">All</option>
                         {% for category in categories %}
@@ -29,10 +28,11 @@
                     <thead class="thead-dark">
                         <tr>
                             <th style="width: 15%;">Product Name</strong></th>
-                            <th style="width: 55%;">Description</th>
+                            <th style="width: 40%;">Description</th>
                             <th style="width: 10%;">Unit Price</th>
                             <th style="width: 10%;">Quantity</th>
                             <th style="width: 10%;">Last Updated</th>
+                            <th style="width: 5%;">Action</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -41,8 +41,25 @@
                             <td class="text-start"><strong>{{ item.name | title }}</strong></td>
                             <td class="text-start">{{ item.description | capitalize }}</td>
                             <td>${{ item.unit_price }}</td>
-                            <td>{{ item.quantity }}</td>
+                            <td>
+                                {{ item.quantity }}
+                                {% if item.quantity <= 10 %}
+                                    <i class="bi bi-exclamation-triangle-fill text-warning"></i>
+                                {% endif %}
+                            </td>
                             <td>{{ item.last_updated | format_time }}</td>
+                            <td>
+                                <form method="post" action="{{ url_for('staff.update_inventory') }}" class="form-inline">
+                                    <input type="hidden" name="product_id" value="{{ item.product_id }}">
+                                    <input type="hidden" name="option_id" value="{{ item.option_id }}">
+                                    <input type="hidden" name="page" value="{{ request.args.get('page', 1)|int }}">
+                                    <input type="hidden" name="category" value="{{ category }}">
+                                    <div class="form-group mb-2">
+                                        <input type="number" class="form-control" name="quantity" value="{{ item.quantity }}">
+                                    </div>
+                                    <button type="submit" class="btn btn-theme mb-2">Update</button>
+                                </form>
+                            </td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -76,4 +93,18 @@
         </div>
     </div>
 </div>
+<script>
+    $(document).ready(function() {
+        // Check if the scroll position is saved in the sessionStorage
+        if (sessionStorage.scrollPosition) {
+            // Restore the scroll position
+            $(window).scrollTop(sessionStorage.scrollPosition);
+        }
+    
+        // Save the scroll position in the sessionStorage when the form is submitted
+        $('form').on('submit', function() {
+            sessionStorage.scrollPosition = $(window).scrollTop();
+        });
+    });
+    </script>
 {% endblock %}

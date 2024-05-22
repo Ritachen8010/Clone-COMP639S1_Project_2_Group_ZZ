@@ -193,7 +193,7 @@ def view_orders():
 def monitor_inventory():
     category = request.args.get('category')
     page = request.args.get('page', 1, type=int)
-    items_per_page = 12
+    items_per_page = 10
     offset = (page - 1) * items_per_page
     email = session.get('email')
     staff_info = get_staff_info(email)
@@ -202,6 +202,8 @@ def monitor_inventory():
     if category:
         cursor.execute("""
             SELECT
+                inventory.product_id,
+                inventory.option_id,
                 product_category.name AS category,
                 CONCAT(product.name, ' ', COALESCE(product_option.name, '')) AS name,
                 product.description,
@@ -222,12 +224,14 @@ def monitor_inventory():
                 AND inventory.option_type_id = product_option_mapping.option_type_id
             LEFT JOIN product_option ON product_option_mapping.option_id = product_option.option_id
             WHERE product_category.name = %s
-            ORDER BY name
+            ORDER BY inventory.quantity ASC, name
             LIMIT %s OFFSET %s
         """, (category, items_per_page, offset))
     else:
         cursor.execute("""
             SELECT
+                inventory.product_id,
+                inventory.option_id,
                 product_category.name AS category,
                 CONCAT(product.name, ' ', COALESCE(product_option.name, '')) AS name,
                 product.description,
@@ -247,7 +251,7 @@ def monitor_inventory():
                 AND inventory.option_id = product_option_mapping.option_id 
                 AND inventory.option_type_id = product_option_mapping.option_type_id
             LEFT JOIN product_option ON product_option_mapping.option_id = product_option.option_id
-            ORDER BY name
+            ORDER BY inventory.quantity ASC, name
             LIMIT %s OFFSET %s
         """, (items_per_page, offset))
 
@@ -266,3 +270,52 @@ def monitor_inventory():
     return render_template('staff/staff_inventory.html', staff_info=staff_info, 
                            inventory=inventory, page=page, items_per_page=items_per_page,
                            categories=categories, category=category)
+
+# Staff update inventory
+@staff_blueprint.route('/update_inventory', methods=['POST'])
+@role_required(['staff'])
+def update_inventory():
+    product_id = request.form.get('product_id')
+    option_id = request.form.get('option_id')
+    new_quantity = request.form.get('quantity')
+    page = request.form.get('page', 1, type=int)  # Get the current page number
+    category = request.form.get('category')
+    connection, cursor = get_cursor()
+
+    # Validate new_quantity
+    try:
+        new_quantity = int(new_quantity)
+        if abs(new_quantity) > 100:
+            raise ValueError
+    except ValueError:
+        flash('Invalid quantity. The maximum inventory limit per entry is 100.', 'error')
+        return redirect(url_for('staff.monitor_inventory', page=page, category=category)) 
+
+    # Check if the new quantity will make the inventory negative
+    cursor.execute("""
+        SELECT quantity FROM inventory WHERE product_id = %s
+    """, (product_id,))
+    current_quantity = cursor.fetchone()['quantity']
+    cursor.fetchall() 
+    if current_quantity + new_quantity < 0:
+        flash('Invalid quantity. The new quantity can not make the inventory negative.', 'error')
+        return redirect(url_for('staff.monitor_inventory'))
+
+    if option_id and option_id.isdigit():
+        cursor.execute("""
+            UPDATE inventory
+            SET quantity = quantity + %s
+            WHERE product_id = %s AND option_id = %s
+        """, (new_quantity, product_id, option_id))
+    else:
+        cursor.execute("""
+            UPDATE inventory
+            SET quantity = quantity + %s
+            WHERE product_id = %s
+        """, (new_quantity, product_id))
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    return redirect(url_for('staff.monitor_inventory', page=page, category=category))
