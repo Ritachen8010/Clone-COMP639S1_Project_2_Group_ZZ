@@ -591,21 +591,6 @@ VALUES
 -- Chai Latte options
 (8, 4, 2), (8, 5, 2), (8, 6, 2), 
 
--- Coca-Cola options
-(9, 10, 4), (9, 11, 4), 
-
--- Sprite options
-(10, 10, 4), (10, 11, 4), 
-
--- Fanta options
-(11, 10, 4), (11, 11, 4), 
-
--- Pepsi options
-(12, 10, 4), (12, 11, 4), 
-
--- Ginger Ale options
-(13, 10, 4), (13, 11, 4),
-
 -- American Hotdogs options
 (27, 17, 7), (27, 18, 7), (27, 19, 7), 
 
