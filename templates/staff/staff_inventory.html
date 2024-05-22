@@ -30,7 +30,7 @@
                         <tr>
                             <th style="width: 15%;">Product Name</strong></th>
                             <th style="width: 55%;">Description</th>
-                            <th style="width: 10%;">Unit Price($)</th>
+                            <th style="width: 10%;">Unit Price</th>
                             <th style="width: 10%;">Quantity</th>
                             <th style="width: 10%;">Last Updated</th>
                         </tr>
@@ -40,9 +40,9 @@
                         <tr>
                             <td class="text-start"><strong>{{ item.name | title }}</strong></td>
                             <td class="text-start">{{ item.description | capitalize }}</td>
-                            <td>{{ item.unit_price }}</td>
+                            <td>${{ item.unit_price }}</td>
                             <td>{{ item.quantity }}</td>
-                            <td>{{ item.last_updated | format_date }}</td>
+                            <td>{{ item.last_updated | format_time }}</td>
                         </tr>
                         {% endfor %}
                     </tbody>
@@ -52,7 +52,8 @@
                         <ul class="pagination">
                             {% if page > 1 %}
                             <li class="page-item">
-                                <a class="page-link" href="{{ url_for('staff.monitor_inventory', page=page-1) }}"
+                                <a class="page-link"
+                                    href="{{ url_for('staff.monitor_inventory', page=page-1, category=category) }}"
                                     aria-label="Previous">
                                     <span aria-hidden="true">&laquo;</span>
                                 </a>
@@ -61,7 +62,8 @@
                             <li class="page-item disabled"><a class="page-link">Page {{ page }}</a></li>
                             {% if inventory|length >= items_per_page %}
                             <li class="page-item">
-                                <a class="page-link" href="{{ url_for('staff.monitor_inventory', page=page+1) }}"
+                                <a class="page-link"
+                                    href="{{ url_for('staff.monitor_inventory', page=page+1, category=category) }}"
                                     aria-label="Next">
                                     <span aria-hidden="true">&raquo;</span>
                                 </a>
