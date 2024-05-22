@@ -17,10 +17,11 @@
         <!-- Navigation links start here -->
         <div class="list-group list-group-flush mx-3 mt-4">
             <!-- Link to the order page -->
-            <a href="#" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
+            <a href="{{ url_for('customer.orders') }}" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
                 <i class="bi bi-cart-check me-2"></i>
                 <span class="ms-1 nav-text d-sm-inline">My Orders</span>
             </a>
+
 
             <!-- Link to the booking page -->
             <li class="list-group-item list-group-item-action py-2 ripple">
