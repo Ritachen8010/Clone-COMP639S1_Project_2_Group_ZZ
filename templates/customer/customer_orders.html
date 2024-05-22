@@ -28,8 +28,8 @@
                             <tr>
                                 <td>{{ order.order_id }}</td>
                                 <td>${{ order.total_price }}</td>
-                                <td>{{ order.status }}</td>
-                                <td>{{ order.created_at }}</td>
+                                <td>{{ order.status | title }}</td>
+                                <td>{{ order.created_at | format_time }}</td>
                                 <td>
                                     <a href="{{ url_for('customer.order_details', order_id=order.order_id) }}" class="btn btn-custom">View</a>
                                     {% if order.status == 'ordered' %}
@@ -43,4 +43,8 @@
                         </tbody>
                     </table>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}
