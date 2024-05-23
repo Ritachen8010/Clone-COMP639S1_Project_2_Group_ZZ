@@ -168,24 +168,73 @@ def staff_updateprofile():
     return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info, max_date=max_date_str, min_date=min_date_str)
 
 # Staff view orders
-@staff_blueprint.route('/orders')
+@staff_blueprint.route('/orders', methods=['GET'])
 @role_required(['staff'])
 def view_orders():
     email = session.get('email')
     staff_info = get_staff_info(email)
+    
     connection, cursor = get_cursor()
-    cursor.execute("""
-        SELECT o.order_id, o.customer_id, o.total_price, o.special_requests, 
-               o.scheduled_pickup_time, o.status, o.created_at, 
-               c.first_name, c.last_name
-        FROM orders o
-        JOIN customer c ON o.customer_id = c.customer_id
-        ORDER BY o.created_at DESC
-    """)
-    orders = cursor.fetchall()
-    cursor.close()
-    connection.close()
-    return render_template('staff/staff_vieworders.html', orders=orders, staff_info=staff_info) 
+    
+    try:
+        cursor.execute("""
+            SELECT o.order_id, o.total_price, o.status, o.created_at, 
+                   c.first_name, c.last_name
+            FROM orders o
+            JOIN customer c ON o.customer_id = c.customer_id
+            ORDER BY o.created_at DESC
+        """)
+        orders = cursor.fetchall()
+    except Exception as e:
+        flash(f"Failed to retrieve orders. Error: {str(e)}", "danger")
+        orders = []
+    finally:
+        cursor.close()
+        connection.close()
+    
+    return render_template('staff/staff_vieworders.html', orders=orders, staff_info=staff_info)
+
+@staff_blueprint.route('/order_details/<int:order_id>', methods=['GET'])
+@role_required(['staff'])
+def order_details(order_id):
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+    
+    connection, cursor = get_cursor()
+    
+    try:
+        cursor.execute("SET NAMES utf8mb4;")
+        cursor.execute("SET CHARACTER SET utf8mb4;")
+        cursor.execute("SET character_set_connection=utf8mb4;")
+        
+        cursor.execute("""
+            SELECT o.*, c.first_name, c.last_name
+            FROM orders o
+            JOIN customer c ON o.customer_id = c.customer_id
+            WHERE o.order_id = %s
+        """, (order_id,))
+        order = cursor.fetchone()
+        
+        if not order:
+            flash("Order not found.", "error")
+            return redirect(url_for('staff.view_orders'))
+        
+        cursor.execute("""
+            SELECT oi.*, p.name AS product_name, p.unit_price
+            FROM order_item oi
+            JOIN product p ON oi.product_id = p.product_id
+            WHERE oi.order_id = %s
+        """, (order_id,))
+        order_items = cursor.fetchall()
+    except Exception as e:
+        flash(f"Failed to retrieve order details. Error: {str(e)}", "danger")
+        order = None
+        order_items = []
+    finally:
+        cursor.close()
+        connection.close()
+    
+    return render_template('staff/staff_order_details.html', order=order, order_items=order_items, staff_info=staff_info)
 
 # Staff monitor inventory
 @staff_blueprint.route('/monitor_inventory')

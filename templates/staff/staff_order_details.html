@@ -1,0 +1,56 @@
+{% extends 'base.html' %}
+
+{% block title %}Order Details{% endblock %}
+
+{% block content %}
+<div class="content">
+    {% include 'dashboard_nav/staff_top_nav.html' %}
+    <div class="container-fluid">
+        <div class="row">
+            {% include 'dashboard_nav/staff_side_nav.html' %}
+            <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
+                <h1>Order Details</h1>
+                <h2>Order ID: {{ order.order_id }}</h2>
+                <p>Customer: {{ order.first_name }} {{ order.last_name }}</p>
+                <p>Total Price: ${{ order.total_price }}</p>
+                <p>Status: {{ order.status }}</p>
+                <p>Created At: {{ order.created_at }}</p>
+                <p>Special Requests: {{ order.special_requests }}</p>
+                <p>Scheduled Pickup Time: {{ order.scheduled_pickup_time }}</p>
+
+                <h3>Order Items</h3>
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Product Name</th>
+                            <th>Quantity</th>
+                            <th>Unit Price</th>
+                            <th>Options</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for item in order_items %}
+                        <tr>
+                            <td>{{ item.product_name }}</td>
+                            <td>{{ item.quantity }}</td>
+                            <td>${{ item.unit_price }}</td>
+                            <td>
+                                {% if item.options %}
+                                <ul>
+                                    {% for option in item.options.split(', ') %}
+                                    <li>{{ option }}</li>
+                                    {% endfor %}
+                                </ul>
+                                {% else %}
+                                No options
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
