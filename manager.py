@@ -169,3 +169,262 @@ def manager_updateprofile():
 
     # Render page with current account information
     return render_template('manager/manager_updateprofile.html', account=account, manager_info=manager_info, max_date=max_date_str, min_date=min_date_str)
+
+# Manager monitor inventory
+@manager_blueprint.route('/monitor_inventory')
+@role_required(['manager'])
+def monitor_inventory():
+    category = request.args.get('category')
+    page = request.args.get('page', 1, type=int)
+    items_per_page = 10
+    offset = (page - 1) * items_per_page
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+    connection, cursor = get_cursor()
+
+    if category:
+        cursor.execute("""
+            SELECT
+                inventory.product_id,
+                inventory.option_id,
+                product_category.name AS category,
+                CONCAT(product.name, ' ', COALESCE(product_option.name, '')) AS name,
+                product.description,
+                product.unit_price,
+                inventory.quantity,
+                inventory.last_updated,
+                staff.first_name,
+                staff.last_name,
+                manager.first_name,
+                manager.last_name
+            FROM inventory 
+            LEFT JOIN product ON inventory.product_id = product.product_id
+            LEFT JOIN staff ON inventory.staff_id = staff.staff_id
+            LEFT JOIN manager ON inventory.manager_id = manager.manager_id
+            LEFT JOIN product_category ON product.category_id = product_category.category_id
+            LEFT JOIN product_option_mapping ON inventory.product_id = product_option_mapping.product_id 
+                AND inventory.option_id = product_option_mapping.option_id 
+                AND inventory.option_type_id = product_option_mapping.option_type_id
+            LEFT JOIN product_option ON product_option_mapping.option_id = product_option.option_id
+            WHERE product_category.name = %s
+            ORDER BY name
+            LIMIT %s OFFSET %s
+        """, (category, items_per_page, offset))
+    else:
+        cursor.execute("""
+            SELECT
+                inventory.product_id,
+                inventory.option_id,
+                product_category.name AS category,
+                CONCAT(product.name, ' ', COALESCE(product_option.name, '')) AS name,
+                product.description,
+                product.unit_price,
+                inventory.quantity,
+                inventory.last_updated,
+                staff.first_name,
+                staff.last_name,
+                manager.first_name,
+                manager.last_name
+            FROM inventory 
+            LEFT JOIN product ON inventory.product_id = product.product_id
+            LEFT JOIN staff ON inventory.staff_id = staff.staff_id
+            LEFT JOIN manager ON inventory.manager_id = manager.manager_id
+            LEFT JOIN product_category ON product.category_id = product_category.category_id
+            LEFT JOIN product_option_mapping ON inventory.product_id = product_option_mapping.product_id 
+                AND inventory.option_id = product_option_mapping.option_id 
+                AND inventory.option_type_id = product_option_mapping.option_type_id
+            LEFT JOIN product_option ON product_option_mapping.option_id = product_option.option_id
+            ORDER BY name
+            LIMIT %s OFFSET %s
+        """, (items_per_page, offset))
+
+    inventory = cursor.fetchall()
+
+    # Query all categories
+    cursor.execute("SELECT name FROM product_category")
+    categories = cursor.fetchall()
+    categories = [row['name'] for row in categories]
+
+    # Remove duplicates by converting the list to a set, then convert it back to a list
+    categories = list(set(categories))
+    cursor.close()
+    connection.close()
+
+    return render_template('manager/manager_inventory.html', manager_info=manager_info, 
+                           inventory=inventory, page=page, items_per_page=items_per_page,
+                           categories=categories, category=category)
+
+# Manager update inventory
+@manager_blueprint.route('/update_inventory', methods=['POST'])
+@role_required(['manager'])
+def update_inventory():
+    product_id = request.form.get('product_id')
+    option_id = request.form.get('option_id')
+    new_quantity = request.form.get('quantity')
+    page = request.form.get('page', 1, type=int)  # Get the current page number
+    category = request.form.get('category')
+    connection, cursor = get_cursor()
+
+    # Validate new_quantity
+    try:
+        new_quantity = int(new_quantity)
+        if abs(new_quantity) > 100:
+            raise ValueError
+    except ValueError:
+        flash('Invalid quantity. The maximum inventory limit per entry is 100.', 'error')
+        return redirect(url_for('manager.monitor_inventory', page=page, category=category)) 
+
+    # Check if the new quantity will make the inventory negative
+    cursor.execute("""
+        SELECT quantity FROM inventory WHERE product_id = %s
+    """, (product_id,))
+    current_quantity = cursor.fetchone()['quantity']
+    cursor.fetchall() 
+    if current_quantity + new_quantity < 0:
+        flash('Invalid quantity. The new quantity can not make the inventory negative.', 'error')
+        return redirect(url_for('manager.monitor_inventory'))
+
+    if option_id and option_id.isdigit():
+        cursor.execute("""
+            UPDATE inventory
+            SET quantity = quantity + %s
+            WHERE product_id = %s AND option_id = %s
+        """, (new_quantity, product_id, option_id))
+    else:
+        cursor.execute("""
+            UPDATE inventory
+            SET quantity = quantity + %s
+            WHERE product_id = %s
+        """, (new_quantity, product_id))
+
+    connection.commit()
+    cursor.close()
+    connection.close()
+
+    return redirect(url_for('manager.monitor_inventory', page=page, category=category))
+
+# Define a name for upload product image
+def upload_product_image(product_id, file):
+    filename = secure_filename(file.filename)
+    unique_filename = f"product_{product_id}_{filename}"
+
+    base_dir = os.path.dirname(os.path.abspath(__file__))
+    upload_folder = os.path.join(base_dir, 'static/product/')
+    file_path = os.path.join(upload_folder, unique_filename)
+
+    file.save(file_path)
+    connection, cursor = get_cursor()
+    cursor.execute("UPDATE product SET image = %s WHERE product_id = %s", (unique_filename, product_id))
+    connection.commit()
+
+# Handling product image update
+@manager_blueprint.route('/upload_product_image', methods=["POST"])
+@role_required(['manager'])
+def handle_upload_product_image():
+    if 'image' not in request.files:
+        flash('No file part')
+        return redirect(url_for('manager.monitor_inventory'))
+
+    file = request.files['image']
+
+    if file.filename == '':
+        flash('No selected file')
+        return redirect(url_for('manager.monitor_inventory'))
+
+    if len(file.filename) > MAX_FILENAME_LENGTH:
+        flash('File name is too long')
+        return redirect(url_for('manager.monitor_inventory'))
+
+    if file and allowed_file(file.filename):
+        product_id = request.form.get('product_id')
+        upload_product_image(product_id, file)
+        flash('Product image successfully uploaded')
+        return redirect(url_for('manager.monitor_inventory'))
+    else:
+        flash('Invalid file type')
+        return redirect(url_for('manager.monitor_inventory'))
+
+# Manager add inventory
+@manager_blueprint.route('/add_inventory', methods=['POST'])
+@role_required(['manager'])
+def add_inventory():
+    category_id = request.form.get('category_id')
+    option_id = request.form.get('option_id')
+    if option_id == 'null':
+        option_id = None
+    option_type_id = request.form.get('option_type_id')
+    if option_type_id == 'null':
+        option_type_id = None
+    name = request.form.get('name')
+    description = request.form.get('description')
+    unit_price = request.form.get('unit_price')
+    quantity = request.form.get('quantity')
+    connection, cursor = get_cursor()
+
+    # Get the image file from the form
+    image = request.files.get('image')
+    if image:
+        return redirect(url_for('manager.monitor_inventory'))
+
+    # Add the new product item to the database
+    is_available = True
+    cursor.execute("INSERT INTO product (category_id, name, description, unit_price, is_available) VALUES (%s, %s, %s, %s, %s)", (category_id, name, description, unit_price, is_available))
+    
+    # Get the product_id of the newly inserted product
+    product_id = cursor.lastrowid
+
+    # Check if a product with the same name already exists in the database
+    cursor.execute("SELECT * FROM product WHERE name = %s", (name,))
+    existing_product = cursor.fetchone()
+
+    if existing_product is not None:
+        flash('A product with the same name already exists')
+        return redirect(url_for('manager.monitor_inventory'))
+
+    # Check if the product option mapping already exists in the database
+    cursor.execute("SELECT * FROM product_option_mapping WHERE product_id = %s AND option_id = %s AND option_type_id = %s", (product_id, option_id, option_type_id))
+    existing_product = cursor.fetchone()
+
+    if existing_product is not None:
+        flash('A product with the same name and flavor already exists')
+        return redirect(url_for('manager.monitor_inventory'))
+    
+    # Add the product option mapping to the database
+    if product_id is not None and option_id is not None and option_type_id is not None:
+        cursor.execute("INSERT INTO product_option_mapping (product_id, option_id, option_type_id) VALUES (%s, %s, %s)", (product_id, option_id, option_type_id))
+    elif product_id is not None and option_type_id is not None:
+        flash('Flavor must be selected when type is chosen')
+        return redirect(url_for('manager.monitor_inventory'))
+    elif product_id is not None and option_id is not None:
+        flash('Type must be selected when flavor is chosen')
+        return redirect(url_for('manager.monitor_inventory'))
+    
+    # Add the product to the inventory
+    if product_id is not None:
+        if option_id is not None and option_type_id is not None:
+            cursor.execute("INSERT INTO inventory (product_id, option_id, option_type_id, quantity) VALUES (%s, %s, %s, %s)", (product_id, option_id, option_type_id, quantity))
+        elif option_type_id is not None:
+            flash('Flavor must be selected when type is chosen')
+            return redirect(url_for('manager.monitor_inventory'))
+        elif option_id is not None:
+            flash('Type must be selected when flavor is chosen')
+            return redirect(url_for('manager.monitor_inventory'))
+        else:
+            cursor.execute("INSERT INTO inventory (product_id, quantity) VALUES (%s, %s)", (product_id, quantity))
+    
+    connection.commit()
+    flash('Product successfully added to inventory')
+    return redirect(url_for('manager.monitor_inventory'))
+
+# Manager edit inventory
+# @manager_blueprint.route('/edit_inventory/<int:product_id>', methods=['POST'])
+# @role_required(['manager'])
+# def edit_inventory(product_id):
+#     quantity = request.form.get('quantity')
+    # Update the inventory item in the database
+
+# Manager delete inventory
+# @manager_blueprint.route('/delete_inventory/<int:product_id>', methods=['POST'])
+# @role_required(['manager'])
+# def delete_inventory(product_id):
+    # Delete the inventory item from the database
