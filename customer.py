@@ -662,6 +662,7 @@ def remove_from_cart():
 
     return redirect(url_for('customer.cart'))
 
+#payment to order 
 @customer_blueprint.route('/checkout', methods=['GET'])
 def customer_checkout():
     email = session.get('email')
@@ -725,8 +726,8 @@ def checkout():
             INSERT INTO payment (customer_id, payment_type_id, order_id, paid_amount) 
             VALUES (%s, %s, %s, %s)
         """, (customer_id, 1, order_id, total_price))
-        cursor.execute("DELETE FROM cart_item WHERE customer_id = %s", (customer_id,))
         cursor.execute("DELETE FROM cart_item_option WHERE cart_item_id IN (SELECT cart_item_id FROM cart_item WHERE customer_id = %s)", (customer_id,))
+        cursor.execute("DELETE FROM cart_item WHERE customer_id = %s", (customer_id,))
         connection.commit()
         flash("Payment successful and order created.", "success")
     except Exception as e:
@@ -736,41 +737,6 @@ def checkout():
         cursor.close()
         connection.close()
     return redirect(url_for('customer.orders'))
-
-#payment to order 
-def add_to_cart(customer_id, product_id, quantity, options):
-    connection, cursor = get_cursor()
-    try:
-        query = """
-            SELECT ci.cart_item_id 
-            FROM cart_item ci
-            LEFT JOIN cart_item_option cio ON ci.cart_item_id = cio.cart_item_id
-            WHERE ci.customer_id = %s AND ci.product_id = %s
-        """
-        params = [customer_id, product_id]
-        for option_id in options:
-            query += " AND EXISTS (SELECT 1 FROM cart_item_option WHERE cart_item_id = ci.cart_item_id AND option_id = %s)"
-            params.append(option_id)
-        cursor.execute(query, params)
-        cart_item = cursor.fetchone()
-        if cart_item:
-            cart_item_id = cart_item['cart_item_id']
-            cursor.execute("UPDATE cart_item SET quantity = quantity + %s WHERE cart_item_id = %s", (quantity, cart_item_id))
-        else:
-            cursor.execute("INSERT INTO cart_item (customer_id, product_id, quantity) VALUES (%s, %s, %s)", (customer_id, product_id, quantity))
-            cart_item_id = cursor.lastrowid
-            for option_id in options:
-                cursor.execute("INSERT INTO cart_item_option (cart_item_id, option_id) VALUES (%s, %s)", (cart_item_id, option_id))
-        connection.commit()
-        return True
-    except Exception as e:
-        connection.rollback()
-        print(f"Error: {e}")
-        return False
-    finally:
-        cursor.close()
-        connection.close()
-
 
 #check orders and details
 @customer_blueprint.route('/orders', methods=['GET'])
