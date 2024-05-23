@@ -454,12 +454,11 @@ def customer_viewallbookings():
     return render_template('customer/customer_viewallbookings.html', all_bookings=all_bookings, customer_info=customer_info)
 
 
-
 #product to cart
 def get_products(category_id=None):
     query = """
     SELECT p.product_id, p.name, p.description, p.unit_price, 
-           COALESCE(SUM(i.quantity), NULL) as quantity, p.image
+           COALESCE(SUM(i.quantity), -1) as quantity, p.image
     FROM product p
     LEFT JOIN inventory i ON p.product_id = i.product_id
     WHERE 1=1
@@ -469,13 +468,16 @@ def get_products(category_id=None):
         query += " AND p.category_id = %s"
         params.append(category_id)
     query += " GROUP BY p.product_id"
+    
     connection, cursor = get_cursor()
     cursor.execute(query, params)
     products = cursor.fetchall()
     cursor.close()
     connection.close()
+    
     for product in products:
-        product['out_of_stock'] = (product['quantity'] is not None and product['quantity'] == 0)
+        product['out_of_stock'] = (product['quantity'] == 0)
+        product['infinite_stock'] = (product['quantity'] == -1)  
     return products
 
 def get_categories():
@@ -515,7 +517,6 @@ def get_product_options():
 
 def add_to_cart(customer_id, product_id, quantity, options):
     connection, cursor = get_cursor()
-    
     try:
         query = """
             SELECT ci.cart_item_id 
@@ -559,6 +560,7 @@ def product():
     
     return render_template('customer/customer_product.html', customer_info=customer_info, products=products, categories=categories, product_options=product_options)
 
+#product to cart
 @customer_blueprint.route('/add_cart', methods=['POST'])
 @role_required(['customer'])
 def add_cart():
@@ -575,10 +577,8 @@ def add_cart():
     if add_to_cart(customer_info['customer_id'], product_id, quantity, options):
         flash('Product added to cart successfully', 'success')
     else:
-        flash('Failed to add product to cart', 'danger')
+        flash('Failed to add product to cart. Out of stock or insufficient quantity.', 'danger')
     return redirect(url_for('customer.product'))
-
-
 
 #cart to payment
 @customer_blueprint.route('/cart', methods=["GET"])
@@ -622,19 +622,22 @@ def cart():
         item_total = item['unit_price'] * item['quantity']
         option_total = sum(option_costs)
         item['subtotal'] = (item_total + option_total) * Decimal('0.85')
+        item['gst'] = (item_total + option_total) * Decimal('0.15')
         item['total'] = item_total + option_total
         total += item['total']
 
     if total > Decimal('0.00'):
         subtotal = total * Decimal('0.85')
+        gst = total * Decimal('0.15')
         total = total
     else:
+        gst = Decimal('0.00')
         subtotal = Decimal('0.00')
         total = Decimal('0.00')
 
     cursor.close()
     connection.close()
-    return render_template('customer/customer_cart.html', cart_items=cart_items, total=total, subtotal=subtotal, customer_info=customer_info)
+    return render_template('customer/customer_cart.html', cart_items=cart_items, total=total, gst=gst, subtotal=subtotal, customer_info=customer_info)
 
 @customer_blueprint.route('/remove_from_cart', methods=["POST"])
 @role_required(['customer'])
@@ -647,7 +650,6 @@ def remove_from_cart():
     try:
         cursor.execute("DELETE FROM cart_item_option WHERE cart_item_id = %s", (cart_item_id,))
         cursor.execute("DELETE FROM cart_item WHERE cart_item_id = %s", (cart_item_id,))
-
         connection.commit()
         flash('Item removed from cart.', 'success')
     except Exception as e:
@@ -664,14 +666,11 @@ def remove_from_cart():
 def customer_checkout():
     email = session.get('email')
     customer_info = get_customer_info(email)
-    
     if not customer_info:
         flash("Please login to proceed to checkout.", "info")
         return redirect(url_for('customer.login'))
-
     return render_template('customer/customer_checkout.html', customer_info=customer_info)
 
-#payment to order 
 @customer_blueprint.route('/checkout', methods=['POST'])
 @role_required(['customer'])
 def checkout():
@@ -686,7 +685,7 @@ def checkout():
         cursor.execute("""
             INSERT INTO orders (customer_id, total_price, status, created_at) 
             VALUES (%s, %s, 'ordered', NOW())
-        """, (customer_id, 0))  #total_price
+        """, (customer_id, 0))
         order_id = cursor.lastrowid
         cursor.execute("""
             SELECT ci.cart_item_id, ci.product_id, ci.quantity, p.unit_price, 
@@ -714,6 +713,11 @@ def checkout():
                 INSERT INTO paid_item (customer_id, product_id, quantity, price, order_id) 
                 VALUES (%s, %s, %s, %s, %s)
             """, (customer_id, product_id, quantity, unit_price, order_id))
+            cursor.execute("""
+                UPDATE inventory 
+                SET quantity = quantity - %s 
+                WHERE product_id = %s AND (option_id IS NULL OR option_id IN (SELECT option_id FROM cart_item_option WHERE cart_item_id = %s))
+            """, (quantity, product_id, item['cart_item_id']))
         cursor.execute("""
             UPDATE orders SET total_price = %s WHERE order_id = %s
         """, (total_price, order_id))
@@ -731,8 +735,42 @@ def checkout():
     finally:
         cursor.close()
         connection.close()
-
     return redirect(url_for('customer.orders'))
+
+#payment to order 
+def add_to_cart(customer_id, product_id, quantity, options):
+    connection, cursor = get_cursor()
+    try:
+        query = """
+            SELECT ci.cart_item_id 
+            FROM cart_item ci
+            LEFT JOIN cart_item_option cio ON ci.cart_item_id = cio.cart_item_id
+            WHERE ci.customer_id = %s AND ci.product_id = %s
+        """
+        params = [customer_id, product_id]
+        for option_id in options:
+            query += " AND EXISTS (SELECT 1 FROM cart_item_option WHERE cart_item_id = ci.cart_item_id AND option_id = %s)"
+            params.append(option_id)
+        cursor.execute(query, params)
+        cart_item = cursor.fetchone()
+        if cart_item:
+            cart_item_id = cart_item['cart_item_id']
+            cursor.execute("UPDATE cart_item SET quantity = quantity + %s WHERE cart_item_id = %s", (quantity, cart_item_id))
+        else:
+            cursor.execute("INSERT INTO cart_item (customer_id, product_id, quantity) VALUES (%s, %s, %s)", (customer_id, product_id, quantity))
+            cart_item_id = cursor.lastrowid
+            for option_id in options:
+                cursor.execute("INSERT INTO cart_item_option (cart_item_id, option_id) VALUES (%s, %s)", (cart_item_id, option_id))
+        connection.commit()
+        return True
+    except Exception as e:
+        connection.rollback()
+        print(f"Error: {e}")
+        return False
+    finally:
+        cursor.close()
+        connection.close()
+
 
 #check orders and details
 @customer_blueprint.route('/orders', methods=['GET'])
@@ -760,7 +798,6 @@ def orders():
         cursor.close()
         connection.close()
     return render_template('customer/customer_orders.html', orders=orders, customer_info=customer_info)
-
 
 @customer_blueprint.route('/order_details/<int:order_id>', methods=['GET'])
 @role_required(['customer'])
@@ -825,6 +862,5 @@ def cancel_order(order_id):
     finally:
         cursor.close()
         connection.close()
-
     return redirect(url_for('customer.orders'))
 

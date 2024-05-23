@@ -38,18 +38,6 @@
                                         <div class="col-8 me-2">
                                             <select id="expiry_m" name="expiry_m" required class="form-select" aria-label="Default select example">
                                                 <option disabled selected value>MM</option>
-                                                <option value="01">01</option>
-                                                <option value="02">02</option>
-                                                <option value="03">03</option>
-                                                <option value="04">04</option>
-                                                <option value="05">05</option>
-                                                <option value="06">06</option>
-                                                <option value="07">07</option>
-                                                <option value="08">08</option>
-                                                <option value="09">09</option>
-                                                <option value="10">10</option>
-                                                <option value="11">11</option>
-                                                <option value="12">12</option>
                                             </select>
                                             <div class="invalid-feedback text-start">
                                                 Please select expire month.
@@ -58,18 +46,6 @@
                                         <div class="col-8">
                                             <select id="expiry_y" name="expiry_y" required class="form-select" aria-label="Default select example">
                                                 <option disabled selected value>YY</option>
-                                                <option value="24">24</option>
-                                                <option value="25">25</option>
-                                                <option value="26">26</option>
-                                                <option value="27">27</option>
-                                                <option value="28">28</option>
-                                                <option value="29">29</option>
-                                                <option value="30">30</option>
-                                                <option value="31">31</option>
-                                                <option value="32">32</option>
-                                                <option value="33">33</option>
-                                                <option value="34">34</option>
-                                                <option value="35">35</option>
                                             </select>
                                             <div class="invalid-feedback text-start">
                                                 Please select expire year.
@@ -110,6 +86,7 @@
     </div>
 </div>
 
+
 <script>
 (function () {
     'use strict'
@@ -123,6 +100,50 @@
             form.classList.add('was-validated')
         }, false)
     })
-})()
+})();
+document.addEventListener("DOMContentLoaded", function() {
+    const cardNumberInput = document.getElementById('card_number');
+    const feedbackElement = cardNumberInput.nextElementSibling;
+
+    cardNumberInput.addEventListener('input', function() {
+        const value = cardNumberInput.value.replace(/\D/g, '');
+        if (value.length === 16) { 
+            cardNumberInput.classList.remove('is-invalid');
+            cardNumberInput.classList.add('is-valid');
+            feedbackElement.textContent = 'Valid card number';
+            feedbackElement.style.color = 'green';
+        } else {
+            cardNumberInput.classList.remove('is-valid');
+            cardNumberInput.classList.add('is-invalid');
+            feedbackElement.textContent = 'Invalid card number';
+            feedbackElement.style.color = 'red';
+        }
+    });
+});
+(function () {
+    var today = new Date();
+    var currentMonth = today.getMonth() + 2; // Months are zero-based
+    var currentYear = today.getFullYear();
+
+    var expiryMonthSelect = document.getElementById('expiry_m');
+    var expiryYearSelect = document.getElementById('expiry_y');
+
+    // Populate expiry month options
+    for (var month = currentMonth; month <= 12; month++) {
+        var option = document.createElement('option');
+        option.value = month < 10 ? '0' + month : month;
+        option.text = month < 10 ? '0' + month : month;
+        expiryMonthSelect.appendChild(option);
+    }
+
+    // Populate expiry year options (next 10 years)
+    for (var year = currentYear; year <= currentYear + 10; year++) {
+        var option = document.createElement('option');
+        option.value = year % 100; // Use last two digits
+        option.text = year;
+        expiryYearSelect.appendChild(option);
+    }
+})();
+
 </script>
 {% endblock %}
