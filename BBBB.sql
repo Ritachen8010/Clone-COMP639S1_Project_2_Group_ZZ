@@ -108,7 +108,7 @@ CREATE TABLE `product_option_mapping` (
     FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
     FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`),
     FOREIGN KEY (`option_type_id`) REFERENCES `product_option_type` (`option_type_id`)
-)AUTO_INCREMENT=1;
+);
 
 -- 10. orders
 CREATE TABLE `orders` (
