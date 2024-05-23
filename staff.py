@@ -273,7 +273,7 @@ def monitor_inventory():
                 AND inventory.option_type_id = product_option_mapping.option_type_id
             LEFT JOIN product_option ON product_option_mapping.option_id = product_option.option_id
             WHERE product_category.name = %s
-            ORDER BY inventory.quantity ASC, name
+            ORDER BY name
             LIMIT %s OFFSET %s
         """, (category, items_per_page, offset))
     else:
@@ -300,7 +300,7 @@ def monitor_inventory():
                 AND inventory.option_id = product_option_mapping.option_id 
                 AND inventory.option_type_id = product_option_mapping.option_type_id
             LEFT JOIN product_option ON product_option_mapping.option_id = product_option.option_id
-            ORDER BY inventory.quantity ASC, name
+            ORDER BY name
             LIMIT %s OFFSET %s
         """, (items_per_page, offset))
 
