@@ -235,8 +235,6 @@ def order_details(order_id):
         connection.close()
     
     return render_template('staff/staff_order_details.html', order=order, order_items=order_items, staff_info=staff_info)
-
-# Staff monitor inventory
 @staff_blueprint.route('/monitor_inventory')
 @role_required(['staff'])
 def monitor_inventory():
@@ -254,24 +252,21 @@ def monitor_inventory():
                 inventory.product_id,
                 inventory.option_id,
                 product_category.name AS category,
-                CONCAT(product.name, ' ', COALESCE(product_option.name, '')) AS name,
+                CONCAT(product.name, ' ', COALESCE(product_option.option_name, '')) AS name,
                 product.description,
                 product.unit_price,
                 inventory.quantity,
                 inventory.last_updated,
-                staff.first_name,
-                staff.last_name,
-                manager.first_name,
-                manager.last_name
+                staff.first_name AS staff_first_name,
+                staff.last_name AS staff_last_name,
+                manager.first_name AS manager_first_name,
+                manager.last_name AS manager_last_name
             FROM inventory 
             LEFT JOIN product ON inventory.product_id = product.product_id
             LEFT JOIN staff ON inventory.staff_id = staff.staff_id
             LEFT JOIN manager ON inventory.manager_id = manager.manager_id
             LEFT JOIN product_category ON product.category_id = product_category.category_id
-            LEFT JOIN product_option_mapping ON inventory.product_id = product_option_mapping.product_id 
-                AND inventory.option_id = product_option_mapping.option_id 
-                AND inventory.option_type_id = product_option_mapping.option_type_id
-            LEFT JOIN product_option ON product_option_mapping.option_id = product_option.option_id
+            LEFT JOIN product_option ON inventory.option_id = product_option.option_id
             WHERE product_category.name = %s
             ORDER BY name
             LIMIT %s OFFSET %s
@@ -282,24 +277,21 @@ def monitor_inventory():
                 inventory.product_id,
                 inventory.option_id,
                 product_category.name AS category,
-                CONCAT(product.name, ' ', COALESCE(product_option.name, '')) AS name,
+                CONCAT(product.name, ' ', COALESCE(product_option.option_name, '')) AS name,
                 product.description,
                 product.unit_price,
                 inventory.quantity,
                 inventory.last_updated,
-                staff.first_name,
-                staff.last_name,
-                manager.first_name,
-                manager.last_name
+                staff.first_name AS staff_first_name,
+                staff.last_name AS staff_last_name,
+                manager.first_name AS manager_first_name,
+                manager.last_name AS manager_last_name
             FROM inventory 
             LEFT JOIN product ON inventory.product_id = product.product_id
             LEFT JOIN staff ON inventory.staff_id = staff.staff_id
             LEFT JOIN manager ON inventory.manager_id = manager.manager_id
             LEFT JOIN product_category ON product.category_id = product_category.category_id
-            LEFT JOIN product_option_mapping ON inventory.product_id = product_option_mapping.product_id 
-                AND inventory.option_id = product_option_mapping.option_id 
-                AND inventory.option_type_id = product_option_mapping.option_type_id
-            LEFT JOIN product_option ON product_option_mapping.option_id = product_option.option_id
+            LEFT JOIN product_option ON inventory.option_id = product_option.option_id
             ORDER BY name
             LIMIT %s OFFSET %s
         """, (items_per_page, offset))
@@ -327,7 +319,7 @@ def update_inventory():
     product_id = request.form.get('product_id')
     option_id = request.form.get('option_id')
     new_quantity = request.form.get('quantity')
-    page = request.form.get('page', 1, type=int)  # Get the current page number
+    page = request.form.get('page', 1, type=int)
     category = request.form.get('category')
     connection, cursor = get_cursor()
 
@@ -341,14 +333,24 @@ def update_inventory():
         return redirect(url_for('staff.monitor_inventory', page=page, category=category)) 
 
     # Check if the new quantity will make the inventory negative
-    cursor.execute("""
-        SELECT quantity FROM inventory WHERE product_id = %s
-    """, (product_id,))
-    current_quantity = cursor.fetchone()['quantity']
-    cursor.fetchall() 
+    if option_id and option_id.isdigit():
+        cursor.execute("""
+            SELECT quantity FROM inventory WHERE product_id = %s AND option_id = %s
+        """, (product_id, option_id))
+    else:
+        cursor.execute("""
+            SELECT quantity FROM inventory WHERE product_id = %s
+        """, (product_id,))
+
+    current_quantity = cursor.fetchone()
+    if current_quantity is None:
+        flash('Product not found in inventory.', 'error')
+        return redirect(url_for('staff.monitor_inventory', page=page, category=category))
+
+    current_quantity = current_quantity['quantity']
     if current_quantity + new_quantity < 0:
-        flash('Invalid quantity. The new quantity can not make the inventory negative.', 'error')
-        return redirect(url_for('staff.monitor_inventory'))
+        flash('Invalid quantity. The new quantity cannot make the inventory negative.', 'error')
+        return redirect(url_for('staff.monitor_inventory', page=page, category=category))
 
     if option_id and option_id.isdigit():
         cursor.execute("""

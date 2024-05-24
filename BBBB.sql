@@ -75,7 +75,6 @@ CREATE TABLE `product` (
     `name` VARCHAR(255),
     `description` TEXT,
     `unit_price` DECIMAL(10,2),
-    `special_requests` TEXT,
     `is_available` BOOLEAN,
     `image` VARCHAR(500),
     PRIMARY KEY (`product_id`),
@@ -83,31 +82,26 @@ CREATE TABLE `product` (
 )AUTO_INCREMENT=1;
 
 -- 7. product option type
-CREATE TABLE `product_option_type` (
-	`option_type_id` INT AUTO_INCREMENT,
-    `description` VARCHAR(500),
-	PRIMARY KEY (`option_type_id`)
-)AUTO_INCREMENT=1;
-
--- 8. product option
 CREATE TABLE `product_option` (
     `option_id` INT AUTO_INCREMENT,
-    `option_type_id` INT,
-    `name` VARCHAR(500),
-    `additional_cost` DECIMAL(10, 2),
-    PRIMARY KEY (`option_id`),
-    FOREIGN KEY (`option_type_id`) REFERENCES `product_option_type` (`option_type_id`)
-)AUTO_INCREMENT=1;
-
--- 9. product option mapping
-CREATE TABLE `product_option_mapping` (
     `product_id` INT,
-    `option_id` INT,
-    `option_type_id` INT,
-    PRIMARY KEY (`product_id`, `option_id`, `option_type_id`),
+    `option_type` VARCHAR(255),
+    `option_name` VARCHAR(255),
+    `additional_cost` DECIMAL(10,2),
+    PRIMARY KEY (`option_id`),
+    FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`)
+) AUTO_INCREMENT=1;
+
+
+CREATE TABLE `inventory` (
+    `staff_id` INT,
+    `manager_id` INT,
+    `product_id` INT,
+    `option_id` INT DEFAULT NULL,
+    `quantity` INT,
+    `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
-    FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`),
-    FOREIGN KEY (`option_type_id`) REFERENCES `product_option_type` (`option_type_id`)
+    FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`)
 );
 
 -- 10. orders
@@ -133,22 +127,6 @@ CREATE TABLE `order_item` (
     PRIMARY KEY (`order_item_id`),
     FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`),
     FOREIGN KEY (`product_id`) REFERENCES `product`(`product_id`)
-)AUTO_INCREMENT=1;
-
--- 12. inventory
-CREATE TABLE `inventory` (
-    `inventory_id` INT AUTO_INCREMENT,
-    `staff_id` INT,
-    `manager_id` INT,
-    `product_id` INT,
-    `option_id` INT,
-    `option_type_id` INT,
-    `quantity` INT,
-    `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-    PRIMARY KEY (`inventory_id`),
-    FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`),
-    FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`),
-    FOREIGN KEY (`product_id`, `option_id`, `option_type_id`) REFERENCES `product_option_mapping` (`product_id`, `option_id`, `option_type_id`)
 )AUTO_INCREMENT=1;
 
 -- 13. accommodation
@@ -393,261 +371,403 @@ VALUES
 ('Fast Food', 'A variety of quick and delicious meals including hotdogs, crepes, and more'),
 ('Frozen Treats', 'Delicious and refreshing frozen desserts, perfect for cooling down on a hot day'),
 ('Travel Essentials & Souvenirs', 'A curated collection of essential items and unique souvenirs, perfect for travelers seeking convenience and memorable keepsakes.');
-
 -- 6. Insert into product
-INSERT INTO `product` (`category_id`, `name`, `description`, `unit_price`, `special_requests`, `is_available`, `image`)
+INSERT INTO `product` (`category_id`, `name`, `description`, `unit_price`, `is_available`, `image`)
 VALUES 
-#1
-(1, 'Espresso', 'Strong black coffee made by forcing steam through ground coffee beans.', 4.50, '', TRUE, 'espresso.jpg'),
-#2
-(1, 'Latte', 'Coffee drink made with espresso and steamed milk.', 6.00, '', TRUE, 'latte.jpg'),
-#3
-(1, 'Cappuccino', 'Coffee-based drink made with equal parts of espresso, steamed milk, and frothed milk.', 6.00, '', TRUE, 'cappuccino.jpg'),
-#4
-(1, 'Flat White', 'Smooth and velvety coffee made with espresso and steamed milk.', 6.00, '', TRUE, 'flatwhite.jpg'),
-#5
-(1, 'Mocha', 'Espresso with steamed milk and chocolate syrup, topped with whipped cream.', 6.50, '', TRUE, 'mocha.jpg'),
-#6
-(2, 'Hot Chocolate', 'Rich and creamy hot chocolate made with real cocoa.', 5.00, '', TRUE, 'hotchocolate.jpg'),
-#7
-(2, 'Herbal Tea', 'A soothing blend of herbal ingredients steeped to perfection.', 6.50, '', TRUE, 'herbaltea.jpg'),
-#8
-(2, 'Chai Latte', 'Spiced tea beverage made with aromatic spices and steamed milk.', 5.00, '', TRUE, 'chai.jpg'),
-#9
-(3, 'Coca-Cola', 'Classic cola-flavored soft drink.',3.00, 'Diet option available', TRUE, 'cola.jpg'),
-#10
-(3, 'Sprite', 'Crisp, refreshing lemon-lime flavored soda.', 3.00, '', TRUE, 'sprite.jpg'),
-#11
-(3, 'Fanta', 'Bright, bubbly and instantly refreshing orange soda.', 3.00, '', TRUE, 'fanta.jpg'),
-#12
-(3, 'Pepsi', 'Bold, refreshing cola drink with a rich flavor.', 3.00, 'Diet option available', TRUE, 'pepsi.jpg'),
-#13
-(3, 'Ginger Ale', 'Gently carbonated, soothing ginger-flavored soda.', 5.00, '', TRUE, 'ginger.jpg'),
-#14
-(4, 'Classic Vanilla', 'Smooth and creamy vanilla milkshake.', 7.00, '', TRUE, 'vanilla.jpg'),
-#15
-(4, 'Rich Chocolate', 'Decadent chocolate milkshake made from real cocoa.', 7.00, '', TRUE, 'chocolate.jpg'),
-#16
-(4, 'Strawberry Delight', 'Fresh and fruity strawberry milkshake.', 7.00, '', TRUE, 'strawberry.jpg'),
-#17
-(4, 'Caramel Swirl', 'Creamy milkshake with rich caramel swirls.', 7.00, '', TRUE, 'caramel.jpg'),
-#18
-(4, 'Banana Bliss', 'Creamy milkshake blended with ripe bananas.', 7.00, '', TRUE, 'banana.jpg'),
-#19
-(4, 'Cookies and Cream', 'Crushed cookies mixed into a creamy milkshake.', 7.00, '', TRUE, 'cookie.jpg'),
-#20
-(4, 'Seasonal Berry', 'Blend of seasonal berries in a refreshing milkshake.', 7.00, '', TRUE, 'berry.jpg'),
-#21
-(5, 'Classic Lemon Iced Tea', 'Iced tea flavored with a twist of lemon.', 4.50, 'Sweetened and Unsweetened options available', TRUE, 'lemontea.jpg'),
-#22
-(5, 'Peach Iced Tea', 'Refreshing iced tea infused with peach flavors.', 4.50, 'Sweetened and Unsweetened options available', TRUE, 'peachtea.jpg'),
-#23
-(5, 'Raspberry Iced Tea', 'Iced tea infused with the essence of raspberries.', 4.50, 'Sweetened and Unsweetened options available', TRUE, 'rasberrytea.jpg'),
-#24
-(5, 'Green Iced Tea', 'Smooth and mellow green tea served chilled.', 4.50, 'Sweetened and Unsweetened options available', TRUE, 'greentea.jpg'),
-#25
-(5, 'Hibiscus Iced Tea', 'Tangy and refreshing hibiscus-flavored iced tea.', 4.50, 'Sweetened and Unsweetened options available', TRUE, 'hibiscuctea.jpg'),
-#26
-(5, 'Mint Iced Tea', 'Cooling mint-flavored iced tea.', 4.50, 'Sweetened and Unsweetened options available', TRUE, 'minttea.jpg'),
-#27
-(6, 'American Hotdogs', 'Classic grilled hotdogs with a selection of toppings.', 8.00, 'Add-ons available: cheese, bacon, onions, relish', TRUE, 'hotdog.jpg'),
-#28
-(6, 'Sweetcorn & Kumara Patties', 'Delicious patties made from sweetcorn and kumara.', 8.50, 'Gluten-free option available', TRUE, 'pattie.jpg'),
-#29
-(6, 'Crepes', 'Thin pancakes served with various toppings.', 8.00, 'Topping choices: chocolate, fruits, honey, syrup', TRUE, 'crepes.jpg'),
-#30
-(6, 'Smokey BBQ Pulled Pork in a Bun', 'Slow-cooked pulled pork smothered in Smokey BBQ sauce, served in a soft bun.', 10.00, '', TRUE, 'bun.jpg'),
-#31
-(6, 'Muffins', 'Freshly baked muffins available in several flavors.', 4.50, 'Flavor choices: blueberry, chocolate chip, bran', TRUE, 'muffins.jpg'),
-#32
-(6, 'Slices', 'Assorted homemade slices.', 3.00, 'Varieties include: lemon, brownie, caramel', TRUE, 'slice.jpg'),
-#33
-(6, 'Chicken Tenders', 'Crispy on the outside, juicy on the inside, our chicken tenders are served with your choice of dipping sauces.', 7.50, '', TRUE, 'chicken_tenders.jpg'),
-#34
-(6, 'Veggie Burger', 'A hearty, meat-free patty served on a toasted bun with lettuce, tomato, and your choice of sauce.', 9.00, '', TRUE, 'veggie_burger.jpg'),
-#35
-(6, 'Fish Tacos', 'Soft tacos filled with lightly seasoned grilled fish, fresh slaw, and a creamy cilantro sauce.', 9.50, '', TRUE, 'fish_tacos.jpg'),
-#36
-(6, 'Loaded Fries', 'Crispy fries topped with melted cheese, bacon bits, and green onions, served with a side of sour cream.', 4.50, '', TRUE, 'loaded_fries.jpg'),
-#37
-(6, 'Falafel Wrap', 'Crunchy falafel balls wrapped in a soft tortilla with lettuce, tomato, and a drizzle of tahini.', 9.00, '', TRUE, 'falafel_wrap.jpg'),
-#38
-(6, 'Cheese Nachos', 'Corn tortilla chips covered with a generous layer of melted cheese, jalapeños, and a side of salsa.', 7.00, '', TRUE, 'nachos.jpg'),
-#39
-(6, 'Spicy Ramen', 'Authentic Spicy Ramen noodles served in a rich, fiery broth, topped with sliced pork, boiled eggs, and fresh green onions.', 8.50, '', TRUE, 'spicy_ramen.jpg'),
-#40
-(6, 'Stinky Tofu', 'Deep-fried Stinky Tofu, renowned for its pungent aroma and crisp exterior, served with pickled cabbage and chili sauce.', 6.50, '', TRUE, 'stinky_tofu.jpg'),
-#41
-(6, 'Grilled Cold Noodles', 'Chilled noodles with a sesame and soy sauce dressing, grilled to perfection and topped with cucumber, peanuts, and coriander.', 7.00, '', TRUE, 'grilled_cold_noodles.jpg'),
-#42
-(7, 'Ice Blocks', 'Refreshing flavored ice blocks.', 3.50, 'Flavors include: raspberry, cola, lime', TRUE, 'iceblock.jpg'),
-#43
-(7, 'Real Fruit Ice Creams', 'Ice cream made with real fruit blended on the spot.', 7.50, 'Fruit options: strawberry, banana, mixed berry', TRUE, 'icecream.jpg'),
-#44
-(7, 'Sorbet', 'Light and refreshing, our sorbet comes in a variety of fruity flavors, perfect for a dairy-free refreshment.', 3.00, '', TRUE, 'sorbet.jpg'),
-#45
-(7, 'Frozen Yogurt', 'Enjoy our creamy frozen yogurt, available in classic and exotic flavors, topped with your choice of fruits or nuts.', 3.50, '', TRUE, 'froyo.jpg'),
-#46
-(7, 'Gelato', 'Indulge in our rich and creamy gelato, crafted with the finest ingredients for a smooth and flavorful experience.', 8.00, '', TRUE, 'gelato.jpg'),
-#47
-(8, 'Sandfly Spray', 'Effective protection against sandflies and other biting insects, essential for enjoying the outdoors in comfort.', 12.00, '', TRUE, 'sandflyspray.jpg'),
-#48
-(8, 'Sunscreen', 'The UV levels can be quite high, so sunscreen is a must to protect your skin.', 15.00, '', TRUE, 'sunscreen.jpg'),
-#49
-(8, 'Rain Gear', 'The region is known for its rainfall, so a waterproof jacket or umbrella is advisable.', 50.00, 'Available in various sizes and colors', TRUE, 'raingear.jpg'),
-#50
-(8, 'Greenstone Jewelry', 'A significant cultural icon in New Zealand, sourced mainly from the West Coast.', 120.00, '', TRUE, 'greenstone.jpg');
+-- Coffee
+(1, 'Espresso', 'Strong black coffee made by forcing steam through ground coffee beans.', 4.50, TRUE, 'espresso.jpg'), -- 1
+(1, 'Latte', 'Coffee drink made with espresso and steamed milk.', 6.00, TRUE, 'latte.jpg'), -- 2
+(1, 'Cappuccino', 'Coffee-based drink made with equal parts of espresso, steamed milk, and frothed milk.', 6.00, TRUE, 'cappuccino.jpg'), -- 3
+(1, 'Flat White', 'Smooth and velvety coffee made with espresso and steamed milk.', 6.00, TRUE, 'flatwhite.jpg'), -- 4
+(1, 'Mocha', 'Espresso with steamed milk and chocolate syrup, topped with whipped cream.', 6.50, TRUE, 'mocha.jpg'), -- 5
 
--- 7. Insert into product_option_type
-INSERT INTO `product_option_type` (`description`)
-VALUES 
-('Milk Type'), 
-('Syrup Type'),
-('Size'),
-('Ice Level'), 
-('Extra Flavor'),
-('Bun Type'), 
-('Toppings'), 
-('Sauce Type'),
-('Cooking Style'),
-('Fruit Flavor');
+-- Hot Drinks
+(2, 'Hot Chocolate', 'Rich and creamy hot chocolate made with real cocoa.', 5.00, TRUE, 'hotchocolate.jpg'), -- 6
+(2, 'Herbal Tea', 'A soothing blend of herbal ingredients steeped to perfection.', 6.50, TRUE, 'herbaltea.jpg'), -- 7
+(2, 'Chai Latte', 'Spiced tea beverage made with aromatic spices and steamed milk.', 5.00, TRUE, 'chai.jpg'), -- 8
 
--- 8. Insert into product_option 
+-- Soft Drinks
+(3, 'Coca-Cola', 'Classic cola-flavored soft drink.', 3.00, TRUE, 'cola.jpg'), -- 9
+(3, 'Sprite', 'Crisp, refreshing lemon-lime flavored soda.', 3.00, TRUE, 'sprite.jpg'), -- 10
+(3, 'Fanta', 'Bright, bubbly and instantly refreshing orange soda.', 3.00, TRUE, 'fanta.jpg'), -- 11
+(3, 'Pepsi', 'Bold, refreshing cola drink with a rich flavor.', 3.00, TRUE, 'pepsi.jpg'), -- 12
+(3, 'Ginger Ale', 'Gently carbonated, soothing ginger-flavored soda.', 5.00, TRUE, 'ginger.jpg'), -- 13
 
--- Insert into product_option 
-INSERT INTO `product_option` (`option_type_id`, `name`, `additional_cost`)
-VALUES 
--- Milk Type options
-(1, 'Soy Milk', 0.50),          -- 1
-(1, 'Almond Milk', 0.50),       -- 2
-(1, 'Oat Milk', 0.50),          -- 3
+-- Milkshakes
+(4, 'Classic Vanilla', 'Smooth and creamy vanilla milkshake.', 7.00, TRUE, 'vanilla.jpg'), -- 14
+(4, 'Rich Chocolate', 'Decadent chocolate milkshake made from real cocoa.', 7.00, TRUE, 'chocolate.jpg'), -- 15
+(4, 'Strawberry Delight', 'Fresh and fruity strawberry milkshake.', 7.00, TRUE, 'strawberry.jpg'), -- 16
+(4, 'Caramel Swirl', 'Creamy milkshake with rich caramel swirls.', 7.00, TRUE, 'caramel.jpg'), -- 17
+(4, 'Banana Bliss', 'Creamy milkshake blended with ripe bananas.', 7.00, TRUE, 'banana.jpg'), -- 18
+(4, 'Cookies and Cream', 'Crushed cookies mixed into a creamy milkshake.', 7.00, TRUE, 'cookie.jpg'), -- 19
+(4, 'Seasonal Berry', 'Blend of seasonal berries in a refreshing milkshake.', 7.00, TRUE, 'berry.jpg'), -- 20
 
--- Syrup Type options
-(2, 'Vanilla Syrup', 0.50),     -- 4
-(2, 'Caramel Syrup', 0.50),     -- 5
-(2, 'Hazelnut Syrup', 0.50),    -- 6
+-- Iced Teas
+(5, 'Classic Lemon Iced Tea', 'Iced tea flavored with a twist of lemon.', 4.50, TRUE, 'lemontea.jpg'), -- 21
+(5, 'Peach Iced Tea', 'Refreshing iced tea infused with peach flavors.', 4.50, TRUE, 'peachtea.jpg'), -- 22
+(5, 'Raspberry Iced Tea', 'Iced tea infused with the essence of raspberries.', 4.50, TRUE, 'rasberrytea.jpg'), -- 23
+(5, 'Green Iced Tea', 'Smooth and mellow green tea served chilled.', 4.50, TRUE, 'greentea.jpg'), -- 24
+(5, 'Hibiscus Iced Tea', 'Tangy and refreshing hibiscus-flavored iced tea.', 4.50, TRUE, 'hibiscuctea.jpg'), -- 25
+(5, 'Mint Iced Tea', 'Cooling mint-flavored iced tea.', 4.50, TRUE, 'minttea.jpg'), -- 26
 
--- Size options
-(3, 'Small', 0.00),             -- 7
-(3, 'Medium', 0.50),            -- 8
-(3, 'Large', 1.00),             -- 9
+-- Fast Food
+(6, 'American Hotdogs', 'Classic grilled hotdogs with a selection of toppings.', 8.00, TRUE, 'hotdog.jpg'), -- 27
+(6, 'Sweetcorn & Kumara Patties', 'Delicious patties made from sweetcorn and kumara.', 8.50, TRUE, 'pattie.jpg'), -- 28
+(6, 'Crepes', 'Thin pancakes served with various toppings.', 8.00, TRUE, 'crepes.jpg'), -- 29
+(6, 'Smokey BBQ Pulled Pork in a Bun', 'Slow-cooked pulled pork smothered in Smokey BBQ sauce, served in a soft bun.', 10.00, TRUE, 'bun.jpg'), -- 30
+(6, 'Muffins', 'Freshly baked muffins available in several flavors.', 4.50, TRUE, 'muffins.jpg'), -- 31
+(6, 'Slices', 'Assorted homemade slices.', 3.00, TRUE, 'slice.jpg'), -- 32
+(6, 'Chicken Tenders', 'Crispy on the outside, juicy on the inside, our chicken tenders are served with your choice of dipping sauces.', 7.50, TRUE, 'chicken_tenders.jpg'), -- 33
+(6, 'Veggie Burger', 'A hearty, meat-free patty served on a toasted bun with lettuce, tomato, and your choice of sauce.', 9.00, TRUE, 'veggie_burger.jpg'), -- 34
+(6, 'Fish Tacos', 'Soft tacos filled with lightly seasoned grilled fish, fresh slaw, and a creamy cilantro sauce.', 9.50, TRUE, 'fish_tacos.jpg'), -- 35
+(6, 'Loaded Fries', 'Crispy fries topped with melted cheese, bacon bits, and green onions, served with a side of sour cream.', 4.50, TRUE, 'loaded_fries.jpg'), -- 36
+(6, 'Falafel Wrap', 'Crunchy falafel balls wrapped in a soft tortilla with lettuce, tomato, and a drizzle of tahini.', 9.00, TRUE, 'falafel_wrap.jpg'), -- 37
+(6, 'Cheese Nachos', 'Corn tortilla chips covered with a generous layer of melted cheese, jalapeños, and a side of salsa.', 7.00, TRUE, 'nachos.jpg'), -- 38
+(6, 'Spicy Ramen', 'Authentic Spicy Ramen noodles served in a rich, fiery broth, topped with sliced pork, boiled eggs, and fresh green onions.', 8.50, TRUE, 'spicy_ramen.jpg'), -- 39
+(6, 'Stinky Tofu', 'Deep-fried Stinky Tofu, renowned for its pungent aroma and crisp exterior, served with pickled cabbage and chili sauce.', 6.50, TRUE, 'stinky_tofu.jpg'), -- 40
+(6, 'Grilled Cold Noodles', 'Chilled noodles with a sesame and soy sauce dressing, grilled to perfection and topped with cucumber, peanuts, and coriander.', 7.00, TRUE, 'grilled_cold_noodles.jpg'), -- 41
 
--- Ice Level options
-(4, 'Light Ice', 0.00),         -- 10
-(4, 'No Ice', 0.00),            -- 11
+-- Frozen Treats
+(7, 'Ice Blocks', 'Refreshing flavored ice blocks.', 3.50, TRUE, 'iceblock.jpg'), -- 42
+(7, 'Real Fruit Ice Creams', 'Ice cream made with real fruit blended on the spot.', 7.50, TRUE, 'icecream.jpg'), -- 43
+(7, 'Sorbet', 'Light and refreshing, our sorbet comes in a variety of fruity flavors, perfect for a dairy-free refreshment.', 3.00, TRUE, 'sorbet.jpg'), -- 44
+(7, 'Frozen Yogurt', 'Enjoy our creamy frozen yogurt, available in classic and exotic flavors, topped with your choice of fruits or nuts.', 3.50, TRUE, 'froyo.jpg'), -- 45
+(7, 'Gelato', 'Indulge in our rich and creamy gelato, crafted with the finest ingredients for a smooth and flavorful experience.', 8.00, TRUE, 'gelato.jpg'), -- 46
 
--- Extra Flavor options
-(5, 'Lemon Flavor', 0.50),      -- 12
-(5, 'Cinnamon', 0.20),          -- 13
-(5, 'Mint Flavor', 0.50),       -- 14
-
--- Bun Type options
-(6, 'Gluten-Free Bun', 0.50),   -- 15
-(6, 'Sesame Bun', 0.20),        -- 16
-
--- Toppings options
-(7, 'Extra Cheese', 0.50),      -- 17
-(7, 'Bacon', 0.75),             -- 18
-(7, 'Grilled Onions', 0.25),    -- 19
-
--- Sauce Type options
-(8, 'BBQ Sauce', 0.00),         -- 20
-(8, 'Mustard', 0.00),           -- 21
-(8, 'Mayo', 0.00),              -- 22
-
--- Cooking Style options
-(9, 'Well Done', 0.00),         -- 23
-(9, 'Medium Well', 0.00),       -- 24
-
--- Fruit Flavor options
-(10, 'Strawberry', 0.00),       -- 25
-(10, 'Banana', 0.00),           -- 26
-(10, 'Mixed Berry', 0.00),      -- 27
-(10, 'Mango', 0.00),            -- 28
-(10, 'Peach', 0.00),            -- 29
-(10, 'Blackberry', 0.00),       -- 30
-(10, 'Kiwi', 0.00);             -- 31
-
--- 9. Insert into product_option_mapping
-INSERT INTO `product_option_mapping` (`product_id`, `option_id`, `option_type_id`)
-VALUES 
--- Espresso options
-(1, 1, 1), (1, 2, 1), (1, 3, 1), (1, 7, 3), (1, 8, 3), (1, 9, 3),
--- Latte options
-(2, 1, 1), (2, 2, 1), (2, 3, 1), (2, 7, 3), (2, 8, 3), (2, 9, 3),
--- Cappuccino options
-(3, 1, 1), (3, 2, 1), (3, 3, 1), (3, 7, 3), (3, 8, 3), (3, 9, 3),
--- Flat White options
-(4, 1, 1), (4, 2, 1), (4, 3, 1), (4, 7, 3), (4, 8, 3), (4, 9, 3),
--- Mocha options
-(5, 1, 1), (5, 2, 1), (5, 3, 1), (5, 7, 3), (5, 8, 3), (5, 9, 3),
-
--- Hot Chocolate options
-(6, 4, 2), (6, 5, 2), (6, 6, 2), 
-
--- Herbal Tea options
-(7, 4, 2), (7, 5, 2), (7, 6, 2), 
-
--- Chai Latte options
-(8, 4, 2), (8, 5, 2), (8, 6, 2), 
-
--- American Hotdogs options
-(27, 17, 7), (27, 18, 7), (27, 19, 7), 
-
--- Sweetcorn & Kumara Patties options
-(28, 17, 7), (28, 18, 7), (28, 19, 7), 
-
--- Crepes options
-(29, 17, 7), (29, 18, 7), (29, 19, 7), 
-
--- Smokey BBQ Pulled Pork in a Bun options
-(30, 17, 7), (30, 18, 7), (30, 19, 7),
-
--- Chicken Tenders options
-(33, 17, 7), (33, 18, 7), (33, 19, 7),
-
--- Veggie Burger options
-(34, 15, 6), (34, 16, 6), (34, 17, 7), (34, 18, 7), (34, 19, 7), 
-
--- Fish Tacos options
-(35, 17, 7), (35, 18, 7), (35, 19, 7),
-
--- Loaded Fries options
-(36, 17, 7), (36, 18, 7), (36, 19, 7),
-
--- Falafel Wrap options
-(37, 17, 7), (37, 18, 7), (37, 19, 7),
-
--- Cheese Nachos options
-(38, 17, 7), (38, 18, 7), (38, 19, 7),
-
--- Spicy Ramen options
-(39, 17, 7), (39, 18, 7), (39, 19, 7),
-
--- Stinky Tofu options
-(40, 17, 7), (40, 18, 7), (40, 19, 7),
-
--- Grilled Cold Noodles options
-(41, 17, 7), (41, 18, 7), (41, 19, 7),
-
--- Ice Blocks options
-(42, 25, 10), (42, 26, 10), (42, 27, 10), (42, 28, 10), (42, 29, 10), (42, 30, 10), (42, 31, 10),
-
--- Real Fruit Ice Creams options
-(43, 25, 10), (43, 26, 10), (43, 27, 10), (43, 28, 10), (43, 29, 10), (43, 30, 10), (43, 31, 10),
-
--- Sorbet options
-(44, 25, 10), (44, 26, 10), (44, 27, 10), (44, 28, 10), (44, 29, 10), (44, 30, 10), (44, 31, 10),
-
--- Frozen Yogurt options
-(45, 25, 10), (45, 26, 10), (45, 27, 10), (45, 28, 10), (45, 29, 10), (45, 30, 10), (45, 31, 10),
-
--- Gelato options
-(46, 25, 10), (46, 26, 10), (46, 27, 10), (46, 28, 10), (46, 29, 10), (46, 30, 10), (46, 31, 10);
+-- Travel Essentials & Souvenirs
+(8, 'Sandfly Spray', 'Effective protection against sandflies and other biting insects, essential for enjoying the outdoors in comfort.', 12.00, TRUE, 'sandflyspray.jpg'), -- 47
+(8, 'Sunscreen', 'The UV levels can be quite high, so sunscreen is a must to protect your skin.', 15.00, TRUE, 'sunscreen.jpg'), -- 48
+(8, 'Rain Gear', 'The region is known for its rainfall, so a waterproof jacket or umbrella is advisable.', 50.00, TRUE, 'raingear.jpg'), -- 49
+(8, 'Greenstone Jewelry', 'A significant cultural icon in New Zealand, sourced mainly from the West Coast.', 120.00, TRUE, 'greenstone.jpg'); -- 50
 
 
+INSERT INTO `product_option` (`product_id`, `option_type`, `option_name`, `additional_cost`)
+VALUES
+-- Coffee Options (Milk Type, Size)
+(1, 'Milk Type', 'Soy Milk', 0.50), (1, 'Milk Type', 'Almond Milk', 0.50), (1, 'Milk Type', 'Oat Milk', 0.50), 
+(1, 'Size', 'Small', 0.00), (1, 'Size', 'Medium', 0.50), (1, 'Size', 'Large', 1.00),
+(2, 'Milk Type', 'Soy Milk', 0.50), (2, 'Milk Type', 'Almond Milk', 0.50), (2, 'Milk Type', 'Oat Milk', 0.50), 
+(2, 'Size', 'Small', 0.00), (2, 'Size', 'Medium', 0.50), (2, 'Size', 'Large', 1.00),
+(3, 'Milk Type', 'Soy Milk', 0.50), (3, 'Milk Type', 'Almond Milk', 0.50), (3, 'Milk Type', 'Oat Milk', 0.50), 
+(3, 'Size', 'Small', 0.00), (3, 'Size', 'Medium', 0.50), (3, 'Size', 'Large', 1.00),
+(4, 'Milk Type', 'Soy Milk', 0.50), (4, 'Milk Type', 'Almond Milk', 0.50), (4, 'Milk Type', 'Oat Milk', 0.50), 
+(4, 'Size', 'Small', 0.00), (4, 'Size', 'Medium', 0.50), (4, 'Size', 'Large', 1.00),
+(5, 'Milk Type', 'Soy Milk', 0.50), (5, 'Milk Type', 'Almond Milk', 0.50), (5, 'Milk Type', 'Oat Milk', 0.50), 
+(5, 'Size', 'Small', 0.00), (5, 'Size', 'Medium', 0.50), (5, 'Size', 'Large', 1.00),
 
--- 10. Insert into orders
+-- Hot Drinks Options (Syrup Type)
+(6, 'Syrup Type', 'Vanilla Syrup', 0.50), (6, 'Syrup Type', 'Caramel Syrup', 0.50), (6, 'Syrup Type', 'Hazelnut Syrup', 0.50),
+(7, 'Syrup Type', 'Vanilla Syrup', 0.50), (7, 'Syrup Type', 'Caramel Syrup', 0.50), (7, 'Syrup Type', 'Hazelnut Syrup', 0.50),
+(8, 'Syrup Type', 'Vanilla Syrup', 0.50), (8, 'Syrup Type', 'Caramel Syrup', 0.50), (8, 'Syrup Type', 'Hazelnut Syrup', 0.50),
+
+-- Soft Drinks Options (No Options)
+(9, 'No Option', 'No option', 0.00), (10, 'No Option', 'No option', 0.00), (11, 'No Option', 'No option', 0.00), 
+(12, 'No Option', 'No option', 0.00), (13, 'No Option', 'No option', 0.00),
+
+-- Milkshakes Options (Ice Level)
+(14, 'Ice Level', 'Light Ice', 0.00), (14, 'Ice Level', 'No Ice', 0.00),
+(15, 'Ice Level', 'Light Ice', 0.00), (15, 'Ice Level', 'No Ice', 0.00),
+(16, 'Ice Level', 'Light Ice', 0.00), (16, 'Ice Level', 'No Ice', 0.00),
+(17, 'Ice Level', 'Light Ice', 0.00), (17, 'Ice Level', 'No Ice', 0.00),
+(18, 'Ice Level', 'Light Ice', 0.00), (18, 'Ice Level', 'No Ice', 0.00),
+(19, 'Ice Level', 'Light Ice', 0.00), (19, 'Ice Level', 'No Ice', 0.00),
+(20, 'Ice Level', 'Light Ice', 0.00), (20, 'Ice Level', 'No Ice', 0.00),
+
+-- Iced Teas Options (Ice Level)
+(21, 'Ice Level', 'Light Ice', 0.00), (21, 'Ice Level', 'No Ice', 0.00),
+(22, 'Ice Level', 'Light Ice', 0.00), (22, 'Ice Level', 'No Ice', 0.00),
+(23, 'Ice Level', 'Light Ice', 0.00), (23, 'Ice Level', 'No Ice', 0.00),
+(24, 'Ice Level', 'Light Ice', 0.00), (24, 'Ice Level', 'No Ice', 0.00),
+(25, 'Ice Level', 'Light Ice', 0.00), (25, 'Ice Level', 'No Ice', 0.00),
+(26, 'Ice Level', 'Light Ice', 0.00), (26, 'Ice Level', 'No Ice', 0.00),
+
+-- Fast Food Options (Bun Type, Toppings, Sauce Type)
+-- American Hotdogs (27)
+(27, 'Add on', 'Gluten-Free Bun', 0.50),
+(27, 'Add on', 'Sesame Bun', 0.20),
+(27, 'Add on', 'Extra Cheese', 0.50),
+(27, 'Add on', 'Bacon', 0.75),
+(27, 'Add on', 'Grilled Onions', 0.25),
+(27, 'Add on', 'BBQ Sauce', 0.00),
+(27, 'Add on', 'Mustard', 0.00),
+(27, 'Add on', 'Mayo', 0.00),
+
+-- Sweetcorn & Kumara Patties (28)
+(28, 'Add on', 'Gluten-Free Bun', 0.50),
+(28, 'Add on', 'Sesame Bun', 0.20),
+(28, 'Add on', 'Extra Cheese', 0.50),
+(28, 'Add on', 'Bacon', 0.75),
+(28, 'Add on', 'Grilled Onions', 0.25),
+(28, 'Add on', 'BBQ Sauce', 0.00),
+(28, 'Add on', 'Mustard', 0.00),
+(28, 'Add on', 'Mayo', 0.00),
+
+-- Crepes (29)
+(29, 'Add on', 'Gluten-Free Bun', 0.50),
+(29, 'Add on', 'Sesame Bun', 0.20),
+(29, 'Add on', 'Extra Cheese', 0.50),
+(29, 'Add on', 'Bacon', 0.75),
+(29, 'Add on', 'Grilled Onions', 0.25),
+(29, 'Add on', 'BBQ Sauce', 0.00),
+(29, 'Add on', 'Mustard', 0.00),
+(29, 'Add on', 'Mayo', 0.00),
+
+-- Smokey BBQ Pulled Pork in a Bun (30)
+(30, 'Add on', 'Gluten-Free Bun', 0.50),
+(30, 'Add on', 'Sesame Bun', 0.20),
+(30, 'Add on', 'Extra Cheese', 0.50),
+(30, 'Add on', 'Bacon', 0.75),
+(30, 'Add on', 'Grilled Onions', 0.25),
+(30, 'Add on', 'BBQ Sauce', 0.00),
+(30, 'Add on', 'Mustard', 0.00),
+(30, 'Add on', 'Mayo', 0.00),
+
+-- Muffins (31)
+(31, 'Add on', 'Gluten-Free Bun', 0.50),
+(31, 'Add on', 'Sesame Bun', 0.20),
+(31, 'Add on', 'Extra Cheese', 0.50),
+(31, 'Add on', 'Bacon', 0.75),
+(31, 'Add on', 'Grilled Onions', 0.25),
+(31, 'Add on', 'BBQ Sauce', 0.00),
+(31, 'Add on', 'Mustard', 0.00),
+(31, 'Add on', 'Mayo', 0.00),
+
+-- Slices (32)
+(32, 'Add on', 'Gluten-Free Bun', 0.50),
+(32, 'Add on', 'Sesame Bun', 0.20),
+(32, 'Add on', 'Extra Cheese', 0.50),
+(32, 'Add on', 'Bacon', 0.75),
+(32, 'Add on', 'Grilled Onions', 0.25),
+(32, 'Add on', 'BBQ Sauce', 0.00),
+(32, 'Add on', 'Mustard', 0.00),
+(32, 'Add on', 'Mayo', 0.00),
+
+-- Chicken Tenders (33)
+(33, 'Add on', 'Gluten-Free Bun', 0.50),
+(33, 'Add on', 'Sesame Bun', 0.20),
+(33, 'Add on', 'Extra Cheese', 0.50),
+(33, 'Add on', 'Bacon', 0.75),
+(33, 'Add on', 'Grilled Onions', 0.25),
+(33, 'Add on', 'BBQ Sauce', 0.00),
+(33, 'Add on', 'Mustard', 0.00),
+(33, 'Add on', 'Mayo', 0.00),
+
+-- Veggie Burger (34)
+(34, 'Add on', 'Gluten-Free Bun', 0.50),
+(34, 'Add on', 'Sesame Bun', 0.20),
+(34, 'Add on', 'Extra Cheese', 0.50),
+(34, 'Add on', 'Bacon', 0.75),
+(34, 'Add on', 'Grilled Onions', 0.25),
+(34, 'Add on', 'BBQ Sauce', 0.00),
+(34, 'Add on', 'Mustard', 0.00),
+(34, 'Add on', 'Mayo', 0.00),
+
+-- Fish Tacos (35)
+(35, 'Add on', 'Gluten-Free Bun', 0.50),
+(35, 'Add on', 'Sesame Bun', 0.20),
+(35, 'Add on', 'Extra Cheese', 0.50),
+(35, 'Add on', 'Bacon', 0.75),
+(35, 'Add on', 'Grilled Onions', 0.25),
+(35, 'Add on', 'BBQ Sauce', 0.00),
+(35, 'Add on', 'Mustard', 0.00),
+(35, 'Add on', 'Mayo', 0.00),
+
+-- Loaded Fries (36)
+(36, 'Add on', 'Gluten-Free Bun', 0.50),
+(36, 'Add on', 'Sesame Bun', 0.20),
+(36, 'Add on', 'Extra Cheese', 0.50),
+(36, 'Add on', 'Bacon', 0.75),
+(36, 'Add on', 'Grilled Onions', 0.25),
+(36, 'Add on', 'BBQ Sauce', 0.00),
+(36, 'Add on', 'Mustard', 0.00),
+(36, 'Add on', 'Mayo', 0.00),
+
+-- Falafel Wrap (37)
+(37, 'Add on', 'Gluten-Free Bun', 0.50),
+(37, 'Add on', 'Sesame Bun', 0.20),
+(37, 'Add on', 'Extra Cheese', 0.50),
+(37, 'Add on', 'Bacon', 0.75),
+(37, 'Add on', 'Grilled Onions', 0.25),
+(37, 'Add on', 'BBQ Sauce', 0.00),
+(37, 'Add on', 'Mustard', 0.00),
+(37, 'Add on', 'Mayo', 0.00),
+
+-- Cheese Nachos (38)
+(38, 'Add on', 'Gluten-Free Bun', 0.50),
+(38, 'Add on', 'Sesame Bun', 0.20),
+(38, 'Add on', 'Extra Cheese', 0.50),
+(38, 'Add on', 'Bacon', 0.75),
+(38, 'Add on', 'Grilled Onions', 0.25),
+(38, 'Add on', 'BBQ Sauce', 0.00),
+(38, 'Add on', 'Mustard', 0.00),
+(38, 'Add on', 'Mayo', 0.00),
+
+-- Spicy Ramen (39)
+(39, 'Add on', 'Gluten-Free Bun', 0.50),
+(39, 'Add on', 'Sesame Bun', 0.20),
+(39, 'Add on', 'Extra Cheese', 0.50),
+(39, 'Add on', 'Bacon', 0.75),
+(39, 'Add on', 'Grilled Onions', 0.25),
+(39, 'Add on', 'BBQ Sauce', 0.00),
+(39, 'Add on', 'Mustard', 0.00),
+(39, 'Add on', 'Mayo', 0.00),
+-- Stinky Tofu (40)
+(40, 'Add on', 'Gluten-Free Bun', 0.50),
+(40, 'Add on', 'Sesame Bun', 0.20),
+(40, 'Add on', 'Extra Cheese', 0.50),
+(40, 'Add on', 'Bacon', 0.75),
+(40, 'Add on', 'Grilled Onions', 0.25),
+(40, 'Add on', 'BBQ Sauce', 0.00),
+(40, 'Add on', 'Mustard', 0.00),
+(40, 'Add on', 'Mayo', 0.00),
+-- Grilled Cold Noodles
+(41, 'Add on', 'Gluten-Free Bun', 0.50),
+(41, 'Add on', 'Sesame Bun', 0.20),
+(41, 'Add on', 'Extra Cheese', 0.50),
+(41, 'Add on', 'Bacon', 0.75),
+(41, 'Add on', 'Grilled Onions', 0.25),
+(41, 'Add on', 'BBQ Sauce', 0.00),
+(41, 'Add on', 'Mustard', 0.00),
+(41, 'Add on', 'Mayo', 0.00),
+
+-- Frozen Treats Options (Fruit Flavor)
+-- Ice Blocks
+(42, 'Fruit Flavor', 'Strawberry', 0.00), 
+(42, 'Fruit Flavor', 'Banana', 0.00), 
+(42, 'Fruit Flavor', 'Mixed Berry', 0.00), 
+(42, 'Fruit Flavor', 'Mango', 0.00), 
+(42, 'Fruit Flavor', 'Peach', 0.00), 
+(42, 'Fruit Flavor', 'Blackberry', 0.00),
+
+-- Real Fruit Ice Creams
+(43, 'Fruit Flavor', 'Strawberry', 0.00), 
+(43, 'Fruit Flavor', 'Banana', 0.00), 
+(43, 'Fruit Flavor', 'Mixed Berry', 0.00), 
+(43, 'Fruit Flavor', 'Mango', 0.00), 
+(43, 'Fruit Flavor', 'Peach', 0.00), 
+(43, 'Fruit Flavor', 'Blackberry', 0.00),
+
+-- Sorbet
+(44, 'Fruit Flavor', 'Strawberry', 0.00), 
+(44, 'Fruit Flavor', 'Banana', 0.00), 
+(44, 'Fruit Flavor', 'Mixed Berry', 0.00), 
+(44, 'Fruit Flavor', 'Mango', 0.00), 
+(44, 'Fruit Flavor', 'Peach', 0.00), 
+(44, 'Fruit Flavor', 'Blackberry', 0.00),
+
+-- Frozen Yogurt
+(45, 'Fruit Flavor', 'Strawberry', 0.00), 
+(45, 'Fruit Flavor', 'Banana', 0.00), 
+(45, 'Fruit Flavor', 'Mixed Berry', 0.00), 
+(45, 'Fruit Flavor', 'Mango', 0.00), 
+(45, 'Fruit Flavor', 'Peach', 0.00), 
+(45, 'Fruit Flavor', 'Blackberry', 0.00),
+
+-- Gelato
+(46, 'Fruit Flavor', 'Strawberry', 0.00), 
+(46, 'Fruit Flavor', 'Banana', 0.00), 
+(46, 'Fruit Flavor', 'Mixed Berry', 0.00), 
+(46, 'Fruit Flavor', 'Mango', 0.00), 
+(46, 'Fruit Flavor', 'Peach', 0.00), 
+(46, 'Fruit Flavor', 'Blackberry', 0.00),
+
+-- Travel Essentials & Souvenirs (No Option)
+(47, 'No Option', 'No option', 0.00),
+(48, 'No Option', 'No option', 0.00),
+(49, 'No Option', 'No option', 0.00),
+(50, 'No Option', 'No option', 0.00);
+INSERT INTO `inventory` (`staff_id`, `manager_id`, `product_id`, `option_id`, `quantity`)
+VALUES
+-- Frozen Treats (Fruit Flavor)
+-- Ice Blocks
+(1, 1, 42, 25, 50), -- Ice Blocks (Strawberry)
+(1, 1, 42, 26, 50), -- Ice Blocks (Banana)
+(1, 1, 42, 27, 50), -- Ice Blocks (Mixed Berry)
+(1, 1, 42, 28, 50), -- Ice Blocks (Mango)
+(1, 1, 42, 29, 50), -- Ice Blocks (Peach)
+(1, 1, 42, 30, 50), -- Ice Blocks (Blackberry)
+
+-- Real Fruit Ice Creams
+(1, 1, 43, 25, 50), -- Real Fruit Ice Creams (Strawberry)
+(1, 1, 43, 26, 50), -- Real Fruit Ice Creams (Banana)
+(1, 1, 43, 27, 50), -- Real Fruit Ice Creams (Mixed Berry)
+(1, 1, 43, 28, 50), -- Real Fruit Ice Creams (Mango)
+(1, 1, 43, 29, 50), -- Real Fruit Ice Creams (Peach)
+(1, 1, 43, 30, 50), -- Real Fruit Ice Creams (Blackberry)
+
+-- Sorbet
+(1, 1, 44, 25, 50), -- Sorbet (Strawberry)
+(1, 1, 44, 26, 50), -- Sorbet (Banana)
+(1, 1, 44, 27, 50), -- Sorbet (Mixed Berry)
+(1, 1, 44, 28, 50), -- Sorbet (Mango)
+(1, 1, 44, 29, 50), -- Sorbet (Peach)
+(1, 1, 44, 30, 50), -- Sorbet (Blackberry)
+
+-- Frozen Yogurt
+(1, 1, 45, 25, 50), -- Frozen Yogurt (Strawberry)
+(1, 1, 45, 26, 50), -- Frozen Yogurt (Banana)
+(1, 1, 45, 27, 50), -- Frozen Yogurt (Mixed Berry)
+(1, 1, 45, 28, 50), -- Frozen Yogurt (Mango)
+(1, 1, 45, 29, 50), -- Frozen Yogurt (Peach)
+(1, 1, 45, 30, 50), -- Frozen Yogurt (Blackberry)
+
+-- Gelato
+(1, 1, 46, 25, 50), -- Gelato (Strawberry)
+(1, 1, 46, 26, 50), -- Gelato (Banana)
+(1, 1, 46, 27, 50), -- Gelato (Mixed Berry)
+(1, 1, 46, 28, 50), -- Gelato (Mango)
+(1, 1, 46, 29, 50), -- Gelato (Peach)
+(1, 1, 46, 30, 50), -- Gelato (Blackberry)
+
+-- Soft Drinks (only product inventory)
+(1, 1, 9, NULL, 50), -- Coca-Cola
+(1, 1, 10, NULL, 50), -- Sprite
+(1, 1, 11, NULL, 50), -- Fanta
+(1, 1, 12, NULL, 50), -- Pepsi
+(1, 1, 13, NULL, 50), -- Ginger Ale
+
+-- Milkshakes (only product inventory)
+(1, 1, 14, NULL, 50), -- Classic Vanilla
+(1, 1, 15, NULL, 50), -- Rich Chocolate
+(1, 1, 16, NULL, 50), -- Strawberry Delight
+(1, 1, 17, NULL, 50), -- Caramel Swirl
+(1, 1, 18, NULL, 50), -- Banana Bliss
+(1, 1, 19, NULL, 50), -- Cookies and Cream
+(1, 1, 20, NULL, 50), -- Seasonal Berry
+
+-- Iced Teas (only product inventory)
+(1, 1, 21, NULL, 50), -- Classic Lemon Iced Tea
+(1, 1, 22, NULL, 50), -- Peach Iced Tea
+(1, 1, 23, NULL, 50), -- Raspberry Iced Tea
+(1, 1, 24, NULL, 50), -- Green Iced Tea
+(1, 1, 25, NULL, 50), -- Hibiscus Iced Tea
+(1, 1, 26, NULL, 50), -- Mint Iced Tea
+
+-- Fast Food (only product inventory)
+(1, 1, 27, NULL, 50), -- American Hotdogs
+(1, 1, 28, NULL, 50), -- Sweetcorn & Kumara Patties
+(1, 1, 29, NULL, 50), -- Crepes
+(1, 1, 30, NULL, 50), -- Smokey BBQ Pulled Pork in a Bun
+(1, 1, 31, NULL, 50), -- Muffins
+(1, 1, 32, NULL, 50), -- Slices
+(1, 1, 33, NULL, 50), -- Chicken Tenders
+(1, 1, 34, NULL, 50), -- Veggie Burger
+(1, 1, 35, NULL, 50), -- Fish Tacos
+(1, 1, 36, NULL, 50), -- Loaded Fries
+(1, 1, 37, NULL, 50), -- Falafel Wrap
+(1, 1, 38, NULL, 50), -- Cheese Nachos
+(1, 1, 39, NULL, 50), -- Spicy Ramen
+(1, 1, 40, NULL, 50), -- Stinky Tofu
+(1, 1, 41, NULL, 50), -- Grilled Cold Noodles
+
+-- Travel Essentials & Souvenirs (only product inventory)
+(1, 1, 47, NULL, 50), -- Sandfly Spray
+(1, 1, 48, NULL, 50), -- Sunscreen
+(1, 1, 49, NULL, 50), -- Rain Gear
+(1, 1, 50, NULL, 50); -- Greenstone Jewelry
+
+
+-- 11. Insert into orders
 INSERT INTO `orders` (`customer_id`, `total_price`, `special_requests`, `scheduled_pickup_time`, `status`, `created_at`) VALUES 
 (1000, 20.00, 'Please add extra sugar to the Hot Chocolate.', '2024-05-19 15:00', 'ordered', '2024-05-19 14:00'),
 (1000, 13.50, 'No ice in the Sprite, please.', '2024-05-18 16:00', 'ordered', '2024-05-18 15:00');
@@ -662,75 +782,6 @@ INSERT INTO `order_item` (`order_id`, `product_id`, `quantity`) VALUES
 (2, 10, 1), -- Sprite
 (2, 11, 1); -- Fanta
 
-
--- 12. insert inventory
-INSERT INTO `inventory` (`staff_id`, `manager_id`, `product_id`, `option_id`, `option_type_id`, `quantity`)
-VALUES
-(1, 1, 9, NULL, NULL, 50),
-(1, 1, 10, NULL, NULL, 50),
-(1, 1, 11, NULL, NULL, 50),
-(1, 1, 12, NULL, NULL, 50),
-(1, 1, 13, NULL, NULL, 50),
-(1, 1, 27, NULL, NULL, 50),
-(1, 1, 28, NULL, NULL, 50),
-(1, 1, 29, NULL, NULL, 50),
-(1, 1, 30, NULL, NULL, 50),
-(1, 1, 31, NULL, NULL, 50),
-(1, 1, 32, NULL, NULL, 50),
-(1, 1, 33, NULL, NULL, 50),
-(1, 1, 34, NULL, NULL, 50),
-(1, 1, 35, NULL, NULL, 50),
-(1, 1, 36, NULL, NULL, 50),
-(1, 1, 37, NULL, NULL, 50),
-(1, 1, 38, NULL, NULL, 50),
-(1, 1, 39, NULL, NULL, 50),
-(1, 1, 40, NULL, NULL, 50),
-(1, 1, 41, NULL, NULL, 50),
--- Ice Blocks
-(1, 1, 42, 25, 10, 50),
-(1, 1, 42, 26, 10, 50),
-(1, 1, 42, 27, 10, 50),
-(1, 1, 42, 28, 10, 50),
-(1, 1, 42, 29, 10, 50),
-(1, 1, 42, 30, 10, 50),
-(1, 1, 42, 31, 10, 50),
--- Real Fruit Ice Creams options
-(1, 1, 43, 25, 10, 50),
-(1, 1, 43, 26, 10, 50),
-(1, 1, 43, 27, 10, 50),
-(1, 1, 43, 28, 10, 50),
-(1, 1, 43, 29, 10, 50),
-(1, 1, 43, 30, 10, 50),
-(1, 1, 43, 31, 10, 50),
--- Sorbet options
-(1, 1, 44, 25, 10, 50),
-(1, 1, 44, 26, 10, 50),
-(1, 1, 44, 27, 10, 50),
-(1, 1, 44, 28, 10, 50),
-(1, 1, 44, 29, 10, 50),
-(1, 1, 44, 30, 10, 50),
-(1, 1, 44, 31, 10, 50),
--- Frozen Yogurt options
-(1, 1, 45, 25, 10, 50),
-(1, 1, 45, 26, 10, 50),
-(1, 1, 45, 27, 10, 50),
-(1, 1, 45, 28, 10, 50),
-(1, 1, 45, 29, 10, 50),
-(1, 1, 45, 30, 10, 50),
-(1, 1, 45, 31, 10, 50),
--- Gelato options
-(1, 1, 46, 25, 10, 50),
-(1, 1, 46, 26, 10, 50),
-(1, 1, 46, 27, 10, 50),
-(1, 1, 46, 28, 10, 50),
-(1, 1, 46, 29, 10, 50),
-(1, 1, 46, 30, 10, 50),
-(1, 1, 46, 31, 10, 50),
--- Travel Essentials & Souvenirs
-(1, 1, 47, NULL, NULL, 50),
-(1, 1, 48, NULL, NULL, 50),
-(1, 1, 49, NULL, NULL, 50),
-(1, 1, 50, NULL, NULL, 50);
 
 -- 13. insert accommodation
 INSERT INTO accommodation (accommodation_id, type, description, capacity, space, price_per_night, is_available, image)
