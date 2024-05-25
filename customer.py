@@ -454,7 +454,6 @@ def customer_viewallbookings():
     return render_template('customer/customer_viewallbookings.html', all_bookings=all_bookings, customer_info=customer_info)
 
 
-#product to cart
 def get_products(category_id=None):
     query = """
     SELECT p.product_id, p.name, p.description, p.unit_price, 
@@ -487,14 +486,11 @@ def get_categories():
     cursor.close()
     connection.close()
     return categories
-
 def get_product_options():
     connection, cursor = get_cursor()
     query = """
-    SELECT pom.product_id, pt.option_type_id, pt.description, po.option_id, po.name, po.additional_cost
-    FROM product_option_mapping pom
-    JOIN product_option po ON pom.option_id = po.option_id
-    JOIN product_option_type pt ON po.option_type_id = pt.option_type_id
+    SELECT po.product_id, po.option_id, po.option_type, po.option_name, po.additional_cost
+    FROM product_option po
     """
     cursor.execute(query)
     options = cursor.fetchall()
@@ -505,10 +501,10 @@ def get_product_options():
         product_id = option['product_id']
         if product_id not in product_options:
             product_options[product_id] = {}
-        option_type_id = option['option_type_id']
-        if option_type_id not in product_options[product_id]:
-            product_options[product_id][option_type_id] = []
-        product_options[product_id][option_type_id].append(option)
+        option_type = option['option_type']
+        if option_type not in product_options[product_id]:
+            product_options[product_id][option_type] = []
+        product_options[product_id][option_type].append(option)
         
     for product in get_products():
         if product['product_id'] not in product_options:
@@ -548,6 +544,7 @@ def add_to_cart(customer_id, product_id, quantity, options):
         cursor.close()
         connection.close()
 
+
 @customer_blueprint.route('/product')
 @role_required(['customer'])
 def product():
@@ -560,11 +557,10 @@ def product():
     
     return render_template('customer/customer_product.html', customer_info=customer_info, products=products, categories=categories, product_options=product_options)
 
-#product to cart
 @customer_blueprint.route('/add_cart', methods=['POST'])
 @role_required(['customer'])
 def add_cart():
-    product_id = request.form.get('product_id')
+    product_id = int(request.form.get('product_id'))
     quantity = int(request.form.get('quantity', 1))
     options = []
     for key in request.form:
@@ -580,7 +576,6 @@ def add_cart():
         flash('Failed to add product to cart. Out of stock or insufficient quantity.', 'danger')
     return redirect(url_for('customer.product'))
 
-#cart to payment
 @customer_blueprint.route('/cart', methods=["GET"])
 @role_required(['customer'])
 def cart():
@@ -601,7 +596,7 @@ def cart():
             p.name AS product_name, 
             p.unit_price, 
             p.image, 
-            GROUP_CONCAT(po.name SEPARATOR ', ') AS options, 
+            GROUP_CONCAT(po.option_name SEPARATOR ', ') AS options, 
             GROUP_CONCAT(po.additional_cost SEPARATOR ', ') AS option_costs
         FROM cart_item ci
         JOIN product p ON ci.product_id = p.product_id
@@ -629,11 +624,9 @@ def cart():
     if total > Decimal('0.00'):
         subtotal = total * Decimal('0.85')
         gst = total * Decimal('0.15')
-        total = total
     else:
         gst = Decimal('0.00')
         subtotal = Decimal('0.00')
-        total = Decimal('0.00')
 
     cursor.close()
     connection.close()
@@ -659,11 +652,13 @@ def remove_from_cart():
     finally:
         cursor.close()
         connection.close()
-
     return redirect(url_for('customer.cart'))
 
-#payment to order 
+
+
+# Showing checkout page
 @customer_blueprint.route('/checkout', methods=['GET'])
+@role_required(['customer'])
 def customer_checkout():
     email = session.get('email')
     customer_info = get_customer_info(email)
@@ -672,6 +667,8 @@ def customer_checkout():
         return redirect(url_for('customer.login'))
     return render_template('customer/customer_checkout.html', customer_info=customer_info)
 
+
+# Handling checkout request
 @customer_blueprint.route('/checkout', methods=['POST'])
 @role_required(['customer'])
 def checkout():
@@ -683,14 +680,17 @@ def checkout():
     customer_id = customer_info['customer_id']
     connection, cursor = get_cursor()
     try:
+
         cursor.execute("""
             INSERT INTO orders (customer_id, total_price, status, created_at) 
             VALUES (%s, %s, 'ordered', NOW())
         """, (customer_id, 0))
         order_id = cursor.lastrowid
+
         cursor.execute("""
             SELECT ci.cart_item_id, ci.product_id, ci.quantity, p.unit_price, 
-                   GROUP_CONCAT(po.name, ' (+$', po.additional_cost, ')') AS options
+                   GROUP_CONCAT(po.option_id) AS option_ids,
+                   GROUP_CONCAT(po.option_name, ' (+$', po.additional_cost, ')') AS options
             FROM cart_item ci
             JOIN product p ON ci.product_id = p.product_id
             LEFT JOIN cart_item_option cio ON ci.cart_item_id = cio.cart_item_id
@@ -699,6 +699,7 @@ def checkout():
             GROUP BY ci.cart_item_id
         """, (customer_id,))
         cart_items = cursor.fetchall()
+        
         total_price = Decimal('0.00')
         for item in cart_items:
             product_id = item['product_id']
@@ -706,6 +707,7 @@ def checkout():
             unit_price = item['unit_price']
             options = item['options'] if item['options'] else ''
             total_price += unit_price * quantity
+
             cursor.execute("""
                 INSERT INTO order_item (order_id, product_id, quantity, options) 
                 VALUES (%s, %s, %s, %s)
@@ -714,20 +716,38 @@ def checkout():
                 INSERT INTO paid_item (customer_id, product_id, quantity, price, order_id) 
                 VALUES (%s, %s, %s, %s, %s)
             """, (customer_id, product_id, quantity, unit_price, order_id))
-            cursor.execute("""
-                UPDATE inventory 
-                SET quantity = quantity - %s 
-                WHERE product_id = %s AND (option_id IS NULL OR option_id IN (SELECT option_id FROM cart_item_option WHERE cart_item_id = %s))
-            """, (quantity, product_id, item['cart_item_id']))
+
+
+            option_ids = item['option_ids'].split(',') if item['option_ids'] else []
+            if option_ids: 
+                for option_id in option_ids:
+                    cursor.execute("""
+                        UPDATE inventory 
+                        SET quantity = quantity - %s 
+                        WHERE product_id = %s AND option_id = %s AND quantity >= %s
+                    """, (quantity, product_id, option_id, quantity))
+            else:  
+                cursor.execute("""
+                    UPDATE inventory 
+                    SET quantity = quantity - %s 
+                    WHERE product_id = %s AND option_id IS NULL AND quantity >= %s
+                """, (quantity, product_id, quantity))
+
+
         cursor.execute("""
             UPDATE orders SET total_price = %s WHERE order_id = %s
         """, (total_price, order_id))
+        
+
         cursor.execute("""
             INSERT INTO payment (customer_id, payment_type_id, order_id, paid_amount) 
             VALUES (%s, %s, %s, %s)
         """, (customer_id, 1, order_id, total_price))
+        
+
         cursor.execute("DELETE FROM cart_item_option WHERE cart_item_id IN (SELECT cart_item_id FROM cart_item WHERE customer_id = %s)", (customer_id,))
         cursor.execute("DELETE FROM cart_item WHERE customer_id = %s", (customer_id,))
+        
         connection.commit()
         flash("Payment successful and order created.", "success")
     except Exception as e:
@@ -737,6 +757,7 @@ def checkout():
         cursor.close()
         connection.close()
     return redirect(url_for('customer.orders'))
+
 
 #check orders and details
 @customer_blueprint.route('/orders', methods=['GET'])
