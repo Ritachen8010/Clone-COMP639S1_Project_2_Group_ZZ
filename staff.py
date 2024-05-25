@@ -4,7 +4,7 @@ from flask_hashing import Hashing
 from config import get_cursor, allowed_file, MAX_FILENAME_LENGTH
 import re
 import os
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from auth import role_required
 from werkzeug.utils import secure_filename
 
@@ -370,3 +370,245 @@ def update_inventory():
     connection.close()
 
     return redirect(url_for('staff.monitor_inventory', page=page, category=category))
+
+
+
+#check in daily bookings
+@staff_blueprint.route('/staff_checkin', methods=['GET', 'POST'])
+@role_required(['staff'])
+def view_checkin_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+
+    if request.method == 'POST':
+        selected_date = request.form.get('selected_date')
+        selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+    else:
+        selected_date = datetime.now().date()
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, b.adults, b.children, 
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.start_date = %s AND b.status = 'confirmed'
+    ''', (selected_date,))
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('staff/staff_checkin.html', bookings=bookings, selected_date=selected_date, staff_info=staff_info)
+
+
+@staff_blueprint.route('/update_booking/<int:booking_id>', methods=['GET', 'POST'])
+@role_required(['staff'])
+def update_booking(booking_id):
+    connection, cursor = get_cursor()
+    
+    # Fetch booking details along with customer and accommodation details
+    cursor.execute('''
+        SELECT b.booking_id, c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num, 
+               b.start_date, b.end_date, b.is_paid, b.status, a.type AS accommodation_type
+        FROM booking b
+        JOIN customer c ON b.customer_id = c.customer_id
+        JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.booking_id = %s
+    ''', (booking_id,))
+    booking = cursor.fetchone()
+    
+    if not booking:
+        flash('Booking not found.', 'danger')
+        return redirect(url_for('staff.view_checkin_bookings'))
+    
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+    today = datetime.today().date()
+    
+    original_duration = (booking['end_date'] - booking['start_date']).days
+    
+    if request.method == 'POST':
+        # Update customer info
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        phone_number = request.form.get('phone_number')
+        date_of_birth = request.form.get('date_of_birth')
+        id_num = request.form.get('id_num')
+        start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date()
+        end_date = booking['end_date']  # Checkout date remains fixed
+        check_in = request.form.get('check_in') == 'on'
+        
+        # Validate the dates
+        if start_date < today:
+            flash('Check-in date cannot be earlier than today.', 'danger')
+            return redirect(url_for('staff.update_booking', booking_id=booking_id))
+        
+        new_duration = (end_date - start_date).days
+        if new_duration > original_duration:
+            flash('The new check-in date cannot extend the total nights beyond the original booking duration.', 'danger')
+            return redirect(url_for('staff.update_booking', booking_id=booking_id))
+        
+        cursor.execute('''
+            UPDATE customer
+            SET first_name = %s, last_name = %s, phone_number = %s, date_of_birth = %s, id_num = %s
+            WHERE customer_id = (SELECT customer_id FROM booking WHERE booking_id = %s)
+        ''', (first_name, last_name, phone_number, date_of_birth, id_num, booking_id))
+        
+        # Update booking info
+        new_status = 'checked in' if check_in and start_date <= today else booking['status']
+        cursor.execute('''
+            UPDATE booking
+            SET start_date = %s, end_date = %s, status = %s
+            WHERE booking_id = %s
+        ''', (start_date, end_date, new_status, booking_id))
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        flash('Booking updated successfully.', 'success')
+        return redirect(url_for('staff.view_checkin_bookings'))
+    
+    return render_template('staff/staff_updatebooking.html', booking=booking, staff_info=staff_info, today=today)
+
+
+#view all bookings
+@staff_blueprint.route('/staff_view_all_bookings', methods=['GET'])
+@role_required(['staff'])
+def view_all_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'confirmed'
+        ORDER BY b.start_date
+    ''')
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('staff/staff_view_all_bookings.html', title='All Confirmed Bookings', bookings=bookings, staff_info=staff_info)
+
+
+@staff_blueprint.route('/view_all_cancelled_bookings', methods=['GET'])
+@role_required(['staff'])
+def view_all_cancelled_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'cancelled'
+        ORDER BY b.start_date DESC
+    ''')
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('staff/staff_view_all_bookings.html', bookings=bookings, staff_info=staff_info, title='All Cancelled Bookings')
+
+
+@staff_blueprint.route('/view_all_checked_out_bookings', methods=['GET'])
+@role_required(['staff'])
+def view_all_checked_out_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'checked out'
+        ORDER BY b.end_date DESC
+    ''')
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('staff/staff_view_all_bookings.html', bookings=bookings, staff_info=staff_info, title='All Checked Out Bookings')
+
+
+@staff_blueprint.route('/view_all_checked_in_bookings', methods=['GET'])
+@role_required(['staff'])
+def view_all_checked_in_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'checked in'
+        ORDER BY b.start_date
+    ''')
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('staff/staff_view_all_bookings.html', bookings=bookings, staff_info=staff_info, title='All Checked In Bookings')
+
+ #search bookings by last name
+@staff_blueprint.route('/search_bookings_by_last_name', methods=['GET'])
+@role_required(['staff'])
+def search_bookings_by_last_name():
+    last_name = request.args.get('last_name')
+    if not last_name:
+        flash('Please enter a last name to search.', 'warning')
+        return redirect(url_for('staff.view_all_bookings'))
+
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid,
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount,
+               b.adults, b.children
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE c.last_name LIKE %s
+        ORDER BY b.start_date ASC
+    ''', (f'%{last_name}%',))
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('staff/staff_view_all_bookings.html', bookings=bookings, title="Search Results", staff_info=staff_info)
+
+
+

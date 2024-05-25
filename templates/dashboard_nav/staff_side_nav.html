@@ -28,10 +28,17 @@
             </li>
 
             <!-- Link to the booking page -->
-            <a href="#" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
-                <i class="bi bi-book me-2"></i>
-                <span class="ms-1 nav-text d-sm-inline">Manage Bookings</span>
-            </a>
+            <li class="list-group-item list-group-item-action py-2 ripple">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-cart-check me-2"></i>
+                    <a href="#bookSubmenu" data-bs-toggle="collapse" aria-expanded="false"
+                        class="dropdown-toggle ms-1 nav-text d-sm-inline">Manage bookings</a>
+                </div>
+                <ul class="collapse list-unstyled" id="bookSubmenu">
+                    <li><a class="dropdown-item" href="{{ url_for('staff.view_checkin_bookings')}}">Check-in Bookings</a></li>
+                    <li><a class="dropdown-item" href="#">Check-out Bookings</a></li>
+                </ul>
+            </li>
 
             <!-- Link to the inventory -->
             <li class="list-group-item list-group-item-action py-2 ripple">
