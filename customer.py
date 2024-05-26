@@ -10,10 +10,12 @@ import decimal
 from decimal import Decimal
 import pandas as pd
 from datetime import date,timedelta,datetime
+import pytz
 from auth import role_required
 
 customer_blueprint = Blueprint('customer', __name__)
 hashing = Hashing()
+nz_tz = pytz.timezone('Pacific/Auckland')
 
 # Get customer information + account information
 def get_customer_info(email):
@@ -453,7 +455,7 @@ def customer_viewallbookings():
 
     return render_template('customer/customer_viewallbookings.html', all_bookings=all_bookings, customer_info=customer_info)
 
-
+# Product to cart
 def get_products(category_id=None):
     query = """
     SELECT p.product_id, p.name, p.description, p.unit_price, 
@@ -576,6 +578,7 @@ def add_cart():
         flash('Failed to add product to cart. Out of stock or insufficient quantity.', 'danger')
     return redirect(url_for('customer.product'))
 
+# Showing Cart
 @customer_blueprint.route('/cart', methods=["GET"])
 @role_required(['customer'])
 def cart():
@@ -632,6 +635,7 @@ def cart():
     connection.close()
     return render_template('customer/customer_cart.html', cart_items=cart_items, total=total, gst=gst, subtotal=subtotal, customer_info=customer_info)
 
+# Remove from cart
 @customer_blueprint.route('/remove_from_cart', methods=["POST"])
 @role_required(['customer'])
 def remove_from_cart():
@@ -656,6 +660,7 @@ def remove_from_cart():
 
 
 
+
 # Showing checkout page
 @customer_blueprint.route('/checkout', methods=['GET'])
 @role_required(['customer'])
@@ -665,10 +670,14 @@ def customer_checkout():
     if not customer_info:
         flash("Please login to proceed to checkout.", "info")
         return redirect(url_for('customer.login'))
-    return render_template('customer/customer_checkout.html', customer_info=customer_info)
+
+    return render_template('customer/customer_checkout.html', customer_info=customer_info, special_requests=special_requests)
+
 
 
 # Handling checkout request
+
+
 @customer_blueprint.route('/checkout', methods=['POST'])
 @role_required(['customer'])
 def checkout():
@@ -677,14 +686,26 @@ def checkout():
     if not customer_info:
         flash("Customer information not found.", "error")
         return redirect(url_for('customer.cart'))
+    
     customer_id = customer_info['customer_id']
+    special_requests = request.form.get('special_requests', '')  # 获取 special_requests 字段
+    scheduled_pickup_datetime_str = request.form.get('scheduled_pickup_time', '')  
+
+    try:
+        # 将字符串转换为 UTC 时间
+        scheduled_pickup_datetime_utc = datetime.fromisoformat(scheduled_pickup_datetime_str.replace('Z', '+00:00'))
+        # 转换为新西兰时间
+        scheduled_pickup_datetime_nz = scheduled_pickup_datetime_utc.astimezone(nz_tz)
+    except ValueError as e:
+        flash(f"Invalid scheduled pickup time: {e}", "danger")
+        return redirect(url_for('customer.cart'))
+
     connection, cursor = get_cursor()
     try:
-
         cursor.execute("""
-            INSERT INTO orders (customer_id, total_price, status, created_at) 
-            VALUES (%s, %s, 'ordered', NOW())
-        """, (customer_id, 0))
+            INSERT INTO orders (customer_id, total_price, status, created_at, special_requests, scheduled_pickup_time) 
+            VALUES (%s, %s, 'ordered', NOW(), %s, %s)
+        """, (customer_id, 0, special_requests, scheduled_pickup_datetime_nz))  
         order_id = cursor.lastrowid
 
         cursor.execute("""
@@ -716,8 +737,6 @@ def checkout():
                 INSERT INTO paid_item (customer_id, product_id, quantity, price, order_id) 
                 VALUES (%s, %s, %s, %s, %s)
             """, (customer_id, product_id, quantity, unit_price, order_id))
-
-
             option_ids = item['option_ids'].split(',') if item['option_ids'] else []
             if option_ids: 
                 for option_id in option_ids:
@@ -732,22 +751,17 @@ def checkout():
                     SET quantity = quantity - %s 
                     WHERE product_id = %s AND option_id IS NULL AND quantity >= %s
                 """, (quantity, product_id, quantity))
-
-
         cursor.execute("""
             UPDATE orders SET total_price = %s WHERE order_id = %s
         """, (total_price, order_id))
         
-
         cursor.execute("""
             INSERT INTO payment (customer_id, payment_type_id, order_id, paid_amount) 
             VALUES (%s, %s, %s, %s)
         """, (customer_id, 1, order_id, total_price))
-        
 
         cursor.execute("DELETE FROM cart_item_option WHERE cart_item_id IN (SELECT cart_item_id FROM cart_item WHERE customer_id = %s)", (customer_id,))
         cursor.execute("DELETE FROM cart_item WHERE customer_id = %s", (customer_id,))
-        
         connection.commit()
         flash("Payment successful and order created.", "success")
     except Exception as e:
@@ -759,7 +773,8 @@ def checkout():
     return redirect(url_for('customer.orders'))
 
 
-#check orders and details
+
+## View Customer Orders
 @customer_blueprint.route('/orders', methods=['GET'])
 @role_required(['customer'])
 def orders():
@@ -771,21 +786,33 @@ def orders():
     customer_id = customer_info['customer_id']
     connection, cursor = get_cursor()
     try:
+        # Get current orders
         cursor.execute("""
-            SELECT o.order_id, o.total_price, o.status, o.created_at 
+            SELECT o.order_id, o.total_price, o.status, o.created_at, o.scheduled_pickup_time
             FROM orders o
-            WHERE o.customer_id = %s
+            WHERE o.customer_id = %s AND o.status NOT IN ('collected', 'cancelled')
             ORDER BY o.created_at DESC
         """, (customer_id,))
         orders = cursor.fetchall()
+
+        # Get historical orders
+        cursor.execute("""
+            SELECT o.order_id, o.total_price, o.status, o.created_at, o.scheduled_pickup_time
+            FROM orders o
+            WHERE o.customer_id = %s AND o.status IN ('collected', 'cancelled')
+            ORDER BY o.created_at DESC
+        """, (customer_id,))
+        history_orders = cursor.fetchall()
     except Exception as e:
         flash(f"Failed to retrieve orders. Error: {str(e)}", "danger")
         orders = []
+        history_orders = []
     finally:
         cursor.close()
         connection.close()
-    return render_template('customer/customer_orders.html', orders=orders, customer_info=customer_info)
+    return render_template('customer/customer_orders.html', orders=orders, history_orders=history_orders, customer_info=customer_info)
 
+# View Customer Order Details
 @customer_blueprint.route('/order_details/<int:order_id>', methods=['GET'])
 @role_required(['customer'])
 def order_details(order_id):
