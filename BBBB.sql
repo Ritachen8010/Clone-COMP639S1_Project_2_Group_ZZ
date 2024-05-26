@@ -113,6 +113,7 @@ CREATE TABLE `orders` (
     `scheduled_pickup_time` DATETIME,
     `status` ENUM('ordered', 'ready', 'collected', 'cancelled') NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`order_id`),
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 )AUTO_INCREMENT=1;
