@@ -166,34 +166,54 @@ def staff_updateprofile():
 
     # Render page with current account information
     return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info, max_date=max_date_str, min_date=min_date_str)
-
 # Staff view orders
-@staff_blueprint.route('/orders', methods=['GET'])
+@staff_blueprint.route('/orders', methods=['GET', 'POST'])
 @role_required(['staff'])
-def view_orders():
+def manage_orders():
     email = session.get('email')
     staff_info = get_staff_info(email)
     
+    filter_status = request.args.get('status', 'active')
+    search_email = request.args.get('search_email', '').strip()
+    pickup_date = request.args.get('pickup_date', '').strip()
+    
     connection, cursor = get_cursor()
-    
-    try:
-        cursor.execute("""
-            SELECT o.order_id, o.total_price, o.status, o.created_at, 
-                   c.first_name, c.last_name
-            FROM orders o
-            JOIN customer c ON o.customer_id = c.customer_id
-            ORDER BY o.created_at DESC
-        """)
-        orders = cursor.fetchall()
-    except Exception as e:
-        flash(f"Failed to retrieve orders. Error: {str(e)}", "danger")
-        orders = []
-    finally:
-        cursor.close()
-        connection.close()
-    
-    return render_template('staff/staff_vieworders.html', orders=orders, staff_info=staff_info)
 
+    query = """
+        SELECT o.order_id, o.total_price, o.status, o.created_at, o.last_updated, 
+               o.scheduled_pickup_time, c.first_name, c.last_name, acc.email
+        FROM orders o
+        JOIN customer c ON o.customer_id = c.customer_id
+        JOIN account acc ON c.account_id = acc.account_id
+        WHERE 1=1
+    """
+    params = []
+
+    if filter_status != 'active':
+        query += " AND o.status = %s"
+        params.append(filter_status)
+    else:
+        query += " AND o.status IN ('ordered', 'preparing', 'ready for collection')"
+
+    if search_email:
+        query += " AND acc.email LIKE %s"
+        params.append(f"%{search_email}%")
+
+    if pickup_date:
+        query += " AND DATE(o.scheduled_pickup_time) = %s"
+        params.append(pickup_date)
+
+    query += " ORDER BY o.created_at DESC"
+
+    cursor.execute(query, params)
+    orders = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template('staff/staff_manage_orders.html', orders=orders, staff_info=staff_info, filter_status=filter_status, search_email=search_email, pickup_date=pickup_date)
+
+# Staff view order details
 @staff_blueprint.route('/order_details/<int:order_id>', methods=['GET'])
 @role_required(['staff'])
 def order_details(order_id):
@@ -217,7 +237,7 @@ def order_details(order_id):
         
         if not order:
             flash("Order not found.", "error")
-            return redirect(url_for('staff.view_orders'))
+            return redirect(url_for('staff.manage_orders'))
         
         cursor.execute("""
             SELECT oi.*, p.name AS product_name, p.unit_price
@@ -235,6 +255,99 @@ def order_details(order_id):
         connection.close()
     
     return render_template('staff/staff_order_details.html', order=order, order_items=order_items, staff_info=staff_info)
+
+# Staff view history order 
+@staff_blueprint.route('/history_orders', methods=['GET'])
+@role_required(['staff'])
+def view_history_orders():
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+    
+    filter_status = request.args.get('status', 'collected')
+    search_email = request.args.get('search_email', '').strip()
+    pickup_date = request.args.get('pickup_date', '').strip()
+    
+    connection, cursor = get_cursor()
+    
+    query = """
+        SELECT o.order_id, o.total_price, o.status, o.created_at, o.last_updated, 
+               o.scheduled_pickup_time, c.first_name, c.last_name, acc.email
+        FROM orders o
+        JOIN customer c ON o.customer_id = c.customer_id
+        JOIN account acc ON c.account_id = acc.account_id
+        WHERE o.status IN ('collected', 'cancelled')
+    """
+    params = []
+
+    if filter_status in ['collected', 'cancelled']:
+        query += " AND o.status = %s"
+        params.append(filter_status)
+
+    if search_email:
+        query += " AND acc.email LIKE %s"
+        params.append(f"%{search_email}%")
+
+    if pickup_date:
+        query += " AND DATE(o.scheduled_pickup_time) = %s"
+        params.append(pickup_date)
+
+    query += " ORDER BY o.created_at DESC"
+
+    try:
+        cursor.execute(query, params)
+        history_orders = cursor.fetchall()
+    except Exception as e:
+        flash(f"Failed to retrieve historical orders. Error: {str(e)}", "danger")
+        history_orders = []
+    finally:
+        cursor.close()
+        connection.close()
+    
+    return render_template('staff/staff_history_orders.html', history_orders=history_orders, staff_info=staff_info, filter_status=filter_status, search_email=search_email, pickup_date=pickup_date)
+
+@staff_blueprint.route('/history_order_details/<int:order_id>', methods=['GET'])
+@role_required(['staff'])
+def history_order_details(order_id):
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+    
+    connection, cursor = get_cursor()
+    
+    try:
+        cursor.execute("SET NAMES utf8mb4;")
+        cursor.execute("SET CHARACTER SET utf8mb4;")
+        cursor.execute("SET character_set_connection=utf8mb4;")
+        
+        cursor.execute("""
+            SELECT o.*, c.first_name, c.last_name
+            FROM orders o
+            JOIN customer c ON o.customer_id = c.customer_id
+            WHERE o.order_id = %s
+        """, (order_id,))
+        order = cursor.fetchone()
+        
+        if not order:
+            flash("Order not found.", "error")
+            return redirect(url_for('staff.view_history_orders'))
+        
+        cursor.execute("""
+            SELECT oi.*, p.name AS product_name, p.unit_price
+            FROM order_item oi
+            JOIN product p ON oi.product_id = p.product_id
+            WHERE oi.order_id = %s
+        """, (order_id,))
+        order_items = cursor.fetchall()
+    except Exception as e:
+        flash(f"Failed to retrieve order details. Error: {str(e)}", "danger")
+        order = None
+        order_items = []
+    finally:
+        cursor.close()
+        connection.close()
+    
+    return render_template('staff/staff_history_order_details.html', order=order, order_items=order_items, staff_info=staff_info)
+
+
 @staff_blueprint.route('/monitor_inventory')
 @role_required(['staff'])
 def monitor_inventory():

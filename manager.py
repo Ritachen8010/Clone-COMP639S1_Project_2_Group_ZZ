@@ -420,3 +420,155 @@ def add_inventory():
 # @role_required(['manager'])
 # def delete_inventory(product_id):
     # Delete the inventory item from the database
+
+
+    
+# Get customer information
+def get_customer_info(email):
+    connection, cursor = get_cursor()
+    cursor.execute("SELECT * FROM customer WHERE email = %s", (email,))
+    customer = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    return customer
+@manager_blueprint.route('/manage_orders', methods=['GET', 'POST'])
+@role_required(['manager'])
+def manage_orders():
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+    filter_status = request.args.get('status', 'active')
+    search_email = request.args.get('search_email', '').strip()
+    pickup_date = request.args.get('pickup_date', '').strip()
+    
+    connection, cursor = get_cursor()
+
+    query = """
+        SELECT o.order_id, o.customer_id, o.total_price, o.special_requests, 
+               o.scheduled_pickup_time, o.status, o.created_at, o.last_updated,
+               c.first_name, c.last_name, acc.email
+        FROM orders o
+        JOIN customer c ON o.customer_id = c.customer_id
+        JOIN account acc ON c.account_id = acc.account_id
+        WHERE 1=1
+    """
+    params = []
+
+    if filter_status != 'active':
+        query += " AND o.status = %s"
+        params.append(filter_status)
+    else:
+        query += " AND o.status IN ('ordered', 'preparing', 'ready for collection')"
+
+    if search_email:
+        query += " AND acc.email LIKE %s"
+        params.append(f"%{search_email}%")
+
+    if pickup_date:
+        query += " AND DATE(o.scheduled_pickup_time) = %s"
+        params.append(pickup_date)
+
+    query += " ORDER BY o.created_at DESC"
+
+    cursor.execute(query, params)
+    orders = cursor.fetchall()
+
+    if request.method == 'POST':
+        order_id = request.form.get('order_id')
+        new_status = request.form.get('new_status')
+        valid_statuses = ['ordered', 'preparing', 'ready for collection', 'collected', 'cancelled']
+        if order_id and new_status in valid_statuses:
+            cursor.execute("""
+                UPDATE orders 
+                SET status = %s, last_updated = NOW()
+                WHERE order_id = %s
+            """, (new_status, order_id))
+            connection.commit()
+            flash(f"Order {order_id} status updated to {new_status}.", "success")
+        else:
+            flash(f"Invalid status value: {new_status}", "danger")
+        return redirect(url_for('manager.manage_orders', status=filter_status, search_email=search_email, pickup_date=pickup_date))
+
+    cursor.close()
+    connection.close()
+
+    return render_template('manager/manager_manage_orders.html', orders=orders, manager_info=manager_info, filter_status=filter_status, search_email=search_email, pickup_date=pickup_date)
+
+#order details
+@manager_blueprint.route('/order_details/<int:order_id>', methods=['GET'])
+@role_required(['manager'])
+def order_details(order_id):
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+    
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT o.*, c.first_name, c.last_name, acc.email
+        FROM orders o
+        JOIN customer c ON o.customer_id = c.customer_id
+        JOIN account acc ON c.account_id = acc.account_id
+        WHERE o.order_id = %s
+    """, (order_id,))
+    order = cursor.fetchone()
+    
+    cursor.execute("""
+        SELECT oi.*, p.name AS product_name
+        FROM order_item oi
+        JOIN product p ON oi.product_id = p.product_id
+        WHERE oi.order_id = %s
+    """, (order_id,))
+    order_items = cursor.fetchall()
+    
+    cursor.close()
+    connection.close()
+    
+    return render_template('manager/manager_order_details.html', order=order, order_items=order_items)
+
+
+# Manager view history orders
+@manager_blueprint.route('/history_orders', methods=['GET', 'POST'])
+@role_required(['manager'])
+def history_orders():
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+    if not manager_info:
+        flash("Manager information not found.", "error")
+        return redirect(url_for('manager_dashboard'))
+
+    filter_status = request.args.get('status', 'collected')
+    search_email = request.args.get('search_email', '').strip()
+    pickup_date = request.args.get('pickup_date', '').strip()
+    
+    connection, cursor = get_cursor()
+    query = """
+        SELECT o.order_id, o.customer_id, o.total_price, o.status, o.created_at, o.last_updated,
+               o.scheduled_pickup_time, c.first_name, c.last_name, acc.email
+        FROM orders o
+        JOIN customer c ON o.customer_id = c.customer_id
+        JOIN account acc ON c.account_id = acc.account_id
+        WHERE o.status IN ('collected', 'cancelled')
+    """
+    params = []
+
+    if filter_status != 'collected':
+        query += " AND o.status = %s"
+        params.append(filter_status)
+    else:
+        query += " AND o.status IN ('collected', 'cancelled')"
+
+    if search_email:
+        query += " AND acc.email LIKE %s"
+        params.append(f"%{search_email}%")
+
+    if pickup_date:
+        query += " AND DATE(o.scheduled_pickup_time) = %s"
+        params.append(pickup_date)
+
+    query += " ORDER BY o.created_at DESC"
+
+    cursor.execute(query, params)
+    history_orders = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return render_template('manager/manager_history_orders.html', history_orders=history_orders, manager_info=manager_info, filter_status=filter_status, search_email=search_email, pickup_date=pickup_date)

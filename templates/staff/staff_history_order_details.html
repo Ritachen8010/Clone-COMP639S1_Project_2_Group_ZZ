@@ -1,3 +1,4 @@
+{% if order and order_items %}
 
 <p><strong>Special Requests:</strong> {{ order.special_requests }}</p>
 
@@ -20,3 +21,6 @@
         {% endfor %}
     </tbody>
 </table>
+{% else %}
+<p>Order details not found.</p>
+{% endif %}

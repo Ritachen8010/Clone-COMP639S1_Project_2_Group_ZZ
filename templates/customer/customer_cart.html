@@ -12,7 +12,6 @@
             {% include 'dashboard_nav/customer_side_nav.html' %}
             <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
 
-            
                 {% if cart_items|length == 0 %}
                 <!-- Start Empty Cart Section -->
                 <div class="empty-cart-section text-center">
@@ -22,22 +21,22 @@
                 <!-- End Empty Cart Section -->
                 {% else %}
 
-    <!-- Start Cart-head Section -->
-    <div class="cart-head mb-3"> 
-        <div class="container">
-            <div class="row justify-content-between">
-                <div class="col-lg-5">
-                    <div class="intro-excerpt">
-                        <h1 style="color: #795b35;">Your Cart</h1>
+                <!-- Start Cart-head Section -->
+                <div class="cart-head mb-3"> 
+                    <div class="container">
+                        <div class="row justify-content-between">
+                            <div class="col-lg-5">
+                                <div class="intro-excerpt">
+                                    <h1 style="color: #795b35;">Your Cart</h1>
+                                </div>
+                            </div>
+                            <div class="col-lg-7 d-flex justify-content-end">
+                                <a href="{{ url_for('customer.product') }}" class="btn btn-custom"> Continue Shopping</a>
+                            </div>
+                        </div>
                     </div>
                 </div>
-                <div class="col-lg-7 d-flex justify-content-end">
-                    <a href="{{ url_for('customer.product') }}" class="btn btn-custom"> Continue Shopping</a>
-                </div>
-            </div>
-        </div>
-    </div>
-    <!-- End Cart-head Section -->
+                <!-- End Cart-head Section -->
 
                 <!-- Start Cart-item Section -->
                 <div class="cart before-footer-section">
@@ -100,11 +99,27 @@
                 <!-- Start Cart-payment Section -->
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="row mb-5">
+                        <div class="row custom-margin">
+                            <div class="col-md-12">
+                                <label for="special_requests" class="text-black">Special Requests</label>
+                                <textarea class="form-control" id="special_requests" name="special_requests" rows="3">{{ special_requests }}</textarea>
+                            </div>
                         </div>
+                        <div class="row custom-margin">
+                            <div class="col-md-6">
+                                <label for="scheduled_pickup_date" class="form-label">Pick Up Date</label>
+                                <input type="date" class="form-control" id="scheduled_pickup_date" name="scheduled_pickup_date" required>
+                            </div>
+                            <div class="col-md-6">
+                                <label for="scheduled_pickup_time" class="form-label">Pick Up Time</label>
+                                <select class="form-control" id="scheduled_pickup_time" name="scheduled_pickup_time" required>
+                                    <!-- Options will be populated by JavaScript -->
+                                </select>
+                            </div>
+                        </div>
+                        
                         <div class="row">
                             <div class="col-md-12">
-                                <label class="text-black h4" for="coupon">Coupon</label>
                                 <p>Enter your coupon code if you have one.</p>
                             </div>
                             <div class="col-md-8 mb-3 mb-md-0">
@@ -149,7 +164,7 @@
                                 </div>
                                 <div class="row">
                                     <div class="col-md-12">
-                                        <a href="{{ url_for('customer.customer_checkout') }}" class="btn btn-custom btn-lg py-3 btn-block">Proceed To Checkout</a>
+                                        <button type="button" class="btn btn-custom btn-lg py-3 btn-block" data-bs-toggle="modal" data-bs-target="#checkoutModal">Proceed To Checkout</button>
                                     </div>
                                 </div>
                             </div>
@@ -164,4 +179,208 @@
     </div>
 </div>
 
-{% endblock %}
+<!-- Checkout Modal -->
+<div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="checkoutModalLabel">Checkout</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="payment-form" action="{{ url_for('customer.checkout') }}" method="post" class="needs-validation" novalidate>
+                    <input type="hidden" name="special_requests" id="hidden_special_requests">
+                    <input type="hidden" name="scheduled_pickup_time" id="hidden_scheduled_pickup_time">
+                    <div class="mb-3">
+                        <label for="card_number" class="form-label">Card number:<span class="require-star">*</span></label>
+                        <input type="text" class="form-control" id="card_number" name="card_number" maxlength="19" required>
+                        <div class="invalid-feedback text-start">
+                            Please enter the credit card number.
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="card_holder" class="form-label">Name on card:<span class="require-star">*</span></label>
+                        <input type="text" class="form-control" id="card_holder" name="card_holder" required>
+                        <div class="invalid-feedback text-start">
+                            Please enter the credit card holder name.
+                        </div>
+                    </div>
+                    <div class="mb-3 row justify-content-between">
+                        <div class="col-5">
+                            <label for="expiry_m" class="form-label">Expire Date:<span class="require-star">*</span></label>
+                            <div class="d-flex">
+                                <div class="col-8 me-2">
+                                    <select id="expiry_m" name="expiry_m" required class="form-select" aria-label="Default select example">
+                                        <option disabled selected value>MM</option>
+                                    </select>
+                                    <div class="invalid-feedback text-start">
+                                        Please select expire month.
+                                    </div>
+                                </div>
+                                <div class="col-8">
+                                    <select id="expiry_y" name="expiry_y" required class="form-select" aria-label="Default select example">
+                                        <option disabled selected value>YY</option>
+                                    </select>
+                                    <div class="invalid-feedback text-start">
+                                        Please select expire year.
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <label for="cvc" class="form-label">CVC:<span class="require-star">*</span></label>
+                            <input type="text" class="form-control" id="cvc" name="cvc" maxlength="3" minlength="3" required>
+                            <div class="invalid-feedback text-start">
+                                Please enter CVC number (3 digits).
+                            </div>
+                        </div>
+                    </div>
+                    <div>
+                        <p style="font-size:14px;">We accept Visa, Mastercard and American Express</p>
+                    </div>
+                    <div class="mb-3">
+                        <img src="{{url_for('static',filename='images/visacard-footer.png')}}" alt="visacard" class="card-logo">
+                        <img src="{{url_for('static',filename='images/mastercard-footer.png')}}" alt="mastercard" class="card-logo">
+                        <img src="{{url_for('static',filename='images/americanexpress-footer.png')}}" alt="americanexpress" class="card-logo">
+                    </div>
+                    <div class="row mb-3 justify-content-between">
+                        <div class="text-center py-3 col-5">
+                            <button type="button" class="btn btn-secondary col-12" data-bs-dismiss="modal">Cancel</button>
+                        </div>
+                        <div class="text-center py-3 col-5">
+                            <button type="submit" id="submitPayment" class="btn btn-danger col-12">Submit</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function () {
+        'use strict';
+        var forms = document.querySelectorAll('.needs-validation');
+        Array.prototype.slice.call(forms).forEach(function (form) {
+            form.addEventListener('submit', function (event) {
+                if (!form.checkValidity()) {
+                    event.preventDefault();
+                    event.stopPropagation();
+                }
+                form.classList.add('was-validated');
+            }, false);
+        });
+    })();
+    
+    document.addEventListener("DOMContentLoaded", function() {
+        const cardNumberInput = document.getElementById('card_number');
+        const feedbackElement = cardNumberInput.nextElementSibling;
+    
+        cardNumberInput.addEventListener('input', function() {
+            const value = cardNumberInput.value.replace(/\D/g, '');
+            if (value.length === 16) {
+                cardNumberInput.classList.remove('is-invalid');
+                cardNumberInput.classList.add('is-valid');
+                feedbackElement.textContent = 'Valid card number';
+                feedbackElement.style.color = 'green';
+            } else {
+                cardNumberInput.classList.remove('is-valid');
+                cardNumberInput.classList.add('is-invalid');
+                feedbackElement.textContent = 'Invalid card number';
+                feedbackElement.style.color = 'red';
+            }
+        });
+    
+        var today = new Date();
+        var currentMonth = today.getMonth() + 2; // Months are zero-based
+        var currentYear = today.getFullYear();
+    
+        var expiryMonthSelect = document.getElementById('expiry_m');
+        var expiryYearSelect = document.getElementById('expiry_y');
+    
+        // Populate expiry month options
+        for (var month = currentMonth; month <= 12; month++) {
+            var option = document.createElement('option');
+            option.value = month < 10 ? '0' + month : month;
+            option.text = month < 10 ? '0' + month : month;
+            expiryMonthSelect.appendChild(option);
+        }
+    
+        // Populate expiry year options (next 10 years)
+        for (var year = currentYear; year <= currentYear + 10; year++) {
+            var option = document.createElement('option');
+            option.value = year % 100; // Use last two digits
+            option.text = year;
+            expiryYearSelect.appendChild(option);
+        }
+    });
+    
+    document.getElementById('checkoutModal').addEventListener('show.bs.modal', function (event) {
+        var specialRequests = document.getElementById('special_requests').value;
+        var scheduledPickupDate = document.getElementById('scheduled_pickup_date').value;
+        var scheduledPickupTime = document.getElementById('scheduled_pickup_time').value;
+        document.getElementById('hidden_special_requests').value = specialRequests;
+        document.getElementById('hidden_scheduled_pickup_time').value = `${scheduledPickupDate}T${scheduledPickupTime}`;
+    });
+
+    document.addEventListener("DOMContentLoaded", function() {
+        var today = new Date();
+        var minDate = today.toISOString().split('T')[0]; // Current date in ISO format (yyyy-MM-dd)
+
+        var scheduledPickupDateInput = document.getElementById('scheduled_pickup_date');
+        scheduledPickupDateInput.min = minDate;
+
+        var scheduledPickupTimeInput = document.getElementById('scheduled_pickup_time');
+
+        // Populate the available time slots (9:00 AM to 6:00 PM, every 15 minutes)
+        var generateTimeSlots = function(selectedDate) {
+            var availableTimeSlots = [];
+            var currentTime = new Date();
+
+            if (selectedDate.toDateString() === today.toDateString()) {
+                if (currentTime.getHours() >= 18) {
+                    scheduledPickupDateInput.value = ""; // Clear date input
+                    scheduledPickupTimeInput.innerHTML = "";
+                    return;
+                }
+                currentTime.setMinutes(Math.ceil(currentTime.getMinutes() / 15) * 15, 0, 0); // Round up to the next 15-minute interval
+                if (currentTime.getHours() < 9) {
+                    currentTime.setHours(9, 0, 0, 0); // Set to 9:00 AM
+                }
+            } else {
+                currentTime.setHours(9, 0, 0, 0); // Set to 9:00 AM
+            }
+
+            while (currentTime.getHours() < 18) {
+                if (currentTime.getMinutes() === 0 || currentTime.getMinutes() === 15 || currentTime.getMinutes() === 30 || currentTime.getMinutes() === 45) {
+                    availableTimeSlots.push(new Date(currentTime));
+                }
+                currentTime.setMinutes(currentTime.getMinutes() + 15);
+            }
+
+            return availableTimeSlots.map(function(slot) {
+                var value = slot.toISOString().slice(11, 16);
+                var text = slot.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                return '<option value="' + value + '">' + text + '</option>';
+            }).join('');
+        }
+
+        scheduledPickupDateInput.addEventListener('change', function() {
+            var selectedDate = new Date(scheduledPickupDateInput.value);
+            scheduledPickupTimeInput.innerHTML = generateTimeSlots(selectedDate);
+        });
+
+        // Initialize with today's date
+        scheduledPickupTimeInput.innerHTML = generateTimeSlots(today);
+    });
+    document.getElementById('proceed-to-checkout-form').addEventListener('submit', function() {
+    var specialRequests = document.getElementById('special_requests').value;
+    var scheduledPickupDate = document.getElementById('scheduled_pickup_date').value;
+    var scheduledPickupTime = document.getElementById('scheduled_pickup_time').value;
+    document.getElementById('hidden_special_requests').value = specialRequests;
+    // 拼接 ISO 格式的日期时间字符串，并指定时区
+    document.getElementById('hidden_scheduled_pickup_time').value = `${scheduledPickupDate}T${scheduledPickupTime}:00Z`;
+});
+
+</script>
+    {% endblock %}
