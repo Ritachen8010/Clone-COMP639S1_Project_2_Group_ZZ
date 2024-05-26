@@ -482,6 +482,7 @@ def view_all_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     staff_info = get_staff_info(email)
+    today = datetime.now().date()
 
     cursor.execute('''
         SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
@@ -493,9 +494,16 @@ def view_all_bookings():
         INNER JOIN customer c ON b.customer_id = c.customer_id
         INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
         WHERE b.status = 'confirmed'
-        ORDER BY b.start_date
+        ORDER BY b.start_date DESC
     ''')
     bookings = cursor.fetchall()
+# Process each booking to determine the status
+    for booking in bookings:
+        if booking['end_date'] < today:
+            booking['status'] = 'Confirmed/No-show'
+        else:
+            booking['status'] = 'Confirmed'
+
     cursor.close()
     connection.close()
 
@@ -545,7 +553,7 @@ def view_all_checked_out_bookings():
         INNER JOIN customer c ON b.customer_id = c.customer_id
         INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
         WHERE b.status = 'checked out'
-        ORDER BY b.end_date DESC
+        ORDER BY b.start_date DESC
     ''')
     bookings = cursor.fetchall()
     cursor.close()
@@ -571,7 +579,7 @@ def view_all_checked_in_bookings():
         INNER JOIN customer c ON b.customer_id = c.customer_id
         INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
         WHERE b.status = 'checked in'
-        ORDER BY b.start_date
+        ORDER BY b.start_date DESC
     ''')
     bookings = cursor.fetchall()
     cursor.close()
@@ -602,7 +610,7 @@ def search_bookings_by_last_name():
         INNER JOIN customer c ON b.customer_id = c.customer_id
         INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
         WHERE c.last_name LIKE %s
-        ORDER BY b.start_date ASC
+        ORDER BY b.start_date DESC
     ''', (f'%{last_name}%',))
     bookings = cursor.fetchall()
     cursor.close()
