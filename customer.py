@@ -447,6 +447,13 @@ def customer_viewallbookings():
         ''', 
         (customer_id,))
     all_bookings = cursor.fetchall()
+    # Update booking statuses if checkout date has passed
+    current_date = datetime.now().date()
+    for booking in all_bookings:
+        end_date = booking['end_date']
+        if booking['status'] == 'confirmed' and end_date < current_date:
+            booking['status'] = 'confirmed/no-show'
+
     cursor.close()
     connection.close()
 
