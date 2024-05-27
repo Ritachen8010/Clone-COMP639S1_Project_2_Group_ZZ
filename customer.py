@@ -59,7 +59,6 @@ def customer():
 
 @customer_blueprint.route('/booking')
 def booking_room():
-    # Render the booking room page
     return render_template('customer/booking_room.html')
 
 @customer_blueprint.route('/search', methods=['POST'])
@@ -68,14 +67,14 @@ def search():
     start_date = datetime.strptime(date_range[0], '%d/%m/%Y').strftime('%Y-%m-%d')
     end_date = datetime.strptime(date_range[1], '%d/%m/%Y').strftime('%Y-%m-%d')
     adults = int(request.form['adults'])
-    children = int(request.form['children'])
-    total_guests = adults + children
+    children_0_2 = int(request.form['children_0_2'])
+    children2_17 = int(request.form['children_2_17'])
+    total_guests = adults + children2_17
 
     connection, cursor = get_cursor()
     results = []
 
     try:
-        # Fetch basic room data and any bookings overlapping the requested dates
         sql = """
         SELECT a.accommodation_id, a.type, a.description, a.capacity, a.price_per_night, a.space,
                EXISTS (
@@ -118,6 +117,106 @@ def search():
         connection.close()
 
     return jsonify(results)
+
+import decimal
+
+@customer_blueprint.route('/preview_booking', methods=['GET'])
+@role_required(['customer'])
+def preview_booking():
+    room_id = request.args.get('room_id')
+    start_date = request.args.get('start_date')
+    end_date = request.args.get('end_date')
+    adults = request.args.get('adults')
+    children_0_2 = request.args.get('children_0_2')
+    children_2_17 = request.args.get('children_2_17')
+    
+    connection, cursor = get_cursor()
+    room = None
+    gst_rate = decimal.Decimal('0.15')  # GST rate of 15%
+
+    try:
+        sql = "SELECT * FROM accommodation WHERE accommodation_id = %s"
+        cursor.execute(sql, (room_id,))
+        room = cursor.fetchone()
+
+        if room:
+            accommodation_type = room['type']  # Get accommodation type
+            # Calculate price details
+            room_price = room['price_per_night']
+            gst_price = room_price * gst_rate
+            total_price = room_price + gst_price
+
+            return render_template('customer/preview_booking.html', 
+                                   room=room, 
+                                   accommodation_type=accommodation_type,  
+                                   start_date=start_date, 
+                                   end_date=end_date, 
+                                   adults=adults, 
+                                   children0_2=children_0_2, 
+                                   children2_17=children_2_17, 
+                                   gst_price=gst_price, 
+                                   total_price=total_price,
+                                   current_year=date.today().year)
+        else:
+            return "Room not found", 404
+
+    except Exception as e:
+        print("Error: ", str(e))
+        return "Internal Server Error", 500
+    finally:
+        cursor.close()
+        connection.close()
+
+@customer_blueprint.route('/booking_payment', methods=['POST'])
+@role_required(['customer'])
+def booking_payment():
+    room_id = request.form['room_id']
+    start_date = datetime.strptime(request.form['start_date'], '%d/%m/%Y').strftime('%Y-%m-%d')
+    end_date = datetime.strptime(request.form['end_date'], '%d/%m/%Y').strftime('%Y-%m-%d')
+    adults = request.form['adults']
+    children_0_2 = request.form['children_0_2']
+    children_2_17 = request.form['children_2_17']
+    card_number = request.form['card_number']
+    card_holder = request.form['card_holder']
+    expiry_m = request.form['expiry_m']
+    expiry_y = request.form['expiry_y']
+    cvc = request.form['cvc']
+    total_guests = int(adults) + int(children_2_17)
+    customer_id = session.get('customer_id')
+    is_paid = True
+    total_price = decimal.Decimal(request.form.get('total_price', 0))
+
+    connection, cursor = get_cursor()
+
+    try:
+        # Insert booking first
+        sql_booking = """
+        INSERT INTO booking (customer_id, accommodation_id, start_date, end_date, adults, children, is_paid, status)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(sql_booking, (customer_id, room_id, start_date, end_date, adults, int(children_0_2) + int(children_2_17), is_paid, 'confirmed'))
+        booking_id = cursor.lastrowid
+
+        # Insert payment and get payment_id
+        sql_payment = """
+        INSERT INTO payment (customer_id, booking_id, payment_type_id, paid_amount)
+        VALUES (%s, %s, %s, %s)
+        """
+        cursor.execute(sql_payment, (customer_id, booking_id, 2, total_price))
+        connection.commit()
+
+        flash('Booking Successful and Payment Confirmed', 'success')
+        return redirect(url_for('customer.customer'))
+
+    except Exception as e:
+        print("Error: ", str(e))
+        connection.rollback()
+        flash('An error occurred while processing your booking. Please try again.', 'danger')
+        return redirect(url_for('customer.preview_booking', room_id=room_id, start_date=request.form['start_date'], end_date=request.form['end_date'], adults=adults, children_0_2=children_0_2, children_2_17=children_2_17))
+
+    finally:
+        cursor.close()
+        connection.close()
 
 
 # Define a name for upload image profile

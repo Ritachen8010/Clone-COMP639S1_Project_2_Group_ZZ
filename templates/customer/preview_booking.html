@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+
+{% block title %}Preview Booking{% endblock %}
+
+{% block navbar %}
+{% include 'home/home_nav.html' %}
+{% endblock %}
+
+{% block content %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Preview Booking</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css">
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/momentjs/latest/moment.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+
+        h1, h2, h3, h4, h5, h6 {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        .card {
+            box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2);
+            transition: 0.3s;
+            border-radius: 5px;
+        }
+
+        .card:hover {
+            box-shadow: 0 8px 16px 0 rgba(0, 0, 0, 0.2);
+        }
+
+        .card-body {
+            padding: 20px;
+        }
+
+        .btn-primary {
+            background-color: #007bff;
+            border-color: #007bff;
+        }
+
+        .btn-primary:hover {
+            background-color: #0069d9;
+            border-color: #0062cc;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Preview Your Booking</h1>
+        <div class="row">
+            <div class="col-md-8">
+                <img src="{{ url_for('static', filename='home/' + room.image) }}" class="img-fluid" alt="Room Image">
+                <h2>Facilities</h2>
+                <ul class="list-inline">
+                    <li class="list-inline-item"><i class="fas fa-parking"></i> Parking</li>
+                    <li class="list-inline-item"><i class="fas fa-wifi"></i> Free WiFi</li>
+                    <li class="list-inline-item"><i class="fas fa-snowflake"></i> Air Conditioning</li>
+                    <li class="list-inline-item"><i class="fas fa-tv"></i> Smart TV</li>
+                </ul>
+                <h3>Overview</h3>
+                <p>{{ room.description }}</p>
+            </div>
+            <div class="col-md-4">
+                <div class="card">
+                    <div class="card-body">
+                        <h3 class="card-title">Total NZD${{ '%.2f'|format(total_price) }}</h3> 
+                        <p class="card-text">Your selected dates: </p>
+                        <p>Start Date: {{ start_date }}</p>
+                        <p>End Date: {{ end_date }}</p>
+                        <p>Guests: {{ adults }} Adults{% if children2_17 != '0' %}, {{ children2_17 }} Children (2-17 years old){% endif %}{% if children0_2 != '0' %}, {{ children0_2 }} Children (0-2 years old){% endif %}</p>
+                        <p>Room Type: {{ room.type }}</p>
+                        <form method="post" action="{{ url_for('customer.booking_payment') }}">
+                            <input type="hidden" name="room_id" value="{{ room.accommodation_id }}">
+                            <input type="hidden" name="start_date" value="{{ start_date }}">
+                            <input type="hidden" name="end_date" value="{{ end_date }}">
+                            <input type="hidden" name="adults" value="{{ adults }}">
+                            <input type="hidden" name="children" value="{{ children }}">
+                            <input type="hidden" name="children_0_2" value="{{ children0_2 }}">
+                            <input type="hidden" name="children_2_17" value="{{ children2_17 }}">
+                            <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#checkoutModal">Pay Now</button>
+                        </form>
+                        <h4 class="mt-4">Price Details</h4>
+                        <p>Room Price: NZD ${{ '%.2f'|format(room.price_per_night) }}</p> 
+                        <p>GST (15%): NZD ${{ '%.2f'|format(gst_price) }}</p> 
+                        <p>Total Price: NZD ${{ '%.2f'|format(total_price) }}</p> 
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Checkout Modal -->
+    <div class="modal fade" id="checkoutModal" tabindex="-1" aria-labelledby="checkoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="checkoutModalLabel">Checkout</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="payment-form" action="{{ url_for('customer.booking_payment') }}" method="post" class="needs-validation" novalidate>
+                        <input type="hidden" name="room_id" value="{{ room.accommodation_id }}">
+                        <input type="hidden" name="start_date" value="{{ start_date }}">
+                        <input type="hidden" name="end_date" value="{{ end_date }}">
+                        <input type="hidden" name="adults" value="{{ adults }}">
+                        <input type="hidden" name="children_0_2" value="{{ children0_2 }}">
+                        <input type="hidden" name="children_2_17" value="{{ children2_17 }}">
+                        <div class="mb-3">
+                            <label for="card_number" class="form-label">Card number:<span class="require-star">*</span></label>
+                            <input type="text" class="form-control" id="card_number" name="card_number" maxlength="19" required>
+                            <div class="invalid-feedback text-start">
+                                Please enter the credit card number.
+                            </div>
+                        </div>
+                        <div class="mb-3">
+                            <label for="card_holder" class="form-label">Name on card:<span class="require-star">*</span></label>
+                            <input type="text" class="form-control" id="card_holder" name="card_holder" required>
+                            <div class="invalid-feedback text-start">
+                                Please enter the credit card holder name.
+                            </div>
+                        </div>
+                        <div class="mb-3 row justify-content-between">
+                            <div class="col-5">
+                                <label for="expiry_m" class="form-label">Expire Date:<span class="require-star">*</span></label>
+                                <div class="d-flex">
+                                    <div class="col-8 me-2">
+                                        <select id="expiry_m" name="expiry_m" required class="form-select" aria-label="Default select example">
+                                            <option disabled selected value>MM</option>
+                                            {% for month in range(1, 13) %}
+                                            <option value="{{ month }}">{{ month }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="invalid-feedback text-start">
+                                            Please select expire month.
+                                        </div>
+                                    </div>
+                                    <div class="col-8">
+                                        <select id="expiry_y" name="expiry_y" required class="form-select" aria-label="Default select example">
+                                            <option disabled selected value>YY</option>
+                                            {% for year in range(current_year, current_year + 10) %}
+                                            <option value="{{ year }}">{{ year }}</option>
+                                            {% endfor %}
+                                        </select>
+                                        <div class="invalid-feedback text-start">
+                                            Please select expire year.
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-3">
+                                <label for="cvc" class="form-label">CVC:<span class="require-star">*</span></label>
+                                <input type="text" class="form-control" id="cvc" name="cvc" maxlength="3" minlength="3" required>
+                                <div class="invalid-feedback text-start">
+                                    Please enter CVC number (3 digits).
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <p style="font-size:14px;">We accept Visa, Mastercard and American Express</p>
+                        </div>
+                        <div class="mb-3">
+                            <img src="{{url_for('static',filename='images/visacard-footer.png')}}" alt="visacard" class="card-logo">
+                            <img src="{{url_for('static',filename='images/mastercard-footer.png')}}" alt="mastercard" class="card-logo">
+                            <img src="{{url_for('static',filename='images/americanexpress-footer.png')}}" alt="americanexpress" class="card-logo" style="width: 50px;">
+                        </div>
+                        <div class="row mb-3 justify-content-between">
+                            <div class="text-center py-3 col-5">
+                                <button type="button" class="btn btn-secondary col-12" data-bs-dismiss="modal">Cancel</button>
+                            </div>
+                            <div class="text-center py-3 col-5">
+                                <button type="submit" id="submitPayment" class="btn btn-danger col-12">Submit</button>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        $(function() {
+            $('input[name="daterange"]').daterangepicker({
+                opens: 'left',
+                minDate: moment(),
+                maxDate: moment().add(1, 'year'),
+                locale: {
+                    format: 'DD/MM/YYYY'
+                }
+            });
+        });
+    </script>
+</body>
+</html>
+{% endblock %}

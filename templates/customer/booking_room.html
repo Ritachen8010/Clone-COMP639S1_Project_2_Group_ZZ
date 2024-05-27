@@ -31,6 +31,13 @@
                     return blockedDates.includes(date.format('YYYY-MM-DD'));
                 }
             });
+
+            $('input[name="daterange"]').on('apply.daterangepicker', function(ev, picker) {
+                if (!picker.startDate || !picker.endDate) {
+                    alert("Please select a valid date range.");
+                    return false;
+                }
+            });
         });
 
         $(document).ready(function() {
@@ -41,16 +48,49 @@
             $('#saveGuests').on('click', function() {
                 var adults = $('#group_adults').val();
                 var children = $('#group_children').val();
+                var children0_2 = 0;
+                var children2_17 = 0;
+
+                $('.child-age-select').each(function() {
+                    var ageGroup = $(this).val();
+                    if (ageGroup === '0-2') {
+                        children0_2++;
+                    } else if (ageGroup === '2-17') {
+                        children2_17++;
+                    }
+                });
+
                 if (adults < 1) {
                     alert('There must be at least one adult.');
                     return;
                 }
-                var totalGuests = parseInt(adults) + parseInt(children);
+
+                var totalGuests = parseInt(adults) + parseInt(children2_17);
                 $('#guestsDropdown').text(totalGuests + ' Guests');
                 $('#number_of_guests').val(totalGuests);
                 $('#adults').val(adults);
                 $('#children').val(children);
+                $('#children_0_2').val(children0_2);
+                $('#children_2_17').val(children2_17);
                 $('#guestsModal').modal('hide');
+            });
+
+            $('#group_children').on('input', function() {
+                var childrenCount = $(this).val();
+                var childrenContainer = $('#childrenContainer');
+                childrenContainer.empty();
+                for (var i = 0; i < childrenCount; i++) {
+                    childrenContainer.append(`
+                        <div class="col-12 mt-2">
+                            <label for="child_${i}_age">Child ${i + 1} Age</label>
+                            <select id="child_${i}_age" class="form-control child-age-select">
+                                <option disabled selected value="">Select child age</option>
+                                <option value="0-2">0-2 years old</option>
+                                <option value="2-17">2-17 years old</option>
+                            </select>
+                        </div>
+                    `);
+                }
             });
         });
     </script>
@@ -65,11 +105,11 @@
 <body>
     <div class="container mt-5">
         <h2>Book Your Room</h2>
-        <form id="searchForm" class="mb-3">
+        <form id="searchForm" class="mb-3" method="post" action="{{ url_for('customer.search') }}">
             <div class="row g-3 align-items-center justify-content-start">
                 <div class="col-md-4">
                     <label for="daterange" class="form-label">Date Range:</label>
-                    <input type="text" id="daterange" name="daterange" class="form-control">
+                    <input type="text" id="daterange" name="daterange" class="form-control" required>
                 </div>
                 <div class="col-md-3">
                     <label for="number_of_guests" class="form-label">Number of Guests:</label>
@@ -77,6 +117,8 @@
                     <input type="hidden" id="number_of_guests" name="number_of_guests" value="1">
                     <input type="hidden" id="adults" name="adults" value="1">
                     <input type="hidden" id="children" name="children" value="0">
+                    <input type="hidden" id="children_0_2" name="children_0_2" value="0">
+                    <input type="hidden" id="children_2_17" name="children_2_17" value="0">
                 </div>
                 <div class="col-md-3">
                     <button type="submit" class="btn btn-primary mt-4">Search Availability</button>
@@ -108,6 +150,9 @@
                                 <input type="range" class="form-range" id="group_children" min="0" max="10" step="1" value="0">
                                 <span id="childrenCount">0</span>
                             </div>
+                            <div id="childrenContainer" class="col-12">
+                                <!-- Dynamic child age dropdowns will be appended here -->
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -122,13 +167,34 @@
     <script>
         $('#group_adults').on('input', function() {
             $('#adultsCount').text($(this).val());
+            $('#adults').val($(this).val());  // 同步成人人数
         });
 
         $('#group_children').on('input', function() {
             $('#childrenCount').text($(this).val());
+            var childrenCount = $(this).val();
+            var childrenContainer = $('#childrenContainer');
+            childrenContainer.empty();
+            for (var i = 0; i < childrenCount; i++) {
+                childrenContainer.append(`
+                    <div class="col-12 mt-2">
+                        <label for="child_${i}_age">Child ${i + 1} Age</label>
+                        <select id="child_${i}_age" class="form-control child-age-select">
+                            <option disabled selected value="">Select child age</option>
+                            <option value="0-2">0-2 years old</option>
+                            <option value="2-17">2-17 years old</option>
+                        </select>
+                    </div>
+                `);
+            }
         });
 
         $('#searchForm').on('submit', function(e) {
+            var daterange = $('#daterange').val();
+            if (!daterange) {
+                alert("Please select a valid date range.");
+                return false;
+            }
             e.preventDefault();
             var data = $(this).serialize();
             $.post('/customer/search', data, function(rooms) {
@@ -157,34 +223,34 @@
 
                     var personIcons = '';
                     for (var i = 0; i < room.capacity; i++) {
-                        personIcons += '<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/icons/person.svg" alt="Person Icon" style="width:20px;"> ';
+                        personIcons += '<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/icons/person.svg" alt="Person Icon" style="width: 20px; height: 20px;">';
                     }
 
-                    rows += `<tr>
-                        <td>${room.type}</td>
-                        <td><img src="${imagePath}" alt="${room.type} Room Image" style="width:100px; height:auto;"> ${room.description}</td>
-                        <td>$NZD ${room.price_per_night}</td>
-                        <td>${personIcons}</td>
-                        <td>${room.availability}</td>
-                        <td>${actionHtml}</td>
-                    </tr>`;
+                    rows += `
+                        <div class="col-4">
+                            <div class="card mb-4 shadow-sm">
+                                <img class="card-img-top" src="${imagePath}" alt="${room.type}">
+                                <div class="card-body">
+                                    <h5 class="card-title">${room.type}</h5>
+                                    <p class="card-text">${room.availability}</p>
+                                    <p class="card-text">Price: $${room.price_per_night}</p>
+                                    <p class="card-text">Max Guests: ${personIcons}</p>
+                                    ${actionHtml}
+                                </div>
+                            </div>
+                        </div>
+                    `;
                 });
-                var table = `
-                    <table class="table">
-                        <thead>
-                            <tr>
-                                <th>Room Type</th>
-                                <th>Room Info</th>
-                                <th>Per Night</th>
-                                <th>Capacity</th>
-                                <th>Availability</th>
-                                <th>Action</th>
-                            </tr>
-                        </thead>
-                        <tbody>${rows}</tbody>
-                    </table>`;
-                $('#resultsTable').html(table);
-            }, 'json');
+                $('#resultsTable').html(`<div class="row">${rows}</div>`);
+            });
+        });
+
+        $(document).on('click', '.reserveBtn', function() {
+            var roomId = $(this).data('room-id');
+            var startDate = $(this).data('start-date');
+            var endDate = $(this).data('end-date');
+            var guests = $(this).data('guests');
+            window.location.href = `/customer/preview_booking?room_id=${roomId}&start_date=${startDate}&end_date=${endDate}&adults=${$('#adults').val()}&children_0_2=${$('#children_0_2').val()}&children_2_17=${$('#children_2_17').val()}`;
         });
     </script>
 </body>
