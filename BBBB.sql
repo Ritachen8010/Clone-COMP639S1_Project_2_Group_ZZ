@@ -111,7 +111,7 @@ CREATE TABLE `orders` (
     `total_price` DECIMAL(10,2),
     `special_requests` TEXT,
     `scheduled_pickup_time` DATETIME,
-    `status` ENUM('ordered', 'ready', 'collected', 'cancelled') NOT NULL,
+    `status` ENUM('ordered', 'preparing', 'ready for collection', 'collected', 'cancelled') NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`order_id`),
