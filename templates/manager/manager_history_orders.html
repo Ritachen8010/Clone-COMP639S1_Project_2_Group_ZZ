@@ -20,6 +20,7 @@
                             <div class="row">
                                 <div class="col-md-3 mb-3">
                                     <select name="status" class="form-select" onchange="this.form.submit()">
+                                        <option value="" {% if not filter_status %}selected{% endif %}>All Completed</option>
                                         <option value="collected" {% if filter_status == 'collected' %}selected{% endif %}>Collected</option>
                                         <option value="cancelled" {% if filter_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
                                     </select>
