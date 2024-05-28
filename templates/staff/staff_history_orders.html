@@ -20,11 +20,12 @@
                             <div class="row">
                                 <div class="col-md-3 mb-3">
                                     <select name="status" class="form-select" onchange="this.form.submit()">
+                                        <option value="" {% if not filter_status %}selected{% endif %}>All Completed Orders</option>
                                         <option value="collected" {% if filter_status == 'collected' %}selected{% endif %}>Collected</option>
                                         <option value="cancelled" {% if filter_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3 mb-3">
+                                <div class="col-md-3 mb-4">
                                     <div class="row">
                                         <div class="col-md-4">
                                             <label for="pickup_date">Pickup Date</label>
@@ -34,15 +35,14 @@
                                         </div>
                                     </div>
                                 </div>
-                                <div class="col-md-3 mb-3">
+                                <div class="col-md-4 mb-3">
                                     <input type="text" name="search_email" class="form-control" placeholder="Search by customer email" value="{{ search_email }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
+                                <div class="col-md-2 mb-3">
                                     <button type="submit" class="btn btn-custom btn-block">Search</button>
                                 </div>
                             </div>
                         </form>
-                        
                         {% if history_orders %}
                         <table class="table">
                             <thead>
@@ -109,7 +109,7 @@
 
 <script>
 function showOrderDetails(orderId) {
-    fetch(`/staff/history_order_details/${orderId}`)
+    fetch(`/staff/order_details/${orderId}`)
         .then(response => response.text())
         .then(data => {
             document.getElementById('orderDetailsContent').innerHTML = data;
@@ -121,4 +121,3 @@ function showOrderDetails(orderId) {
 </script>
 
 {% endblock %}
-

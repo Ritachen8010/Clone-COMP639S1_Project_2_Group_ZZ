@@ -534,7 +534,7 @@ def history_orders():
         flash("Manager information not found.", "error")
         return redirect(url_for('manager_dashboard'))
 
-    filter_status = request.args.get('status', 'collected')
+    filter_status = request.args.get('status', '').strip()
     search_email = request.args.get('search_email', '').strip()
     pickup_date = request.args.get('pickup_date', '').strip()
     
@@ -549,11 +549,9 @@ def history_orders():
     """
     params = []
 
-    if filter_status != 'collected':
+    if filter_status:
         query += " AND o.status = %s"
         params.append(filter_status)
-    else:
-        query += " AND o.status IN ('collected', 'cancelled')"
 
     if search_email:
         query += " AND acc.email LIKE %s"

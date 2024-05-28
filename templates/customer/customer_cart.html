@@ -16,7 +16,7 @@
                 <!-- Start Empty Cart Section -->
                 <div class="empty-cart-section text-center">
                     <h2>Your cart is currently empty.</h2>
-                    <a href="{{ url_for('customer.product') }}" class="btn btn-custom mt-3">Continue Shopping</a>
+                    <a href="{{ url_for('customer.product') }}" class="btn btn-theme mt-3">Continue Shopping</a>
                 </div>
                 <!-- End Empty Cart Section -->
                 {% else %}
@@ -31,7 +31,7 @@
                                 </div>
                             </div>
                             <div class="col-lg-7 d-flex justify-content-end">
-                                <a href="{{ url_for('customer.product') }}" class="btn btn-custom"> Continue Shopping</a>
+                                <a href="{{ url_for('customer.product') }}" class="btn btn-theme"> Continue Shopping</a>
                             </div>
                         </div>
                     </div>
@@ -258,129 +258,141 @@
 </div>
 
 <script>
-    (function () {
-        'use strict';
-        var forms = document.querySelectorAll('.needs-validation');
-        Array.prototype.slice.call(forms).forEach(function (form) {
-            form.addEventListener('submit', function (event) {
-                if (!form.checkValidity()) {
-                    event.preventDefault();
-                    event.stopPropagation();
-                }
-                form.classList.add('was-validated');
-            }, false);
-        });
-    })();
-    
-    document.addEventListener("DOMContentLoaded", function() {
-        const cardNumberInput = document.getElementById('card_number');
-        const feedbackElement = cardNumberInput.nextElementSibling;
-    
-        cardNumberInput.addEventListener('input', function() {
-            const value = cardNumberInput.value.replace(/\D/g, '');
-            if (value.length === 16) {
-                cardNumberInput.classList.remove('is-invalid');
-                cardNumberInput.classList.add('is-valid');
-                feedbackElement.textContent = 'Valid card number';
-                feedbackElement.style.color = 'green';
-            } else {
-                cardNumberInput.classList.remove('is-valid');
-                cardNumberInput.classList.add('is-invalid');
-                feedbackElement.textContent = 'Invalid card number';
-                feedbackElement.style.color = 'red';
+(function () {
+    'use strict';
+    var forms = document.querySelectorAll('.needs-validation');
+    Array.prototype.slice.call(forms).forEach(function (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
             }
-        });
-    
-        var today = new Date();
-        var currentMonth = today.getMonth() + 2; // Months are zero-based
-        var currentYear = today.getFullYear();
-    
-        var expiryMonthSelect = document.getElementById('expiry_m');
-        var expiryYearSelect = document.getElementById('expiry_y');
-    
-        // Populate expiry month options
-        for (var month = currentMonth; month <= 12; month++) {
-            var option = document.createElement('option');
-            option.value = month < 10 ? '0' + month : month;
-            option.text = month < 10 ? '0' + month : month;
-            expiryMonthSelect.appendChild(option);
-        }
-    
-        // Populate expiry year options (next 10 years)
-        for (var year = currentYear; year <= currentYear + 10; year++) {
-            var option = document.createElement('option');
-            option.value = year % 100; // Use last two digits
-            option.text = year;
-            expiryYearSelect.appendChild(option);
+            form.classList.add('was-validated');
+        }, false);
+    });
+})();
+
+document.addEventListener("DOMContentLoaded", function() {
+    const cardNumberInput = document.getElementById('card_number');
+    const feedbackElement = cardNumberInput.nextElementSibling;
+
+    cardNumberInput.addEventListener('input', function() {
+        const value = cardNumberInput.value.replace(/\D/g, '');
+        if (value.length === 16) {
+            cardNumberInput.classList.remove('is-invalid');
+            cardNumberInput.classList.add('is-valid');
+            feedbackElement.textContent = 'Valid card number';
+            feedbackElement.style.color = 'green';
+        } else {
+            cardNumberInput.classList.remove('is-valid');
+            cardNumberInput.classList.add('is-invalid');
+            feedbackElement.textContent = 'Invalid card number';
+            feedbackElement.style.color = 'red';
         }
     });
-    
-    document.getElementById('checkoutModal').addEventListener('show.bs.modal', function (event) {
-        var specialRequests = document.getElementById('special_requests').value;
-        var scheduledPickupDate = document.getElementById('scheduled_pickup_date').value;
-        var scheduledPickupTime = document.getElementById('scheduled_pickup_time').value;
-        document.getElementById('hidden_special_requests').value = specialRequests;
-        document.getElementById('hidden_scheduled_pickup_time').value = `${scheduledPickupDate}T${scheduledPickupTime}`;
-    });
 
-    document.addEventListener("DOMContentLoaded", function() {
-        var today = new Date();
-        var minDate = today.toISOString().split('T')[0]; // Current date in ISO format (yyyy-MM-dd)
+    var today = new Date();
+    var currentMonth = today.getMonth() + 2; // Months are zero-based
+    var currentYear = today.getFullYear();
 
-        var scheduledPickupDateInput = document.getElementById('scheduled_pickup_date');
-        scheduledPickupDateInput.min = minDate;
+    var expiryMonthSelect = document.getElementById('expiry_m');
+    var expiryYearSelect = document.getElementById('expiry_y');
 
-        var scheduledPickupTimeInput = document.getElementById('scheduled_pickup_time');
+    // Populate expiry month options
+    for (var month = currentMonth; month <= 12; month++) {
+        var option = document.createElement('option');
+        option.value = month < 10 ? '0' + month : month;
+        option.text = month < 10 ? '0' + month : month;
+        expiryMonthSelect.appendChild(option);
+    }
 
-        // Populate the available time slots (9:00 AM to 6:00 PM, every 15 minutes)
-        var generateTimeSlots = function(selectedDate) {
-            var availableTimeSlots = [];
-            var currentTime = new Date();
+    // Populate expiry year options (next 10 years)
+    for (var year = currentYear; year <= currentYear + 10; year++) {
+        var option = document.createElement('option');
+        option.value = year % 100; // Use last two digits
+        option.text = year;
+        expiryYearSelect.appendChild(option);
+    }
+});
 
-            if (selectedDate.toDateString() === today.toDateString()) {
-                if (currentTime.getHours() >= 18) {
-                    scheduledPickupDateInput.value = ""; // Clear date input
-                    scheduledPickupTimeInput.innerHTML = "";
-                    return;
-                }
-                currentTime.setMinutes(Math.ceil(currentTime.getMinutes() / 15) * 15, 0, 0); // Round up to the next 15-minute interval
-                if (currentTime.getHours() < 9) {
-                    currentTime.setHours(9, 0, 0, 0); // Set to 9:00 AM
-                }
-            } else {
-                currentTime.setHours(9, 0, 0, 0); // Set to 9:00 AM
-            }
-
-            while (currentTime.getHours() < 18) {
-                if (currentTime.getMinutes() === 0 || currentTime.getMinutes() === 15 || currentTime.getMinutes() === 30 || currentTime.getMinutes() === 45) {
-                    availableTimeSlots.push(new Date(currentTime));
-                }
-                currentTime.setMinutes(currentTime.getMinutes() + 15);
-            }
-
-            return availableTimeSlots.map(function(slot) {
-                var value = slot.toISOString().slice(11, 16);
-                var text = slot.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-                return '<option value="' + value + '">' + text + '</option>';
-            }).join('');
-        }
-
-        scheduledPickupDateInput.addEventListener('change', function() {
-            var selectedDate = new Date(scheduledPickupDateInput.value);
-            scheduledPickupTimeInput.innerHTML = generateTimeSlots(selectedDate);
-        });
-
-        // Initialize with today's date
-        scheduledPickupTimeInput.innerHTML = generateTimeSlots(today);
-    });
-    document.getElementById('proceed-to-checkout-form').addEventListener('submit', function() {
+document.getElementById('checkoutModal').addEventListener('show.bs.modal', function (event) {
     var specialRequests = document.getElementById('special_requests').value;
     var scheduledPickupDate = document.getElementById('scheduled_pickup_date').value;
     var scheduledPickupTime = document.getElementById('scheduled_pickup_time').value;
     document.getElementById('hidden_special_requests').value = specialRequests;
-    // 拼接 ISO 格式的日期时间字符串，并指定时区
-    document.getElementById('hidden_scheduled_pickup_time').value = `${scheduledPickupDate}T${scheduledPickupTime}:00Z`;
+    document.getElementById('hidden_scheduled_pickup_time').value = `${scheduledPickupDate}T${scheduledPickupTime}`;
 });
 
+document.addEventListener("DOMContentLoaded", function() {
+    var today = new Date();
+    var minDate = today.toISOString().split('T')[0]; // Current date in ISO format (yyyy-MM-dd)
+
+    var scheduledPickupDateInput = document.getElementById('scheduled_pickup_date');
+    scheduledPickupDateInput.min = minDate;
+    scheduledPickupDateInput.value = minDate; // Set default value to today
+
+    var scheduledPickupTimeInput = document.getElementById('scheduled_pickup_time');
+
+    // Populate the available time slots (9:00 AM to 6:00 PM, every 15 minutes)
+    var generateTimeSlots = function(selectedDate) {
+        var availableTimeSlots = [];
+        var currentTime = new Date();
+
+        if (selectedDate.toDateString() === today.toDateString()) {
+            if (currentTime.getHours() >= 18) {
+                scheduledPickupDateInput.value = ""; // Clear date input
+                scheduledPickupTimeInput.innerHTML = "";
+                return;
+            }
+            currentTime.setMinutes(Math.ceil(currentTime.getMinutes() / 15) * 15, 0, 0); // Round up to the next 15-minute interval
+            if (currentTime.getHours() < 9) {
+                currentTime.setHours(9, 0, 0, 0); // Set to 9:00 AM
+            }
+        } else {
+            currentTime.setHours(9, 0, 0, 0); // Set to 9:00 AM
+        }
+
+        while (currentTime.getHours() < 18) {
+            if (currentTime.getMinutes() === 0 || currentTime.getMinutes() === 15 || currentTime.getMinutes() === 30 || currentTime.getMinutes() === 45) {
+                availableTimeSlots.push(new Date(currentTime));
+            }
+            currentTime.setMinutes(currentTime.getMinutes() + 15);
+        }
+
+        return availableTimeSlots.map(function(slot) {
+            var value = slot.toISOString().slice(11, 16);
+            var text = slot.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+            return '<option value="' + value + '">' + text + '</option>';
+        }).join('');
+    }
+
+    scheduledPickupDateInput.addEventListener('change', function() {
+        var selectedDate = new Date(scheduledPickupDateInput.value);
+        scheduledPickupTimeInput.innerHTML = generateTimeSlots(selectedDate);
+    });
+
+    // Initialize with today's date
+    scheduledPickupTimeInput.innerHTML = generateTimeSlots(today);
+});
+
+document.getElementById('proceed-to-checkout-form').addEventListener('submit', function() {
+    var specialRequests = document.getElementById('special_requests').value;
+    var scheduledPickupDate = document.getElementById('scheduled_pickup_date').value;
+    var scheduledPickupTime = document.getElementById('scheduled_pickup_time').value;
+    document.getElementById('hidden_special_requests').value = specialRequests;
+
+
+    var nzDateTime = new Date(`${scheduledPickupDate}T${scheduledPickupTime}:00`);
+    var nzOffset = 12 * 60; 
+    var nzDstOffset = (new Date().getTimezoneOffset() === -780) ? 13 * 60 : nzOffset; 
+
+    nzDateTime.setMinutes(nzDateTime.getMinutes() - nzDateTime.getTimezoneOffset() + nzDstOffset);
+
+    var isoDateTime = nzDateTime.toISOString().replace('Z', nzDstOffset === 780 ? '+13:00' : '+12:00'); // Manually adjust the timezone offset
+
+    document.getElementById('hidden_scheduled_pickup_time').value = isoDateTime;
+});
+
+
 </script>
-    {% endblock %}
+{% endblock %}

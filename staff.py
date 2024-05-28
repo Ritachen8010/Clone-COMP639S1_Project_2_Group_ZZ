@@ -166,7 +166,6 @@ def staff_updateprofile():
 
     # Render page with current account information
     return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info, max_date=max_date_str, min_date=min_date_str)
-# Staff view orders
 @staff_blueprint.route('/orders', methods=['GET', 'POST'])
 @role_required(['staff'])
 def manage_orders():
@@ -207,6 +206,22 @@ def manage_orders():
 
     cursor.execute(query, params)
     orders = cursor.fetchall()
+
+    if request.method == 'POST':
+        order_id = request.form.get('order_id')
+        new_status = request.form.get('new_status')
+        valid_statuses = ['ordered', 'preparing', 'ready for collection', 'collected', 'cancelled']
+        if order_id and new_status in valid_statuses:
+            cursor.execute("""
+                UPDATE orders 
+                SET status = %s, last_updated = NOW()
+                WHERE order_id = %s
+            """, (new_status, order_id))
+            connection.commit()
+            flash(f"Order {order_id} status updated to {new_status}.", "success")
+        else:
+            flash(f"Invalid status value: {new_status}", "danger")
+        return redirect(url_for('staff.manage_orders', status=filter_status, search_email=search_email, pickup_date=pickup_date))
 
     cursor.close()
     connection.close()
@@ -255,15 +270,13 @@ def order_details(order_id):
         connection.close()
     
     return render_template('staff/staff_order_details.html', order=order, order_items=order_items, staff_info=staff_info)
-
-# Staff view history order 
 @staff_blueprint.route('/history_orders', methods=['GET'])
 @role_required(['staff'])
 def view_history_orders():
     email = session.get('email')
     staff_info = get_staff_info(email)
     
-    filter_status = request.args.get('status', 'collected')
+    filter_status = request.args.get('status', '').strip()
     search_email = request.args.get('search_email', '').strip()
     pickup_date = request.args.get('pickup_date', '').strip()
     
@@ -279,7 +292,7 @@ def view_history_orders():
     """
     params = []
 
-    if filter_status in ['collected', 'cancelled']:
+    if filter_status:
         query += " AND o.status = %s"
         params.append(filter_status)
 
