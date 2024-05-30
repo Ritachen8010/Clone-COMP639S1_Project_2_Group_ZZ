@@ -10,7 +10,8 @@
         <div class="row">
             <!-- insert staff_side_nav.html -->
             {% include 'dashboard_nav/staff_side_nav.html' %}
-            <div class="col-xs-12 col-sm-12 col-lg-12 px-md-4 py-4 mx-auto mt-5 mb-5">
+            <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
+                <h1 class="mb-4">Manage Orders</h1> 
                 <div class="card">
                     <div class="card-header">
                         <h2 class="custom-title">Manage Orders</h2>
@@ -18,7 +19,7 @@
                     <div class="card-body">
                         <form action="{{ url_for('staff.manage_orders') }}" method="get" class="mb-3">
                             <div class="row">
-                                <div class="col-md-3 mb-3">
+                                <div class="col-md-3 mb-3 d-flex align-items-center">
                                     <select name="status" class="form-select" onchange="this.form.submit()">
                                         <option value="active" {% if filter_status == 'active' %}selected{% endif %}>Active Orders</option>
                                         <option value="ordered" {% if filter_status == 'ordered' %}selected{% endif %}>Ordered</option>
@@ -28,20 +29,13 @@
                                         <option value="cancelled" {% if filter_status == 'cancelled' %}selected{% endif %}>Cancelled</option>
                                     </select>
                                 </div>
-                                <div class="col-md-3 mb-3">
-                                    <div class="row">
-                                        <div class="col-md-4">
-                                            <label for="pickup_date">Pickup Date</label>
-                                        </div>
-                                        <div class="col-md-8">
-                                            <input type="date" id="pickup_date" name="pickup_date" class="form-control" placeholder="Pickup Date" value="{{ pickup_date }}">
-                                        </div>
-                                    </div>
+                                <div class="col-md-3 mb-3 d-flex align-items-center">
+                                    <input type="date" id="pickup_date" name="pickup_date" class="form-control" placeholder="Pickup Date" value="{{ pickup_date }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
+                                <div class="col-md-4 mb-3 d-flex align-items-center">
                                     <input type="text" name="search_email" class="form-control" placeholder="Search by customer email" value="{{ search_email }}">
                                 </div>
-                                <div class="col-md-3 mb-3">
+                                <div class="col-md-2 mb-3 d-flex align-items-center">
                                     <button type="submit" class="btn btn-custom btn-block">Search</button>
                                 </div>
                             </div>
@@ -66,12 +60,12 @@
                                 {% for order in orders %}
                                 <tr>
                                     <td>{{ order.order_id }}</td>
-                                    <td>{{ order.first_name }} {{ order.last_name }}</td>
+                                    <td>{{ order.first_name | capitalize }} {{ order.last_name | capitalize }}</td>
                                     <td>{{ order.email }}</td>
                                     <td>${{ order.total_price }}</td>
-                                    <td>{{ order.status }}</td>
-                                    <td>{{ order.created_at.strftime('%d-%m-%Y %H:%M') }}</td>
-                                    <td>{{ order.scheduled_pickup_time.strftime('%d-%m-%Y %H:%M') }}</td>
+                                    <td>{{ order.status | capitalize }}</td>
+                                    <td>{{ order.created_at | format_time }}</td>
+                                    <td>{{ order.scheduled_pickup_time | format_time }}</td>
                                     <td><button class="btn btn-custom btn-sm" onclick="showOrderDetails({{ order.order_id }})">View Details</button></td>
                                     
                                     <td>
@@ -107,9 +101,7 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="orderDetailsModalLabel">Order Details</h5>
-                <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">&times;</span>
-                </button>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 <!-- Order details will be loaded here via JavaScript -->

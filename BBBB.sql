@@ -114,8 +114,9 @@ CREATE TABLE `orders` (
     `total_price` DECIMAL(10,2),
     `special_requests` TEXT,
     `scheduled_pickup_time` DATETIME,
-    `status` ENUM('ordered', 'ready', 'collected', 'cancelled') NOT NULL,
+    `status` ENUM('ordered', 'preparing', 'ready for collection', 'collected', 'cancelled') NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`order_id`),
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
 )AUTO_INCREMENT=1;
@@ -725,7 +726,6 @@ VALUES
 INSERT INTO `orders` (`customer_id`, `total_price`, `special_requests`, `scheduled_pickup_time`, `status`, `created_at`) VALUES 
 (1000, 20.00, 'Please add extra sugar to the Hot Chocolate.', '2024-05-19 15:00', 'ordered', '2024-05-19 14:00'),
 (1000, 13.50, 'No ice in the Sprite, please.', '2024-05-18 16:00', 'ordered', '2024-05-18 15:00');
-
 
 -- 11. Insert into order_item
 INSERT INTO `order_item` (`order_id`, `product_id`, `quantity`) VALUES 
