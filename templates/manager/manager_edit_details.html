@@ -16,12 +16,12 @@
                     <div class="row">
                         <div class="col-md-4">
                             <div class="card-body">
-                                <form method="post" enctype="multipart/form-data" action="{{ url_for('manager.handle_upload_product_image') }}">
-                                    <img class="img-profile mb-2" src="{{ url_for('static', filename='product/' + (product.image|default('default.png'))) }}"
+                                <form method="post" enctype="multipart/form-data" action="{{ url_for('manager.upload_product_image_new', product_id=product.product_id) }}">
+                                    <img class="img-profile mb-2" src="{{ url_for('static', filename='product/' + (product.image)) }}"
                                         class="img-thumbnail mb-3" alt="Product Image" style="width: 80%; height: auto;">
                                     <input type="file" class="form-control" id="image" name="image">
                                     <button type="submit" class="btn btn-theme mt-4">Update Picture</button>
-                                </form>
+                                </form>                                                                                                                             
                             </div>
                         </div>
                         <div class="col-md-8">

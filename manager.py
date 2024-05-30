@@ -462,7 +462,7 @@ def upload_product_image(product_id, file):
     cursor.close()
     connection.close()
     
-# Handling product image update
+# Handling product image add
 @manager_blueprint.route('/upload_product_image', methods=["POST"])
 @role_required(['manager'])
 def handle_upload_product_image():
@@ -488,7 +488,32 @@ def handle_upload_product_image():
     else:
         flash('Invalid file type')
         return redirect(url_for('manager.manage_products'))
+
+# Handling edit product image update
+@manager_blueprint.route('/upload_product_image/<int:product_id>', methods=['POST'])
+@role_required(['manager'])
+def upload_product_image_new(product_id):
+    if 'image' not in request.files:
+        flash('No file part', 'error')
+        return redirect(url_for('manager.edit_product', product_id=product_id))
     
+    file = request.files['image']
+    
+    if file.filename == '':
+        flash('No selected file', 'error')
+        return redirect(url_for('manager.edit_product', product_id=product_id))
+
+    if len(file.filename) > MAX_FILENAME_LENGTH:
+        flash('File name is too long', 'error')
+        return redirect(url_for('manager.edit_product', product_id=product_id))
+
+    if file and allowed_file(file.filename):
+        upload_product_image(product_id, file)
+        flash('Product image successfully uploaded', 'success')
+        return redirect(url_for('manager.edit_product', product_id=product_id))
+    else:
+        flash('Invalid file type', 'error')
+        return redirect(url_for('manager.edit_product', product_id=product_id))
     
 # Manager add new product
 @manager_blueprint.route('/add_inventory', methods=['POST'])
@@ -788,7 +813,7 @@ def edit_product(product_id):
 
     cursor.execute("""
         SELECT product.product_id, product.name, product.category_id, product_category.name AS category_name, 
-               product.description, product.unit_price, COALESCE(GROUP_CONCAT(DISTINCT product_option.option_type), '') AS option_types
+               product.description, product.unit_price, product.image, COALESCE(GROUP_CONCAT(DISTINCT product_option.option_type), '') AS option_types
         FROM product 
         LEFT JOIN product_category ON product.category_id = product_category.category_id 
         LEFT JOIN product_option ON product.product_id = product_option.product_id
