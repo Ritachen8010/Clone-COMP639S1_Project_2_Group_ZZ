@@ -339,105 +339,72 @@ def search_product():
 
     return render_template('manager/manager_edit_inventory.html', manager_info=manager_info, products=products)
 
-# Manager monitor inventory
 @manager_blueprint.route('/monitor_inventory')
 @role_required(['manager'])
 def monitor_inventory():
-    category = request.args.get('category')
-    product_id = request.args.get('product_id')
+    email = session.get('email')
+    manager_info = get_manager_info(email)
     page = request.args.get('page', 1, type=int)
     items_per_page = 10
     offset = (page - 1) * items_per_page
-    email = session.get('email')
-    manager_info = get_manager_info(email)
+    category_filter = request.args.get('category')
+
     connection, cursor = get_cursor()
 
-    if category:
-        cursor.execute("""
-            SELECT
-                inventory.product_id,
-                inventory.option_id,
-                product.product_id,
-                product.image,
-                product_category.name AS category,
-                CONCAT(product.name, ' ', 
-                    CASE 
-                        WHEN product_option.option_type IN ('Add On', 'No Options') THEN ''
-                        ELSE COALESCE(product_option.option_name, '')
-                    END
-                ) AS name,
-                product.description,
-                product.unit_price,
-                inventory.quantity,
-                inventory.last_updated,
-                staff.first_name AS staff_first_name,
-                staff.last_name AS staff_last_name,
-                manager.first_name AS manager_first_name,
-                manager.last_name AS manager_last_name
-            FROM inventory 
-            LEFT JOIN product ON inventory.product_id = product.product_id
-            LEFT JOIN staff ON inventory.staff_id = staff.staff_id
-            LEFT JOIN manager ON inventory.manager_id = manager.manager_id
-            LEFT JOIN product_category ON product.category_id = product_category.category_id
-            LEFT JOIN product_option ON inventory.option_id = product_option.option_id
-            WHERE product_category.name = %s
-            ORDER BY name
-            LIMIT %s OFFSET %s
-        """, (category, items_per_page, offset))
-    else:
-        cursor.execute("""
-            SELECT
-                inventory.product_id,
-                inventory.option_id,
-                product.product_id,
-                product.image,
-                product_category.name AS category,
-                CONCAT(product.name, ' ', 
-                    CASE 
-                        WHEN product_option.option_type IN ('Add On', 'No Options') THEN ''
-                        ELSE COALESCE(product_option.option_name, '')
-                    END
-                ) AS name,
-                product.description,
-                product.unit_price,
-                inventory.quantity,
-                inventory.last_updated,
-                staff.first_name AS staff_first_name,
-                staff.last_name AS staff_last_name,
-                manager.first_name AS manager_first_name,
-                manager.last_name AS manager_last_name
-            FROM inventory 
-            LEFT JOIN product ON inventory.product_id = product.product_id
-            LEFT JOIN staff ON inventory.staff_id = staff.staff_id
-            LEFT JOIN manager ON inventory.manager_id = manager.manager_id
-            LEFT JOIN product_category ON product.category_id = product_category.category_id
-            LEFT JOIN product_option ON inventory.option_id = product_option.option_id
-            ORDER BY name
-            LIMIT %s OFFSET %s
-        """, (items_per_page, offset))
-
-    inventory = cursor.fetchall()
-
-    # Query all categories
-    cursor.execute("SELECT name FROM product_category")
+    # Query all categories except specific ones
+    cursor.execute("""
+        SELECT name FROM product_category 
+        WHERE name NOT IN ('Coffee', 'Hot Drinks', 'Milkshakes', 'Iced Teas')
+    """)
     categories = cursor.fetchall()
     categories = [row['name'] for row in categories]
 
-    # Remove duplicates by converting the list to a set, then convert it back to a list
-    categories = list(set(categories))
+    query = """
+        SELECT
+            product_category.name AS category,
+            product.product_id,
+            product.name,
+            product.unit_price,
+            product.description,
+            product.is_available,
+            product.image,
+            inventory.quantity,
+            inventory.last_updated,
+            staff.first_name AS staff_first_name,
+            staff.last_name AS staff_last_name,
+            manager.first_name AS manager_first_name,
+            manager.last_name AS manager_last_name
+        FROM inventory
+        LEFT JOIN product ON inventory.product_id = product.product_id
+        LEFT JOIN product_category ON product.category_id = product_category.category_id
+        LEFT JOIN staff ON inventory.staff_id = staff.staff_id
+        LEFT JOIN manager ON inventory.manager_id = manager.manager_id
+        WHERE product.is_available = 1
+    """
+
+    params = []
+    if category_filter:
+        query += " AND product_category.name = %s"
+        params.append(category_filter)
+
+    query += " ORDER BY product.name LIMIT %s OFFSET %s"
+    params.extend([items_per_page, offset])
+
+    cursor.execute(query, params)
+    inventory = cursor.fetchall()
+
     cursor.close()
     connection.close()
 
-    return render_template('manager/manager_inventory.html', manager_info=manager_info, 
-                           inventory=inventory, page=page, items_per_page=items_per_page,
-                           categories=categories, category=category)
+    return render_template('manager/manager_inventory.html', manager_info=manager_info, inventory=inventory, 
+                           categories=categories, page=page, items_per_page=items_per_page, 
+                           category=category_filter)
 
 # Manager update inventory
 @manager_blueprint.route('/update_inventory', methods=['POST'])
 @role_required(['manager'])
 def update_inventory():
     product_id = request.form.get('product_id')
-    option_id = request.form.get('option_id')
     new_quantity = request.form.get('quantity')
     page = request.form.get('page', 1, type=int)
     category = request.form.get('category')
@@ -453,14 +420,9 @@ def update_inventory():
         return redirect(url_for('manager.monitor_inventory', page=page, category=category)) 
 
     # Check if the new quantity will make the inventory negative
-    if option_id and option_id.isdigit():
-        cursor.execute("""
-            SELECT quantity FROM inventory WHERE product_id = %s AND option_id = %s
-        """, (product_id, option_id))
-    else:
-        cursor.execute("""
-            SELECT quantity FROM inventory WHERE product_id = %s
-        """, (product_id,))
+    cursor.execute("""
+        SELECT quantity FROM inventory WHERE product_id = %s
+    """, (product_id,))
 
     current_quantity = cursor.fetchone()
     if current_quantity is None:
@@ -472,18 +434,11 @@ def update_inventory():
         flash('Invalid quantity. The new quantity cannot make the inventory negative.', 'error')
         return redirect(url_for('manager.monitor_inventory', page=page, category=category))
 
-    if option_id and option_id.isdigit():
-        cursor.execute("""
-            UPDATE inventory
-            SET quantity = quantity + %s
-            WHERE product_id = %s AND option_id = %s
-        """, (new_quantity, product_id, option_id))
-    else:
-        cursor.execute("""
-            UPDATE inventory
-            SET quantity = quantity + %s
-            WHERE product_id = %s
-        """, (new_quantity, product_id))
+    cursor.execute("""
+        UPDATE inventory
+        SET quantity = quantity + %s
+        WHERE product_id = %s
+    """, (new_quantity, product_id))
 
     connection.commit()
     cursor.close()
@@ -622,6 +577,7 @@ def manage_products():
             product.unit_price,
             product.description,
             product.image,
+            product.is_available,
             GROUP_CONCAT(
                 CASE 
                     WHEN product_option.option_type IN ('Add On', 'No Options') THEN ''

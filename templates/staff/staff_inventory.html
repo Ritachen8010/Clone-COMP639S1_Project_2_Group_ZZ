@@ -16,10 +16,7 @@
                     <select id="category" name="category">
                         <option value="">All</option>
                         {% for category in categories %}
-                        {% if category and category not in ['Coffee', 'Hot Drinks', 'Milkshakes', 'Iced Teas'] %}
-                        <option value="{{ category }}" {% if category==request.args.get('category') %}selected{% endif
-                            %}>{{ category }}</option>
-                        {% endif %}
+                        <option value="{{ category }}" {% if category == request.args.get('category') %}selected{% endif %}>{{ category }}</option>
                         {% endfor %}
                     </select>
                     <button class="btn-theme">Filter</button>
@@ -27,7 +24,8 @@
                 <table class="table table-striped table-hover">
                     <thead class="thead-dark">
                         <tr>
-                            <th style="width: 15%;">Product Name</strong></th>
+                            <th style="width: 10%;">Image</th>
+                            <th style="width: 15%;">Product Name</th>
                             <th style="width: 40%;">Description</th>
                             <th style="width: 10%;">Unit Price</th>
                             <th style="width: 10%;">Quantity</th>
@@ -38,6 +36,10 @@
                     <tbody>
                         {% for item in inventory %}
                         <tr>
+                            <td>
+                                <img src="{{ url_for('static', filename='product/' + item.image) }}" alt="Product Image"
+                                    class="img-thumbnail" style="width: 80px; height: 100px;">
+                            </td>
                             <td class="text-start"><strong>{{ item.name | title }}</strong></td>
                             <td class="text-start">{{ item.description | capitalize }}</td>
                             <td>${{ item.unit_price }}</td>
@@ -51,7 +53,6 @@
                             <td>
                                 <form method="post" action="{{ url_for('staff.update_inventory') }}" class="form-inline">
                                     <input type="hidden" name="product_id" value="{{ item.product_id }}">
-                                    <input type="hidden" name="option_id" value="{{ item.option_id }}">
                                     <input type="hidden" name="page" value="{{ request.args.get('page', 1)|int }}">
                                     <input type="hidden" name="category" value="{{ category }}">
                                     <div class="form-group mb-2">
@@ -69,9 +70,7 @@
                         <ul class="pagination">
                             {% if page > 1 %}
                             <li class="page-item">
-                                <a class="page-link"
-                                    href="{{ url_for('staff.monitor_inventory', page=page-1, category=category) }}"
-                                    aria-label="Previous">
+                                <a class="page-link" href="{{ url_for('staff.monitor_inventory', page=page-1, category=category) }}" aria-label="Previous">
                                     <span aria-hidden="true">&laquo;</span>
                                 </a>
                             </li>
@@ -79,9 +78,7 @@
                             <li class="page-item disabled"><a class="page-link">Page {{ page }}</a></li>
                             {% if inventory|length >= items_per_page %}
                             <li class="page-item">
-                                <a class="page-link"
-                                    href="{{ url_for('staff.monitor_inventory', page=page+1, category=category) }}"
-                                    aria-label="Next">
+                                <a class="page-link" href="{{ url_for('staff.monitor_inventory', page=page+1, category=category) }}" aria-label="Next">
                                     <span aria-hidden="true">&raquo;</span>
                                 </a>
                             </li>
@@ -100,11 +97,11 @@
             // Restore the scroll position
             $(window).scrollTop(sessionStorage.scrollPosition);
         }
-    
+
         // Save the scroll position in the sessionStorage when the form is submitted
         $('form').on('submit', function() {
             sessionStorage.scrollPosition = $(window).scrollTop();
         });
     });
-    </script>
+</script>
 {% endblock %}

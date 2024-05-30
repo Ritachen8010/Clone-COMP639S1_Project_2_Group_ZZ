@@ -12,17 +12,17 @@
                 <h1 class="mb-4">Manage Product Details</h1>
                 
                 <!-- Category Filter -->
-                <form class="form-inline mb-4 d-flex align-items-center" method="GET" action="{{ url_for('manager.manage_products') }}">
-                    <label for="category_filter" class="mr-sm-2">Filter by Category:</label>
-                    <select class="form-control mr-sm-2" id="category_filter" name="category_id">
-                        <option value="">All Categories</option>
+                <!-- <form class="form-inline mb-4 d-flex align-items-center" method="GET" action="{{ url_for('manager.manage_products') }}"> -->
+                <form method="GET" action="{{ url_for('manager.manage_products') }}">
+                    <select id="category_filter" name="category_id">
+                        <option value="">All</option>
                         {% for category in categories %}
                             <option value="{{ category.category_id }}" {% if request.args.get('category_id') == category.category_id %}selected{% endif %}>
                                 {{ category.name }}
                             </option>
                         {% endfor %}
                     </select>
-                    <button class="btn btn-outline-success my-2 my-sm-0" type="submit">Filter</button>
+                    <button class="btn-theme mb-4">Filter</button>
                 </form>
             
                 <!-- Add Inventory -->
@@ -195,6 +195,7 @@
                                     {% endif %}
                                 </form>
                             </td>
+                        </tr>
                         {% endfor %}
                     </tbody>
                 </table>

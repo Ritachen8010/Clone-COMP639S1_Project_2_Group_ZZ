@@ -11,7 +11,7 @@
                     <a class="nav-link {% if active == 'manager' %} active {% endif %}" href="{{ url_for('manager.manager') }}">Dashboard</a>
                 </li>
                 <li class="nav-item me-2">
-                    <a class="nav-link" href="#">Our Product</a>
+                    <a class="nav-link" href="{{ url_for('guest.home') }}#product">Our Product</a>
                 </li>
                 <li class="nav-item me-2">
                     <a class="nav-link {% if active == 'about_us' %} active {% endif %}" href="{{ url_for('guest.about_us') }}">About Us & Our Policy</a>
