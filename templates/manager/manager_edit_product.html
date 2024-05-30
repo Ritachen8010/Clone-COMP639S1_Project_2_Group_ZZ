@@ -65,15 +65,18 @@
                                     </div>
                                     <div class="form-group">
                                         <label for="description">Description:</label>
-                                        <input type="text" class="form-control" id="description" name="description" required>
+                                        <input type="text" class="form-control" id="description" name="description" maxlength="300" required oninput="validateDescription()">
+                                        <div id="descriptionError" style="color: red; display: none;">Description cannot exceed 300 characters.</div>
                                     </div>
                                     <div class="form-group">
-                                        <label for="unit_price">Unit Price:</label>
-                                        <input type="text" class="form-control" id="unit_price" name="unit_price" required>
+                                        <label for="unit_price">Unit Price($):</label>
+                                        <input type="text" class="form-control" id="unit_price" name="unit_price" min="0" required oninput="validateUnitprice()">
+                                        <div id="unitPriceError" style="color: red; display: none;">Unit price cannot be negative.</div>
                                     </div>
                                     <div class="form-group">
                                         <label for="quantity">Quantity:</label>
-                                        <input type="text" class="form-control" id="quantity" name="quantity" required>
+                                        <input type="text" class="form-control" id="quantity" name="quantity" min="0" required oninput="validateQuantity()">
+                                        <div id="quantityError" style="color: red; display: none;">Quantity cannot be negative.</div>
                                     </div>
                                     <div class="form-group">
                                         <label for="image">Image:</label>
@@ -350,6 +353,59 @@
             }
         });
     }
+
+    function previewImage(event) {
+        var reader = new FileReader();
+        reader.onload = function () {
+            var output = document.getElementById('preview');
+            output.src = reader.result;
+        };
+        reader.readAsDataURL(event.target.files[0]);
+    }
+
+    function validateImage() {
+        var fileInput = document.getElementById('image');
+        var errorDiv = document.getElementById('imageError');
+
+        if (!fileInput.files.length || fileInput.files[0].name == '') {
+            errorDiv.textContent = 'Image file is required';
+            return false;
+        } else {
+            errorDiv.textContent = '';
+            return true;
+        }
+    }
+
+    function validateQuantity() {
+        var quantity = document.getElementById('quantity');
+        var quantityError = document.getElementById('quantityError');
+        if (quantity.value < 0) {
+            quantityError.style.display = 'block';
+        } else {
+            quantityError.style.display = 'none';
+        }
+    }
+
+    function validateDescription() {
+        var description = document.getElementById('description');
+        var descriptionError = document.getElementById('descriptionError');
+        if (description.value.length > 300) {
+            descriptionError.style.display = 'block';
+        } else {
+            descriptionError.style.display = 'none';
+        }
+    }
+
+    function validateUnitprice() {
+        var unitPrice = document.getElementById('unit_price');
+        var unitPriceError = document.getElementById('unitPriceError');
+        if (unitPrice.value < 0) {
+            unitPriceError.style.display = 'block';
+        } else {
+            unitPriceError.style.display = 'none';
+        }
+    }
+
 </script>
    
 {% endblock %}

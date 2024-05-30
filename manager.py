@@ -514,7 +514,7 @@ def add_inventory():
         return redirect(url_for('manager.manage_products'))
 
     # Add the new product item to the database
-    is_available = True
+    is_available = False
     cursor.execute("INSERT INTO product (category_id, name, description, unit_price, is_available) VALUES (%s, %s, %s, %s, %s)", (category_id, name, description, unit_price, is_available))
 
     # Get the product_id of the newly inserted product
