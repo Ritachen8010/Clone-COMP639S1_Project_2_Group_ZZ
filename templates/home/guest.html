@@ -82,44 +82,25 @@
           traveling
           together. All guests have access to shared bathroom and kitchen facilities, ensuring your stay is as
           convenient as it is enjoyable.</p>
+        <h3 class="mb-4 mt-3">
+          <strong>To Reserve rooms please <a href="/login">Login</a> first!</strong>
+        </h3>
       </div>
     </div>
     <div class="row">
+      {% for room in rooms %}
       <div class="col-md-6 col-lg-4 px-4 mb-5">
-        <a href="#" class="room">
+        <!-- <a href="#" class="room"> -->
           <div class="img-wrap">
-            <img src="{{ url_for('static', filename='home/dorm.jpg') }}" alt="1" class="img-fluid mb-3">
+            <img src="{{ url_for('static', filename='home/' + room['image']) }}" alt="1" class="img-fluid mb-3">
           </div>
         </a>
         <div class="p-3 text-center room-info">
-          <h2>Dorm Room</h2>
-          <span class="text-uppercase">...</span>
+          <h2>{{ room.type }}</h2>
+          <span class="text-uppercase">${{ room['price_per_night'] }} per night</span>
         </div>
       </div>
-
-      <div class="col-md-6 col-lg-4 px-4 mb-5">
-        <a href="#" class="room">
-          <div class="img-wrap">
-            <img src="{{ url_for('static', filename='home/twin.jpg') }}" alt="2" class="img-fluid mb-3">
-          </div>
-        </a>
-        <div class="p-3 text-center room-info">
-          <h2>Twin Room</h2>
-          <span class="text-uppercase">...</span>
-        </div>
-      </div>
-
-      <div class="col-md-6 col-lg-4 px-4 mb-5">
-        <a href="#" class="room">
-          <div class="img-wrap">
-            <img src="{{ url_for('static', filename='home/queen.jpg') }}" alt="3" class="img-fluid mb-3">
-          </div>
-        </a>
-        <div class="p-3 text-center room-info">
-          <h2>Family Room</h2>
-          <span class="text-uppercase">...</span>
-        </div>
-      </div>
+      {% endfor %}
     </div>
   </div>
 </div>

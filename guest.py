@@ -22,7 +22,8 @@ mail = Mail(app)
 
 @guest_blueprint.route('/')
 def home():
-    return render_template('home/guest.html')
+    rooms_info = rooms()
+    return render_template('home/guest.html', rooms=rooms_info)
 
 
 
@@ -242,3 +243,11 @@ def essentials():
         connection.close() 
 
     return jsonify(product_list)
+
+def rooms():
+    connection, cursor = get_cursor()
+    cursor.execute("SELECT * FROM accommodation WHERE is_available = TRUE AND room_status = 'Open'")
+    rooms_info = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return rooms_info
