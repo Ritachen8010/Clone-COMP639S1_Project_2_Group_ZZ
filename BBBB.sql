@@ -103,7 +103,8 @@ CREATE TABLE `inventory` (
     `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     PRIMARY KEY (`inventory_id`),
     FOREIGN KEY (`product_id`) REFERENCES `product` (`product_id`),
-    FOREIGN KEY (`option_id`) REFERENCES `product_option` (`option_id`)
+    FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`),
+    FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`)
 )AUTO_INCREMENT=1;
 
 -- 10. orders
@@ -654,70 +655,70 @@ VALUES
 
 
 
-INSERT INTO `inventory` (`staff_id`, `manager_id`, `product_id`, `option_id`, `quantity`)
+INSERT INTO `inventory` (`staff_id`, `manager_id`, `product_id`, `quantity`)
 VALUES
 -- Ice Blocks (new products)
-(1, 1, 42, NULL, 50), -- Strawberry Ice Blocks
-(1, 1, 43, NULL, 50), -- Banana Ice Blocks
-(1, 1, 44, NULL, 50), -- Mixed Berry Ice Blocks
-(1, 1, 45, NULL, 50), -- Mango Ice Blocks
-(1, 1, 46, NULL, 50), -- Peach Ice Blocks
-(1, 1, 47, NULL, 50), -- Blackberry Ice Blocks
+(1, 1, 42, 50), -- Strawberry Ice Blocks
+(1, 1, 43, 50), -- Banana Ice Blocks
+(1, 1, 44, 50), -- Mixed Berry Ice Blocks
+(1, 1, 45, 50), -- Mango Ice Blocks
+(1, 1, 46, 50), -- Peach Ice Blocks
+(1, 1, 47, 50), -- Blackberry Ice Blocks
 
 -- Real Fruit Ice Creams (new products)
-(1, 1, 48, NULL, 50), -- Strawberry Real Fruit Ice Creams
-(1, 1, 49, NULL, 50), -- Banana Real Fruit Ice Creams
-(1, 1, 50, NULL, 50), -- Mixed Berry Real Fruit Ice Creams
-(1, 1, 51, NULL, 50), -- Mango Real Fruit Ice Creams
-(1, 1, 52, NULL, 50), -- Peach Real Fruit Ice Creams
-(1, 1, 53, NULL, 50), -- Blackberry Real Fruit Ice Creams
+(1, 1, 48, 50), -- Strawberry Real Fruit Ice Creams
+(1, 1, 49, 50), -- Banana Real Fruit Ice Creams
+(1, 1, 50, 50), -- Mixed Berry Real Fruit Ice Creams
+(1, 1, 51, 50), -- Mango Real Fruit Ice Creams
+(1, 1, 52, 50), -- Peach Real Fruit Ice Creams
+(1, 1, 53, 50), -- Blackberry Real Fruit Ice Creams
 
 -- Soft Drinks (only product inventory)
-(1, 1, 9, NULL, 50), -- Coca-Cola
-(1, 1, 10, NULL, 50), -- Sprite
-(1, 1, 11, NULL, 50), -- Fanta
-(1, 1, 12, NULL, 50), -- Pepsi
-(1, 1, 13, NULL, 50), -- Ginger Ale
+(1, 1, 9, 50), -- Coca-Cola
+(1, 1, 10, 50), -- Sprite
+(1, 1, 11, 50), -- Fanta
+(1, 1, 12, 50), -- Pepsi
+(1, 1, 13, 50), -- Ginger Ale
 
 -- Milkshakes (only product inventory)
-(1, 1, 14, NULL, 50), -- Classic Vanilla
-(1, 1, 15, NULL, 50), -- Rich Chocolate
-(1, 1, 16, NULL, 50), -- Strawberry Delight
-(1, 1, 17, NULL, 50), -- Caramel Swirl
-(1, 1, 18, NULL, 50), -- Banana Bliss
-(1, 1, 19, NULL, 50), -- Cookies and Cream
-(1, 1, 20, NULL, 50), -- Seasonal Berry
+(1, 1, 14, 50), -- Classic Vanilla
+(1, 1, 15, 50), -- Rich Chocolate
+(1, 1, 16, 50), -- Strawberry Delight
+(1, 1, 17, 50), -- Caramel Swirl
+(1, 1, 18, 50), -- Banana Bliss
+(1, 1, 19, 50), -- Cookies and Cream
+(1, 1, 20, 50), -- Seasonal Berry
 
 -- Iced Teas (only product inventory)
-(1, 1, 21, NULL, 50), -- Classic Lemon Iced Tea
-(1, 1, 22, NULL, 50), -- Peach Iced Tea
-(1, 1, 23, NULL, 50), -- Raspberry Iced Tea
-(1, 1, 24, NULL, 50), -- Green Iced Tea
-(1, 1, 25, NULL, 50), -- Hibiscus Iced Tea
-(1, 1, 26, NULL, 50), -- Mint Iced Tea
+(1, 1, 21, 50), -- Classic Lemon Iced Tea
+(1, 1, 22, 50), -- Peach Iced Tea
+(1, 1, 23, 50), -- Raspberry Iced Tea
+(1, 1, 24, 50), -- Green Iced Tea
+(1, 1, 25, 50), -- Hibiscus Iced Tea
+(1, 1, 26, 50), -- Mint Iced Tea
 
 -- Fast Food (only product inventory)
-(1, 1, 27, NULL, 50), -- American Hotdogs
-(1, 1, 28, NULL, 50), -- Sweetcorn & Kumara Patties
-(1, 1, 29, NULL, 50), -- Crepes
-(1, 1, 30, NULL, 50), -- Smokey BBQ Pulled Pork in a Bun
-(1, 1, 31, NULL, 50), -- Muffins
-(1, 1, 32, NULL, 50), -- Slices
-(1, 1, 33, NULL, 50), -- Chicken Tenders
-(1, 1, 34, NULL, 50), -- Veggie Burger
-(1, 1, 35, NULL, 50), -- Fish Tacos
-(1, 1, 36, NULL, 50), -- Loaded Fries
-(1, 1, 37, NULL, 50), -- Falafel Wrap
-(1, 1, 38, NULL, 50), -- Cheese Nachos
-(1, 1, 39, NULL, 50), -- Spicy Ramen
-(1, 1, 40, NULL, 50), -- Stinky Tofu
-(1, 1, 41, NULL, 50), -- Grilled Cold Noodles
+(1, 1, 27, 50), -- American Hotdogs
+(1, 1, 28, 50), -- Sweetcorn & Kumara Patties
+(1, 1, 29, 50), -- Crepes
+(1, 1, 30, 50), -- Smokey BBQ Pulled Pork in a Bun
+(1, 1, 31, 50), -- Muffins
+(1, 1, 32, 50), -- Slices
+(1, 1, 33, 50), -- Chicken Tenders
+(1, 1, 34, 50), -- Veggie Burger
+(1, 1, 35, 50), -- Fish Tacos
+(1, 1, 36, 50), -- Loaded Fries
+(1, 1, 37, 50), -- Falafel Wrap
+(1, 1, 38, 50), -- Cheese Nachos
+(1, 1, 39, 50), -- Spicy Ramen
+(1, 1, 40, 50), -- Stinky Tofu
+(1, 1, 41, 50), -- Grilled Cold Noodles
 
 -- Travel Essentials & Souvenirs (only product inventory)
-(1, 1, 47, NULL, 50), -- Sandfly Spray
-(1, 1, 48, NULL, 50), -- Sunscreen
-(1, 1, 49, NULL, 50), -- Rain Gear
-(1, 1, 50, NULL, 50); -- Greenstone Jewelry
+(1, 1, 54, 50), -- Sandfly Spray
+(1, 1, 55, 50), -- Sunscreen
+(1, 1, 56, 50), -- Rain Gear
+(1, 1, 57, 50); -- Greenstone Jewelry
 
 
 -- 11. Insert into orders
