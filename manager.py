@@ -884,16 +884,22 @@ def manage_accounts():
              staff.profile_image, staff.status, account.email, staff.position
          FROM staff
          JOIN account ON staff.account_id = account.account_id
+         UNION
+         SELECT 'manager' as role, manager.manager_id AS id, manager.first_name, manager.last_name, manager.phone_number, 
+             manager.date_of_birth, manager.gender, NULL as id_num, NULL as created_at, 
+             manager.profile_image, manager.status, account.email, manager.position
+         FROM manager
+         JOIN account ON manager.account_id = account.account_id
+         WHERE account.email != %s
         """
+    filters = [email]
 
     # Filter by role
     if role != 'all':
         base_query = f"""
             SELECT * FROM ({base_query}) AS all_roles WHERE role = %s
         """
-        filters = [role]
-    else:
-        filters = []
+        filters.append(role)
 
     # Search and filter accounts
     if request.method == 'POST':
@@ -981,6 +987,102 @@ def edit_account(account_id, role):
 
     return render_template('manager/manage_accounts.html', account_details=account_details, role=role)
 
+# Manager can add new staff
+@manager_blueprint.route('/add_staff', methods=['POST'])
+@role_required(['manager'])
+def add_staff():
+    email = request.form.get('email')
+    password = request.form.get('password')
+    first_name = request.form.get('first_name')
+    last_name = request.form.get('last_name')
+    phone_number = request.form.get('phone_number')
+    date_of_birth = request.form.get('date_of_birth')
+    gender = request.form.get('gender')
+    position = request.form.get('position')
+
+    # validate
+    if not email or not password or not first_name or not last_name or not phone_number or not date_of_birth or not gender or not position:
+        flash('All fields are required.', 'error')
+        return redirect(url_for('manager.manage_accounts', role='staff'))
+
+    hashed_password = hashing.hash_value(password)
+    default_image = '123.jpg'
+
+    connection, cursor = get_cursor()
+
+    try:
+        # Add to account table
+        cursor.execute("""
+            INSERT INTO account (email, password, role)
+            VALUES (%s, %s, 'staff')
+        """, (email, hashed_password))
+        account_id = cursor.lastrowid
+
+        # Add to staff table
+        cursor.execute("""
+            INSERT INTO staff (account_id, first_name, last_name, phone_number, date_of_birth, gender, position, profile_image)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (account_id, first_name, last_name, phone_number, date_of_birth, gender, position, default_image))
+
+        connection.commit()
+        flash('New staff added successfully.', 'success')
+    except Exception as e:
+        connection.rollback()
+        flash(f'Error adding new staff: {str(e)}', 'error')
+    finally:
+        cursor.close()
+        connection.close()
+
+    return redirect(url_for('manager.manage_accounts', role='staff'))
+
+# Manager can add new manager
+@manager_blueprint.route('/add_manager', methods=['POST'])
+@role_required(['manager'])
+def add_manager():
+    email = request.form.get('email')
+    password = request.form.get('password')
+    first_name = request.form.get('first_name')
+    last_name = request.form.get('last_name')
+    phone_number = request.form.get('phone_number')
+    date_of_birth = request.form.get('date_of_birth')
+    gender = request.form.get('gender')
+    position = request.form.get('position')
+
+    # validate
+    if not email or not password or not first_name or not last_name or not phone_number or not date_of_birth or not gender or not position:
+        flash('All fields are required.', 'error')
+        return redirect(url_for('manager.manage_accounts', role='manager'))
+
+    hashed_password = hashing.hash_value(password)
+    default_image = '123.jpg'
+
+    connection, cursor = get_cursor()
+
+    try:
+        # Add to account table
+        cursor.execute("""
+            INSERT INTO account (email, password, role)
+            VALUES (%s, %s, 'manager')
+        """, (email, hashed_password))
+        account_id = cursor.lastrowid
+
+        # Add to manager table
+        cursor.execute("""
+            INSERT INTO manager (account_id, first_name, last_name, phone_number, date_of_birth, gender, position, profile_image)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+        """, (account_id, first_name, last_name, phone_number, date_of_birth, gender, position, default_image))
+
+        connection.commit()
+        flash('New manager added successfully.', 'success')
+    except Exception as e:
+        connection.rollback()
+        flash(f'Error adding new manager: {str(e)}', 'error')
+    finally:
+        cursor.close()
+        connection.close()
+
+    return redirect(url_for('manager.manage_accounts', role='manager'))
+
 # Manager reset password
 @manager_blueprint.route('/reset_password', methods=['POST'])
 @role_required(['manager'])
@@ -1005,6 +1107,8 @@ def reset_password():
             cursor.execute("SELECT account_id FROM customer WHERE customer_id = %s", (account_id,))
         elif role == 'staff':
             cursor.execute("SELECT account_id FROM staff WHERE staff_id = %s", (account_id,))
+        elif role == 'manager':
+            cursor.execute("SELECT account_id FROM manager WHERE manager_id = %s", (account_id,))
         
         account_id_record = cursor.fetchone()
         print(f'Associated Account ID Record: {account_id_record}')
@@ -1055,6 +1159,8 @@ def toggle_status():
             cursor.execute("SELECT status FROM customer WHERE customer_id = %s", (account_id,))
         elif role == 'staff':
             cursor.execute("SELECT status FROM staff WHERE staff_id = %s", (account_id,))
+        elif role == 'manager':
+            cursor.execute("SELECT status FROM manager WHERE manager_id = %s", (account_id,))
         
         current_status = cursor.fetchone()['status']
         new_status = 'inactive' if current_status == 'active' else 'active'
@@ -1064,6 +1170,8 @@ def toggle_status():
             cursor.execute("UPDATE customer SET status = %s WHERE customer_id = %s", (new_status, account_id))
         elif role == 'staff':
             cursor.execute("UPDATE staff SET status = %s WHERE staff_id = %s", (new_status, account_id))
+        elif role == 'manager':
+            cursor.execute("UPDATE manager SET status = %s WHERE manager_id = %s", (new_status, account_id))
 
         connection.commit()
         flash(f'{role.capitalize()} status has been changed to {new_status}.', 'success')

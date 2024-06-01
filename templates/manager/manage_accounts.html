@@ -11,6 +11,15 @@
             <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
                 <div class="d-flex align-items-center justify-content-between mb-4">
                     <h1 class="mb-4">Manage Accounts</h1>
+                    {% if role == 'staff' %}
+                        <!-- Button to Open the Add Staff Modal -->
+                        <button class="btn btn-theme" data-bs-toggle="modal" data-bs-target="#addStaffModal">
+                            Add New Staff</button>
+                    {% elif role == 'manager' %}
+                        <!-- Button to Open the Manager Home Page -->
+                        <button class="btn btn-theme" data-bs-toggle="modal" data-bs-target="#addManagerModal">
+                            Add New Manager</button>
+                    {% endif %}
                 </div>
                 <ul class="nav nav-tabs mb-4" id="accountTabs" role="tablist">
                     <li class="nav-item">
@@ -20,6 +29,10 @@
                     <li class="nav-item">
                         <a class="nav-link {% if role == 'staff' %}active{% endif %}"
                             href="{{ url_for('manager.manage_accounts', role='staff') }}">Staff</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if role == 'manager' %}active{% endif %}"
+                            href="{{ url_for('manager.manage_accounts', role='manager') }}">Managers</a>
                     </li>
                 </ul>
                 <form method="POST" action="{{ url_for('manager.manage_accounts', role=role) }}"
@@ -54,7 +67,7 @@
                                 <th>Gender</th>
                                 {% if role == 'customer' %}
                                 <th>ID Number</th>
-                                {% elif role == 'staff' %}
+                                {% elif role == 'staff' or role == 'manager' %}
                                 <th>Position</th>
                                 {% endif %}
                                 {% if role == 'customer' %}
@@ -75,7 +88,7 @@
                                 <td>{{ account.gender | capitalize }}</td>
                                 {% if role == 'customer' %}
                                 <td>{{ account.id_num }}</td>
-                                {% elif role == 'staff' %}
+                                {% elif role == 'staff' or role == 'manager' %}
                                 <td>{{ account.position }}</td>
                                 {% endif %}
                                 {% if role == 'customer' %}
@@ -83,6 +96,7 @@
                                 {% endif %}
                                 <td>{{ account.status | title }}</td>
                                 <td>
+                                    {% if role != 'manager' %}
                                     <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
                                         data-bs-target="#editAccountModal" 
                                         data-account-id="{{ account.id }}"
@@ -97,6 +111,7 @@
                                         data-position="{{ account.position }}"
                                         {% endif %}
                                         data-role="{{ role }}">Edit</button>
+                                    {% endif %}
                                     <form action="{{ url_for('manager.reset_password') }}" method="post" class="d-inline">
                                         <input type="hidden" name="account_id" value="{{ account.id }}">
                                         <input type="hidden" name="role" value="{{ role }}">
@@ -178,12 +193,135 @@
                         maxlength="50" pattern="[A-Za-z ]+">
                     </div>
 
-                    <button type="submit" class="btn btn-primary">Update Account</button>
+                    <button type="submit" class="btn btn-theme">Update Account</button>
                 </form>
             </div>
         </div>
     </div>
 </div>
+
+<!-- Add Staff Modal -->
+<div class="modal fade" id="addStaffModal" tabindex="-1" aria-labelledby="addStaffModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addStaffModalLabel">Add New Staff</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addStaffForm" action="{{ url_for('manager.add_staff') }}" method="post">
+                    <div class="mb-3">
+                        <label for="add_email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="add_email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="add_password" name="password" 
+                        pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}" placeholder="Plese enter your New Password*" 
+                        title="Password must be at least 8 characters long, including an uppercase letter, 
+                        a lowercase letter, a number, and a special character."required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_first_name" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="add_first_name" name="first_name" 
+                        pattern="[A-Za-z]+" t itle="Name must be a letter" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_last_name" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="add_last_name" name="last_name" 
+                        pattern="[A-Za-z]+" title="Name must be a letter" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_phone_number" class="form-label">Phone Number</label>
+                        <input type="text" class="form-control" id="add_phone_number" name="phone_number" 
+                        pattern="[0-9]{8,15}" title="Phone number must be between 8 and 11 digits" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_date_of_birth" class="form-label">Date of Birth</label>
+                        <input type="date" class="form-control" id="add_date_of_birth" name="date_of_birth" 
+                        min="{{ min_date }}" max="{{ max_date }}" title="You must be over 16" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_gender" class="form-label">Gender</label>
+                        <select class="form-select" id="add_gender" name="gender" required>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_position" class="form-label">Position</label>
+                        <input type="text" class="form-control" id="add_position" name="position" 
+                        maxlength="50" pattern="[A-Za-z ]+"required>
+                    </div>
+                    <button type="submit" class="btn btn-theme">Add Staff</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Manager Modal -->
+<div class="modal fade" id="addManagerModal" tabindex="-1" aria-labelledby="addManagerModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addManagerModalLabel">Add New Manager</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addManagerForm" action="{{ url_for('manager.add_manager') }}" method="post">
+                    <div class="mb-3">
+                        <label for="add_manager_email" class="form-label">Email</label>
+                        <input type="email" class="form-control" id="add_manager_email" name="email" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_manager_password" class="form-label">Password</label>
+                        <input type="password" class="form-control" id="add_manager_password" name="password" 
+                        pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}" placeholder="Please enter your New Password*" 
+                        title="Password must be at least 8 characters long, including an uppercase letter, 
+                        a lowercase letter, a number, and a special character." required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_manager_first_name" class="form-label">First Name</label>
+                        <input type="text" class="form-control" id="add_manager_first_name" name="first_name" 
+                        pattern="[A-Za-z]+" title="Name must be a letter" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_manager_last_name" class="form-label">Last Name</label>
+                        <input type="text" class="form-control" id="add_manager_last_name" name="last_name" 
+                        pattern="[A-Za-z]+" title="Name must be a letter" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_manager_phone_number" class="form-label">Phone Number</label>
+                        <input type="text" class="form-control" id="add_manager_phone_number" name="phone_number" 
+                        pattern="[0-9]{8,15}" title="Phone number must be between 8 and 15 digits" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_manager_date_of_birth" class="form-label">Date of Birth</label>
+                        <input type="date" class="form-control" id="add_manager_date_of_birth" name="date_of_birth" 
+                        min="{{ min_date }}" max="{{ max_date }}" title="You must be over 16" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_manager_gender" class="form-label">Gender</label>
+                        <select class="form-select" id="add_manager_gender" name="gender" required>
+                            <option value="male">Male</option>
+                            <option value="female">Female</option>
+                            <option value="other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="add_manager_position" class="form-label">Position</label>
+                        <input type="text" class="form-control" id="add_manager_position" name="position" 
+                        maxlength="50" pattern="[A-Za-z ]+" required>
+                    </div>
+                    <button type="submit" class="btn btn-theme">Add Manager</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
