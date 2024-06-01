@@ -861,7 +861,7 @@ def toggle_product_status(product_id):
     else:
         flash('Product has been deactivated.', 'warning')
 
-    return redirect(url_for('manager.manage_products', product_id=product_id))    return redirect(url_for('manager.manage_products', product_id=product_id))
+    return redirect(url_for('manager.manage_products', product_id=product_id))
 
 # Manage accounts
 @manager_blueprint.route('/manage_accounts', methods=['GET', 'POST'])
