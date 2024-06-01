@@ -861,4 +861,217 @@ def toggle_product_status(product_id):
     else:
         flash('Product has been deactivated.', 'warning')
 
-    return redirect(url_for('manager.manage_products', product_id=product_id))
+    return redirect(url_for('manager.manage_products', product_id=product_id))    return redirect(url_for('manager.manage_products', product_id=product_id))
+
+# Manage accounts
+@manager_blueprint.route('/manage_accounts', methods=['GET', 'POST'])
+@role_required(['manager'])
+def manage_accounts():
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+    role = request.args.get('role', 'customer')  # Default role set to 'customer'
+    connection, cursor = get_cursor()
+    
+    base_query = """
+         SELECT 'customer' as role, customer.customer_id AS id, customer.first_name, customer.last_name, customer.phone_number, 
+             customer.date_of_birth, customer.gender, customer.id_num, customer.created_at, 
+             customer.profile_image, customer.status, account.email, NULL as position
+         FROM customer
+         JOIN account ON customer.account_id = account.account_id
+         UNION
+         SELECT 'staff' as role, staff.staff_id AS id, staff.first_name, staff.last_name, staff.phone_number, 
+             staff.date_of_birth, staff.gender, NULL as id_num, NULL as created_at, 
+             staff.profile_image, staff.status, account.email, staff.position
+         FROM staff
+         JOIN account ON staff.account_id = account.account_id
+        """
+
+    # Filter by role
+    if role != 'all':
+        base_query = f"""
+            SELECT * FROM ({base_query}) AS all_roles WHERE role = %s
+        """
+        filters = [role]
+    else:
+        filters = []
+
+    # Search and filter accounts
+    if request.method == 'POST':
+        search_query = request.form.get('query')
+        status = request.form.get('status')
+
+        if search_query:
+            search_query = f"%{search_query}%"
+            base_query += " AND (first_name LIKE %s OR last_name LIKE %s OR email LIKE %s OR phone_number LIKE %s)"
+            filters.extend([search_query, search_query, search_query, search_query])
+
+        if status:
+            base_query += " AND status = %s"
+            filters.append(status)
+
+    cursor.execute(base_query, filters)
+    accounts = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    # Set the validation for birthday ages from 16-100
+    today = date.today()
+    min_date = (today - timedelta(days=365 * 100)).strftime('%Y-%m-%d')
+    max_date = (today - timedelta(days=365 * 16)).strftime('%Y-%m-%d')
+
+    return render_template('manager/manage_accounts.html', accounts=accounts, title=f"Manage {role.capitalize()}s", 
+                           manager_info=manager_info, role=role, min_date=min_date, max_date=max_date)
+
+# Manage edit account
+@manager_blueprint.route('/edit_account/<account_id>/<role>', methods=['GET', 'POST'])
+@role_required(['manager'])
+def edit_account(account_id, role):
+    connection, cursor = get_cursor()
+
+    if request.method == 'POST':
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        phone_number = request.form.get('phone_number')
+        date_of_birth = request.form.get('date_of_birth')
+        gender = request.form.get('gender')
+        id_num = request.form.get('id_num')
+        position = request.form.get('position')
+
+        try:
+            if role == 'customer':
+                cursor.execute("SELECT customer_id FROM customer WHERE customer_id = %s", (account_id,))
+                customer_id = cursor.fetchone()['customer_id']
+                cursor.execute("""
+                    UPDATE customer 
+                    SET first_name = %s, last_name = %s, phone_number = %s, date_of_birth = %s, gender = %s, id_num = %s
+                    WHERE customer_id = %s
+                """, (first_name, last_name, phone_number, date_of_birth, gender, id_num, customer_id))
+            elif role == 'staff':
+                cursor.execute("SELECT staff_id FROM staff WHERE staff_id = %s", (account_id,))
+                staff_id = cursor.fetchone()['staff_id']
+                cursor.execute("""
+                    UPDATE staff 
+                    SET first_name = %s, last_name = %s, phone_number = %s, date_of_birth = %s, gender = %s, position = %s
+                    WHERE staff_id = %s
+                """, (first_name, last_name, phone_number, date_of_birth, gender, position, staff_id))
+
+            connection.commit()
+            flash(f'{role.capitalize()} details updated successfully.', 'success')
+        except Exception as e:
+            connection.rollback()
+            flash(f'Error updating {role} details: {str(e)}', 'error')
+        finally:
+            cursor.close()
+            connection.close()
+
+        return redirect(url_for('manager.manage_accounts', role=role))
+
+    # Fetch the account details to pre-populate the form for GET request
+    account_details = {}
+    if role == 'customer':
+        cursor.execute("SELECT * FROM customer WHERE customer_id = %s", (account_id,))
+        account_details = cursor.fetchone()
+    elif role == 'staff':
+        cursor.execute("SELECT * FROM staff WHERE staff_id = %s", (account_id,))
+        account_details = cursor.fetchone()
+
+    cursor.close()
+    connection.close()
+
+    return render_template('manager/manage_accounts.html', account_details=account_details, role=role)
+
+# Manager reset password
+@manager_blueprint.route('/reset_password', methods=['POST'])
+@role_required(['manager'])
+def reset_password():
+    account_id = request.form.get('account_id')
+    role = request.form.get('role')
+
+    # Generate a default password
+    default_password = 'Password123.'
+    salt = 'S1#e2!r3@t4$'
+    hashed_password = hashing.hash_value(default_password, salt=salt)
+
+    connection, cursor = get_cursor()
+
+    try:
+        # Debug information
+        print(f'Account ID: {account_id}')
+        print(f'Role: {role}')
+        print(f'Hashed Password: {hashed_password}')
+
+        if role == 'customer':
+            cursor.execute("SELECT account_id FROM customer WHERE customer_id = %s", (account_id,))
+        elif role == 'staff':
+            cursor.execute("SELECT account_id FROM staff WHERE staff_id = %s", (account_id,))
+        
+        account_id_record = cursor.fetchone()
+        print(f'Associated Account ID Record: {account_id_record}')
+        
+        if not account_id_record:
+            raise Exception("Associated account ID not found.")
+
+        actual_account_id = account_id_record['account_id']
+
+        # Debug information
+        cursor.execute("SELECT * FROM account WHERE account_id = %s", (actual_account_id,))
+        account_record = cursor.fetchone()
+        print(f'Account Record: {account_record}')
+
+        cursor.execute("SELECT password FROM account WHERE account_id = %s", (actual_account_id,))
+        current_password = cursor.fetchone()
+        print(f'Current Password: {current_password}')
+
+        cursor.execute("UPDATE account SET password = %s WHERE account_id = %s", (hashed_password, actual_account_id))
+        connection.commit()
+
+        cursor.execute("SELECT password FROM account WHERE account_id = %s", (actual_account_id,))
+        new_password = cursor.fetchone()
+        print(f'New Password: {new_password}')
+
+        flash(f'{role.capitalize()} password has been reset successfully.', 'success')
+    except Exception as e:
+        connection.rollback()
+        flash(f'Error resetting password: {str(e)}', 'error')
+    finally:
+        cursor.close()
+        connection.close()
+
+    return redirect(url_for('manager.manage_accounts', role=role))
+
+# Manager toggle account status
+@manager_blueprint.route('/toggle_status', methods=['POST'])
+@role_required(['manager'])
+def toggle_status():
+    account_id = request.form.get('account_id')
+    role = request.form.get('role')
+
+    connection, cursor = get_cursor()
+
+    try:
+        # 根据角色获取当前状态
+        if role == 'customer':
+            cursor.execute("SELECT status FROM customer WHERE customer_id = %s", (account_id,))
+        elif role == 'staff':
+            cursor.execute("SELECT status FROM staff WHERE staff_id = %s", (account_id,))
+        
+        current_status = cursor.fetchone()['status']
+        new_status = 'inactive' if current_status == 'active' else 'active'
+
+        # 更新状态
+        if role == 'customer':
+            cursor.execute("UPDATE customer SET status = %s WHERE customer_id = %s", (new_status, account_id))
+        elif role == 'staff':
+            cursor.execute("UPDATE staff SET status = %s WHERE staff_id = %s", (new_status, account_id))
+
+        connection.commit()
+        flash(f'{role.capitalize()} status has been changed to {new_status}.', 'success')
+    except Exception as e:
+        connection.rollback()
+        flash(f'Error toggling status: {str(e)}', 'error')
+    finally:
+        cursor.close()
+        connection.close()
+
+    return redirect(url_for('manager.manage_accounts', role=role))

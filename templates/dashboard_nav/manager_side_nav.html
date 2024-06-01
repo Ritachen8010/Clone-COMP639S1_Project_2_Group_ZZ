@@ -79,17 +79,10 @@
             </a>
             
             <!-- Link to the manage account -->
-            <li class="list-group-item list-group-item-action py-2 ripple">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-people me-2"></i>
-                    <a href="#manageSubmenu" data-bs-toggle="collapse" aria-expanded="false"
-                        class="dropdown-toggle ms-1 nav-text d-sm-inline">Manage Accounts</a>
-                </div>
-                <ul class="collapse list-unstyled" id="manageSubmenu">
-                    <li><a class="dropdown-item" href="#">Manage Customer</a></li>
-                    <li><a class="dropdown-item" href="#">Manage Staff</a></li>
-                </ul>
-            </li>
+            <a href="{{ url_for('manager.manage_accounts')}}" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
+                <i class="bi bi-people me-2"></i>
+                <span class="ms-1 nav-text d-sm-inline">Manage Accounts</span>
+            </a>
             
             <!-- Link to the report -->
             <li class="list-group-item list-group-item-action py-2 ripple">
