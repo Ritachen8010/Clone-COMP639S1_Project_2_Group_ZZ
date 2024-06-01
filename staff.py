@@ -575,8 +575,7 @@ def view_all_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     staff_info = get_staff_info(email)
-    today = datetime.now().date()
-
+    
     cursor.execute('''
         SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
                c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
@@ -590,17 +589,44 @@ def view_all_bookings():
         ORDER BY b.start_date DESC
     ''')
     bookings = cursor.fetchall()
-# Process each booking to determine the status
-    for booking in bookings:
-        if booking['end_date'] < today:
-            booking['status'] = 'Confirmed/No-show'
-        else:
-            booking['status'] = 'Confirmed'
-
     cursor.close()
     connection.close()
 
     return render_template('staff/staff_view_all_bookings.html', title='All Confirmed Bookings', bookings=bookings, staff_info=staff_info)
+
+
+@staff_blueprint.route('/view_all_no_show_bookings', methods=['GET'])
+@role_required(['staff'])
+def view_all_no_show_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+    today = datetime.now().date()
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'confirmed' AND b.end_date < %s
+        ORDER BY b.start_date DESC
+    ''', (today,))
+    bookings = cursor.fetchall()
+
+    # Update the status to 'No Show'
+    for booking in bookings:
+        booking['status'] = 'no show'
+
+    cursor.close()
+    connection.close()
+
+    return render_template('staff/staff_view_all_bookings.html', title='All No Show Bookings', bookings=bookings, staff_info=staff_info)
+
+
 
 
 @staff_blueprint.route('/view_all_cancelled_bookings', methods=['GET'])
@@ -680,36 +706,63 @@ def view_all_checked_in_bookings():
 
     return render_template('staff/staff_view_all_bookings.html', bookings=bookings, staff_info=staff_info, title='All Checked In Bookings')
 
- #search bookings by last name
-@staff_blueprint.route('/search_bookings_by_last_name', methods=['GET'])
+ #search bookings by last name and booking ID
+#search bookings by last name and booking ID
+@staff_blueprint.route('/search_bookings', methods=['GET'])
 @role_required(['staff'])
-def search_bookings_by_last_name():
-    last_name = request.args.get('last_name')
-    if not last_name:
-        flash('Please enter a last name to search.', 'warning')
+def search_bookings():
+    search_query = request.args.get('search_query')
+    
+    if not search_query:
+        flash('Please enter a last name or booking ID to search.', 'warning')
         return redirect(url_for('staff.view_all_bookings'))
 
     connection, cursor = get_cursor()
     email = session.get('email')
     staff_info = get_staff_info(email)
+    today = datetime.now().date()
 
-    cursor.execute('''
-        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid,
-               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
-               a.type AS accommodation_type, a.capacity, a.price_per_night,
-               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount,
-               b.adults, b.children
-        FROM booking b
-        INNER JOIN customer c ON b.customer_id = c.customer_id
-        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
-        WHERE c.last_name LIKE %s
-        ORDER BY b.start_date DESC
-    ''', (f'%{last_name}%',))
+    # Determine if search_query is a booking ID or a last name  
+    if search_query.isdigit():
+        cursor.execute('''
+            SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid,
+                   c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+                   a.type AS accommodation_type, a.capacity, a.price_per_night,
+                   (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount,
+                   b.adults, b.children
+            FROM booking b
+            INNER JOIN customer c ON b.customer_id = c.customer_id
+            INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+            WHERE b.booking_id = %s
+            ORDER BY b.start_date DESC
+        ''', (search_query,))
+    else:
+        cursor.execute('''
+            SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid,
+                   c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+                   a.type AS accommodation_type, a.capacity, a.price_per_night,
+                   (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount,
+                   b.adults, b.children
+            FROM booking b
+            INNER JOIN customer c ON b.customer_id = c.customer_id
+            INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+            WHERE c.last_name LIKE %s
+            ORDER BY b.start_date DESC
+        ''', (f'%{search_query}%',))
+    
     bookings = cursor.fetchall()
+
+    # Update the status to 'No Show' if the end date is in the past and the status is 'confirmed'
+    for booking in bookings:
+        if booking['status'] == 'confirmed' and booking['end_date'] < today:
+            booking['status'] = 'No Show'
+
     cursor.close()
     connection.close()
 
-    return render_template('staff/staff_view_all_bookings.html', bookings=bookings, title="Search Results", staff_info=staff_info)
+    return render_template('staff/staff_view_all_bookings.html', title="Search Results", bookings=bookings, staff_info=staff_info)
+
+
 
 
 
