@@ -15,8 +15,8 @@
                     <h1 class="mb-4">View Bookings Sorted by Status</h1> 
                     <a href="{{ url_for('staff.view_checkin_bookings') }}" class="btn btn-theme">Update and Check-in Bookings</a>
                 </div>
-                <form method="GET" action="{{ url_for('staff.search_bookings_by_last_name') }}" class="search-form mb-4">
-                    <input type="text" class="form-control" name="last_name" placeholder="Search Customers Bookings by Last Name">
+                <form method="GET" action="{{ url_for('staff.search_bookings') }}" class="search-form mb-4">
+                    <input type="text" class="form-control mb-2" name="search_query" placeholder="Search by Last Name or Booking ID">
                     <button type="submit" class="btn btn-primary ml-2">Search</button>
                 </form>
                 <ul class="nav nav-tabs mb-4" id="bookingTabs" role="tablist">
@@ -32,6 +32,9 @@
                     <li class="nav-item">
                         <a class="nav-link {% if title == 'All Checked In Bookings' %}active{% endif %}" href="{{ url_for('staff.view_all_checked_in_bookings') }}">All Checked In</a>
                     </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if title == 'All No Show Bookings' %}active{% endif %}" href="{{ url_for('staff.view_all_no_show_bookings') }}">All No Show</a>
+                    </li>
                 </ul>
                 <div class="tab-content">
                     {% if bookings %}
@@ -40,6 +43,7 @@
                                 <tr>
                                     <th>Check-in Date</th>
                                     <th>Check-out Date</th>
+                                    <th>Booking ID</th>
                                     <th>Last Name</th>
                                     <th>First Name</th>
                                     <th>Booked Nights</th>
@@ -55,6 +59,7 @@
                                     <tr>
                                         <td>{{ booking.start_date | format_date }}</td>
                                         <td>{{ booking.end_date | format_date }}</td>
+                                        <td>{{ booking.booking_id }}</td>
                                         <td>{{ booking.last_name | capitalize }}</td>
                                         <td>{{ booking.first_name | capitalize }}</td>
                                         <td>{{ (booking.end_date - booking.start_date).days }}</td>
@@ -62,7 +67,7 @@
                                         <td>{{ booking.children }}</td>
                                         <td>{{ booking.accommodation_type }}</td>
                                         <td>${{ booking.paid_amount }}</td>
-                                        <td>{{ booking.status | title }}</td>
+                                        <td>{{ booking.status }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>
