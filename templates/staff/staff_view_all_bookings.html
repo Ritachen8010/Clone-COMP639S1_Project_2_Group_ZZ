@@ -14,6 +14,7 @@
                 <div class="d-flex align-items-center justify-content-between mb-4">
                     <h1 class="mb-4">View Bookings Sorted by Status</h1> 
                     <a href="{{ url_for('staff.view_checkin_bookings') }}" class="btn btn-theme">Update and Check-in Bookings</a>
+                    <a href="{{ url_for('staff.view_checked_in_bookings') }}" class="btn btn-theme">Checkout Bookings</a>
                 </div>
                 <form method="GET" action="{{ url_for('staff.search_bookings') }}" class="search-form mb-4">
                     <input type="text" class="form-control mb-2" name="search_query" placeholder="Search by Last Name or Booking ID">
