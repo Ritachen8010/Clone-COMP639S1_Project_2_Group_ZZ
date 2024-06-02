@@ -166,15 +166,21 @@ def staff_updateprofile():
 
     # Render page with current account information
     return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info, max_date=max_date_str, min_date=min_date_str)
+
+
 @staff_blueprint.route('/orders', methods=['GET', 'POST'])
 @role_required(['staff'])
 def manage_orders():
     email = session.get('email')
     staff_info = get_staff_info(email)
-    
     filter_status = request.args.get('status', 'active')
     search_email = request.args.get('search_email', '').strip()
     pickup_date = request.args.get('pickup_date', '').strip()
+    sort_by = request.args.get('sort_by', 'order_id')  # Default sort by order_id
+    sort_order = request.args.get('sort_order', 'asc')  # Default sort order ascending
+    
+    # Determine the next sort order for toggling
+    next_sort_order = 'desc' if sort_order == 'asc' else 'asc'
     
     connection, cursor = get_cursor()
 
@@ -202,7 +208,7 @@ def manage_orders():
         query += " AND DATE(o.scheduled_pickup_time) = %s"
         params.append(pickup_date)
 
-    query += " ORDER BY o.created_at DESC"
+    query += f" ORDER BY o.{sort_by} {sort_order.upper()}"
 
     cursor.execute(query, params)
     orders = cursor.fetchall()
@@ -221,12 +227,21 @@ def manage_orders():
             flash(f"Order {order_id} status updated to {new_status}.", "success")
         else:
             flash(f"Invalid status value: {new_status}", "danger")
-        return redirect(url_for('staff.manage_orders', status=filter_status, search_email=search_email, pickup_date=pickup_date))
+        return redirect(url_for('staff.manage_orders', status=filter_status, search_email=search_email, pickup_date=pickup_date, sort_by=sort_by, sort_order=sort_order))
 
     cursor.close()
     connection.close()
 
-    return render_template('staff/staff_manage_orders.html', orders=orders, staff_info=staff_info, filter_status=filter_status, search_email=search_email, pickup_date=pickup_date)
+    return render_template('staff/staff_manage_orders.html', 
+                           orders=orders, 
+                           staff_info=staff_info, 
+                           filter_status=filter_status, 
+                           search_email=search_email, 
+                           pickup_date=pickup_date, 
+                           sort_by=sort_by, 
+                           sort_order=sort_order, 
+                           next_sort_order=next_sort_order)
+
 
 # Staff view order details
 @staff_blueprint.route('/order_details/<int:order_id>', methods=['GET'])
