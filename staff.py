@@ -803,6 +803,119 @@ def checkout_booking(booking_id):
     flash('Booking checked out successfully.', 'success')
     return redirect(url_for('staff.view_checked_in_bookings'))
 
+#staff cancel bookings
+@staff_blueprint.route('/staff_cancelbooking', methods=["GET", "POST"])
+@role_required(['staff'])
+def view_confirmed_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+
+    search_term = request.args.get('search_term', '')
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date AS check_in_date, b.end_date AS check_out_date, b.status, b.is_paid, 
+               CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children, b.booking_date,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'confirmed' AND (b.booking_id = %s OR c.first_name LIKE %s OR c.last_name LIKE %s)
+        ORDER BY b.end_date DESC
+    ''', (search_term, f'%{search_term}%', f'%{search_term}%'))
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return render_template('staff/staff_cancelbooking.html', bookings=bookings, staff_info=staff_info, title='All Confirmed Bookings')
 
 
 
+
+@staff_blueprint.route('/cancel_booking/<int:booking_id>', methods=['POST'])
+@role_required(['staff'])
+def cancel_booking(booking_id):
+    connection, cursor = get_cursor()
+    cursor.execute('''
+        SELECT b.*, a.price_per_night, p.payment_type_id, p.paid_amount, pt.payment_type 
+        FROM booking b 
+        JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        JOIN payment p ON b.booking_id = p.booking_id
+        JOIN payment_type pt ON p.payment_type_id = pt.payment_type_id
+        WHERE b.booking_id = %s
+    ''', (booking_id,))
+    booking = cursor.fetchall()
+    cursor.close()
+
+    if not booking:
+        connection.close()
+        flash('Booking not found.', 'error')
+        return redirect(url_for('staff.staff_cancelbooking'))
+
+    booking = booking[0]  # Get the first result
+
+    # Calculate refund amount
+    payment_type_id = booking['payment_type_id']
+    paid_amount = booking['paid_amount']
+    payment_type_name = booking['payment_type']
+    price_per_night = booking['price_per_night']
+    start_date = booking['start_date']
+    end_date = booking['end_date']
+    customer_id= booking['customer_id']
+    nights = (end_date - start_date).days
+    refund_amount = calculate_refund_amount(price_per_night, nights, start_date, paid_amount)
+    
+    # insert negative payment entry only if there's a refund
+    if refund_amount > 0:
+        if payment_type_name == 'gift_card':
+            cursor = connection.cursor()
+            cursor.execute('UPDATE gift_card SET balance = balance + %s WHERE gift_card_id = %s', 
+                           (refund_amount, booking['payment_id']))
+            cursor.close()
+        elif payment_type_name == 'bank_card':
+            cursor = connection.cursor()
+            cursor.execute('''
+                INSERT INTO payment (customer_id, booking_id, payment_type_id, paid_amount)
+                VALUES (%s, %s, %s, %s)
+            ''', (customer_id, booking_id, payment_type_id, -refund_amount))
+            cursor.close()
+
+    # Update the booking status to cancelled
+    cursor = connection.cursor()
+    cursor.execute('''
+        UPDATE booking 
+        SET status = 'cancelled' 
+        WHERE booking_id = %s
+    ''', (booking_id,))
+    cursor.close()
+    
+    # Remove blocked dates
+    cursor = connection.cursor()
+    cursor.execute('''
+        DELETE FROM blocked_dates 
+        WHERE accommodation_id = %s AND start_date = %s AND end_date = %s
+    ''', (booking['accommodation_id'], start_date, end_date))
+    cursor.close()
+
+    connection.commit()
+    connection.close()
+
+    # Payment type name display fixed
+    payment_type_name = payment_type_name.replace('_', ' ').title()
+
+    if refund_amount > 0:
+        flash(f'Booking cancelled and ${refund_amount} refunded to {payment_type_name}.', 'success')
+    else:
+        flash(f'Booking cancelled but no refund as per the cancellation policy.', 'info')
+    return redirect(url_for('staff.view_confirmed_bookings', booking_id=booking_id))
+
+
+def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
+    today = datetime.now().date()
+    days_to_start = (start_date - today).days
+
+    # Refund policy
+    if days_to_start >= 1:
+        return paid_amount  # Full refund
+    else:
+        return 0 #no refund

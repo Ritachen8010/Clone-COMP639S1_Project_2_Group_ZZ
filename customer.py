@@ -412,12 +412,11 @@ def customer_managebookings():
 
     customer_id = account_info['customer_id']
 
-    # Fetch the bookings with date filter, excluding cancelled bookings
+    # Fetch the confirmed bookings
     connection, cursor = get_cursor()
-    today = datetime.now().date()
     cursor.execute(
-        'SELECT b.*, a.type, a.description, a.image, a.price_per_night FROM booking b INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id WHERE b.customer_id = %s AND b.start_date >= %s AND b.status != "cancelled"', 
-        (customer_id, today))
+            'SELECT b.*, a.type, a.description, a.image, a.price_per_night FROM booking b INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id WHERE b.customer_id = %s AND b.status = "confirmed"', 
+            (customer_id,))
     bookings = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -464,15 +463,24 @@ def cancel_booking():
     price_per_night = booking['price_per_night']
     start_date = booking['start_date']
     end_date = booking['end_date']
+    customer_id= booking['customer_id']
     nights = (end_date - start_date).days
     refund_amount = calculate_refund_amount(price_per_night, nights, start_date, paid_amount)
     
     # insert negative payment entry only if there's a refund
     if refund_amount > 0:
-        cursor = connection.cursor()
-        cursor.execute('UPDATE gift_card SET balance = balance + %s WHERE gift_card_id = %s', 
-                       (refund_amount, booking['payment_id']))
-        cursor.close()
+        if payment_type_name == 'gift_card':
+            cursor = connection.cursor()
+            cursor.execute('UPDATE gift_card SET balance = balance + %s WHERE gift_card_id = %s', 
+                           (refund_amount, booking['payment_id']))
+            cursor.close()
+        elif payment_type_name == 'bank_card':
+            cursor = connection.cursor()
+            cursor.execute('''
+                INSERT INTO payment (customer_id, booking_id, payment_type_id, paid_amount)
+                VALUES (%s, %s, %s, %s)
+            ''', (customer_id, booking_id, payment_type_id, -refund_amount))
+            cursor.close()
 
     # Update the booking status to cancelled
     cursor = connection.cursor()
@@ -494,7 +502,6 @@ def cancel_booking():
     connection.commit()
     connection.close()
 
-    # Payment type name display fixed
     payment_type_name = payment_type_name.replace('_', ' ').title()
 
     if refund_amount > 0:
