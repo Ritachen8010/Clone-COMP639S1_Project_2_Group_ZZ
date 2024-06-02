@@ -575,6 +575,7 @@ def view_all_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     staff_info = get_staff_info(email)
+    today = datetime.now().date()
     
     cursor.execute('''
         SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
@@ -585,9 +586,9 @@ def view_all_bookings():
         FROM booking b
         INNER JOIN customer c ON b.customer_id = c.customer_id
         INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
-        WHERE b.status = 'confirmed'
-        ORDER BY b.start_date DESC
-    ''')
+        WHERE b.status = 'confirmed' AND b.end_date >= %s
+        ORDER BY b.start_date ASC
+    ''', (today,))
     bookings = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -706,7 +707,6 @@ def view_all_checked_in_bookings():
 
     return render_template('staff/staff_view_all_bookings.html', bookings=bookings, staff_info=staff_info, title='All Checked In Bookings')
 
- #search bookings by last name and booking ID
 #search bookings by last name and booking ID
 @staff_blueprint.route('/search_bookings', methods=['GET'])
 @role_required(['staff'])
@@ -755,13 +755,53 @@ def search_bookings():
     # Update the status to 'No Show' if the end date is in the past and the status is 'confirmed'
     for booking in bookings:
         if booking['status'] == 'confirmed' and booking['end_date'] < today:
-            booking['status'] = 'No Show'
+            booking['status'] = 'no show'
 
     cursor.close()
     connection.close()
 
     return render_template('staff/staff_view_all_bookings.html', title="Search Results", bookings=bookings, staff_info=staff_info)
 
+
+#staff checkout bookings
+@staff_blueprint.route('/staff_checkout_booking', methods=["GET", "POST"])
+@role_required(['staff'])
+def view_checked_in_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'checked in'
+        ORDER BY b.end_date DESC
+    ''')
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return render_template('staff/staff_checkout_booking.html', bookings=bookings, staff_info=staff_info, title='All Checked In Bookings')
+
+@staff_blueprint.route('/checkout_booking/<int:booking_id>', methods=['POST'])
+@role_required(['staff'])
+def checkout_booking(booking_id):
+    connection, cursor = get_cursor()
+    cursor.execute('''
+        UPDATE booking
+        SET status = 'checked out'
+        WHERE booking_id = %s
+    ''', (booking_id,))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    flash('Booking checked out successfully.', 'success')
+    return redirect(url_for('staff.view_checked_in_bookings'))
 
 
 
