@@ -105,6 +105,13 @@ def login():
             cursor.execute('SELECT * FROM account WHERE email = %s', (email,))
             account = cursor.fetchone()
             if account:
+                # Check if account status 'inactive' or not
+                cursor.execute('SELECT status FROM customer WHERE account_id = %s', (account['account_id'],))
+                status = cursor.fetchone()
+                if status and status['status'] == 'inactive':
+                    flash('Your account is inactive. Please contact support.', 'error')
+                    return redirect(url_for('auth.login'))
+
                 stored_password = account['password']
                 if hashing.check_value(stored_password, user_password, salt='S1#e2!r3@t4$'):
                     session['loggedin'] = True
