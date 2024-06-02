@@ -91,12 +91,11 @@ def contact():
     
     return render_template('home/about_us.html', form=form, success=False)
 
-
 @guest_blueprint.route('/get-coffee-and-hot-drinks')
 def get_coffee_and_hot_drinks():
     connection, cursor = get_cursor() 
     try:
-        cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id IN (1, 2)")
+        cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id IN (1, 2) AND is_available = TRUE")
         products = cursor.fetchall()
         product_list = []
         for product in products:
@@ -116,13 +115,12 @@ def get_coffee_and_hot_drinks():
         connection.close() 
 
     return jsonify(product_list)
-
 
 @guest_blueprint.route('/get_cold_drinks')
 def get_cold_drinks():
     connection, cursor = get_cursor() 
     try:
-        cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id IN (3, 5)")
+        cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id IN (3, 5) AND is_available = TRUE")
         products = cursor.fetchall()
         product_list = []
         for product in products:
@@ -143,12 +141,11 @@ def get_cold_drinks():
 
     return jsonify(product_list)
 
-
 @guest_blueprint.route('/get_milkshake')
 def get_milkshake():
     connection, cursor = get_cursor() 
     try:
-        cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 4")
+        cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 4 AND is_available = TRUE")
         products = cursor.fetchall()
         product_list = []
         for product in products:
@@ -173,7 +170,7 @@ def get_milkshake():
 def quicktaste():
     connection, cursor = get_cursor() 
     try:
-        cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 6")
+        cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 6 AND is_available = TRUE")
         products = cursor.fetchall()
         product_list = []
         for product in products:
@@ -198,7 +195,7 @@ def quicktaste():
 def chill():
     connection, cursor = get_cursor() 
     try:
-        cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 7")
+        cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 7 AND is_available = TRUE")
         products = cursor.fetchall()
         product_list = []
         for product in products:
@@ -223,7 +220,7 @@ def chill():
 def essentials():
     connection, cursor = get_cursor() 
     try:
-        cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 8")
+        cursor.execute("SELECT name, description, unit_price, image FROM product WHERE category_id = 8 AND is_available = TRUE")
         products = cursor.fetchall()
         product_list = []
         for product in products:
@@ -243,6 +240,7 @@ def essentials():
         connection.close() 
 
     return jsonify(product_list)
+
 
 def rooms():
     connection, cursor = get_cursor()

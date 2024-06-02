@@ -575,7 +575,7 @@ def get_products(category_id=None):
            COALESCE(SUM(i.quantity), -1) as quantity, p.image
     FROM product p
     LEFT JOIN inventory i ON p.product_id = i.product_id
-    WHERE 1=1
+    WHERE p.is_available = TRUE
     """
     params = []
     if category_id:
@@ -593,6 +593,7 @@ def get_products(category_id=None):
         product['out_of_stock'] = (product['quantity'] == 0)
         product['infinite_stock'] = (product['quantity'] == -1)  
     return products
+
 
 def get_categories():
     connection, cursor = get_cursor()
@@ -625,22 +626,28 @@ def get_product_options():
         if product['product_id'] not in product_options:
             product_options[product['product_id']] = {}
     return product_options
-
 def add_to_cart(customer_id, product_id, quantity, options):
     connection, cursor = get_cursor()
     try:
+        # Initial query to find a matching cart item
         query = """
             SELECT ci.cart_item_id 
             FROM cart_item ci
             LEFT JOIN cart_item_option cio ON ci.cart_item_id = cio.cart_item_id
             WHERE ci.customer_id = %s AND ci.product_id = %s
+            GROUP BY ci.cart_item_id
+            HAVING COUNT(cio.option_id) = %s
         """
-        params = [customer_id, product_id]
+        params = [customer_id, product_id, len(options)]
+        
+        # Add conditions for each option
         for option_id in options:
-            query += " AND EXISTS (SELECT 1 FROM cart_item_option WHERE cart_item_id = ci.cart_item_id AND option_id = %s)"
+            query += " AND SUM(cio.option_id = %s) > 0"
             params.append(option_id)
+        
         cursor.execute(query, params)
         cart_item = cursor.fetchone()
+        
         if cart_item:
             cart_item_id = cart_item['cart_item_id']
             cursor.execute("UPDATE cart_item SET quantity = quantity + %s WHERE cart_item_id = %s", (quantity, cart_item_id))
@@ -649,6 +656,7 @@ def add_to_cart(customer_id, product_id, quantity, options):
             cart_item_id = cursor.lastrowid
             for option_id in options:
                 cursor.execute("INSERT INTO cart_item_option (cart_item_id, option_id) VALUES (%s, %s)", (cart_item_id, option_id))
+        
         connection.commit()
         return True
     except Exception as e:
@@ -658,8 +666,6 @@ def add_to_cart(customer_id, product_id, quantity, options):
     finally:
         cursor.close()
         connection.close()
-
-
 @customer_blueprint.route('/product')
 @role_required(['customer'])
 def product():

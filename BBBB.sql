@@ -349,19 +349,29 @@ CREATE TABLE `paid_item` (
 INSERT INTO `account` (`account_id`, `email`, `password`, `role`) VALUES 
 (1, 'aa@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'manager'),
 (2, 'bb@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'staff'),
-(3, 'cc@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'customer');
+(3, 'cc@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'customer'),
+(4, 'Emma@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'customer'),
+(5, 'Dasiy@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'customer');
+
 
 -- 2. Insert into customer
 INSERT INTO `customer` (`customer_id`, `account_id`, `first_name`, `last_name`, `phone_number`, `date_of_birth`, `gender`, `id_num`, `created_at`, `profile_image`, `status`) 
-VALUES (1000, 3, 'cc', 'CC', '1234567890', '1985-10-25', 'Male', 'AB1234567', CURRENT_TIMESTAMP, 'cc.jpg', 'active');
+VALUES  
+(1000, 3, 'Charlie', 'Collins', '1234567890', '1985-10-25', 'Male', 'AB1234567', CURRENT_TIMESTAMP, 'cc.jpg', 'active'),
+(1001, 4, 'Emma', 'Anderson', '1234567891', '1991-02-14', 'Female', 'AB1234568', CURRENT_TIMESTAMP, 'cc.jpg', 'active'),
+(1002, 5, 'Daisy', 'Adams', '1234567892', '1987-08-22', 'Male', 'AB1234569', CURRENT_TIMESTAMP, 'cc.jpg', 'active');
 
--- 3. Insert into staff
+
+-- 3. Insert into manager
 INSERT INTO `manager` (`manager_id`, `account_id`, `first_name`, `last_name`, `phone_number`, `date_of_birth`, `gender`, `position`, `profile_image`, `status`) 
-VALUES (1, 1, 'aa', 'AA', '5551234567', '1975-08-30', 'Female', 'General Manager', 'default.jpg', 'active');
+VALUES (1, 1, 'Ava', 'Anderson', '5551234567', '1975-08-30', 'Female', 'General Manager', 'default.jpg', 'active');
 
--- 4. Insert into manager
+-- 4. Insert into staff
 INSERT INTO `staff` (`staff_id`, `account_id`, `first_name`, `last_name`, `phone_number`, `date_of_birth`, `gender`, `position`, `profile_image`, `status`) 
-VALUES (1, 2, 'bb', 'BB', '9876543210', '1990-05-15', 'Female', 'Reception', 'bb.jpg', 'active');
+VALUES 
+(1, 2, 'Bob', 'Brown', '9876543210', '1990-05-15', 'Female', 'Reception', 'bb.jpg', 'active'),
+(2, 4, 'Alice', 'Johnson', '9876543211', '1985-07-20', 'Female', 'Manager', 'alice.jpg', 'active'),
+(3, 5, 'Bob', 'Smith', '9876543212', '1982-12-05', 'Male', 'Engineer', 'bob.jpg', 'active');
 
 -- 5. Insert into product_category
 INSERT INTO `product_category` (`name`, `description`)
@@ -455,17 +465,23 @@ VALUES
 
 INSERT INTO `product_option` (`product_id`, `option_type`, `option_name`, `additional_cost`)
 VALUES
--- Coffee Options (Milk Type, Size)
+-- Coffee Options (Milk Type, Size, Syrup Type)
 (1, 'Milk Type', 'Soy Milk', 0.50), (1, 'Milk Type', 'Almond Milk', 0.50), (1, 'Milk Type', 'Oat Milk', 0.50), 
 (1, 'Size', 'Small', 0.00), (1, 'Size', 'Medium', 0.50), (1, 'Size', 'Large', 1.00),
+(1, 'Syrup Type', 'Vanilla Syrup', 0.50), (1, 'Syrup Type', 'Caramel Syrup', 0.50), (1, 'Syrup Type', 'Hazelnut Syrup', 0.50),
 (2, 'Milk Type', 'Soy Milk', 0.50), (2, 'Milk Type', 'Almond Milk', 0.50), (2, 'Milk Type', 'Oat Milk', 0.50), 
 (2, 'Size', 'Small', 0.00), (2, 'Size', 'Medium', 0.50), (2, 'Size', 'Large', 1.00),
+(2, 'Syrup Type', 'Vanilla Syrup', 0.50), (2, 'Syrup Type', 'Caramel Syrup', 0.50), (2, 'Syrup Type', 'Hazelnut Syrup', 0.50),
 (3, 'Milk Type', 'Soy Milk', 0.50), (3, 'Milk Type', 'Almond Milk', 0.50), (3, 'Milk Type', 'Oat Milk', 0.50), 
 (3, 'Size', 'Small', 0.00), (3, 'Size', 'Medium', 0.50), (3, 'Size', 'Large', 1.00),
+(3, 'Syrup Type', 'Vanilla Syrup', 0.50), (3, 'Syrup Type', 'Caramel Syrup', 0.50), (3, 'Syrup Type', 'Hazelnut Syrup', 0.50),
 (4, 'Milk Type', 'Soy Milk', 0.50), (4, 'Milk Type', 'Almond Milk', 0.50), (4, 'Milk Type', 'Oat Milk', 0.50), 
 (4, 'Size', 'Small', 0.00), (4, 'Size', 'Medium', 0.50), (4, 'Size', 'Large', 1.00),
+(4, 'Syrup Type', 'Vanilla Syrup', 0.50), (4, 'Syrup Type', 'Caramel Syrup', 0.50), (4, 'Syrup Type', 'Hazelnut Syrup', 0.50),
 (5, 'Milk Type', 'Soy Milk', 0.50), (5, 'Milk Type', 'Almond Milk', 0.50), (5, 'Milk Type', 'Oat Milk', 0.50), 
 (5, 'Size', 'Small', 0.00), (5, 'Size', 'Medium', 0.50), (5, 'Size', 'Large', 1.00),
+(5, 'Syrup Type', 'Vanilla Syrup', 0.50), (5, 'Syrup Type', 'Caramel Syrup', 0.50), (5, 'Syrup Type', 'Hazelnut Syrup', 0.50),
+
 
 -- Hot Drinks Options (Syrup Type)
 (6, 'Syrup Type', 'Vanilla Syrup', 0.50), (6, 'Syrup Type', 'Caramel Syrup', 0.50), (6, 'Syrup Type', 'Hazelnut Syrup', 0.50),
@@ -724,17 +740,124 @@ VALUES
 
 -- 11. Insert into orders
 INSERT INTO `orders` (`customer_id`, `total_price`, `special_requests`, `scheduled_pickup_time`, `status`, `created_at`) VALUES 
-(1000, 20.00, 'Please add extra sugar to the Hot Chocolate.', '2024-05-19 15:00', 'ordered', '2024-05-19 14:00'),
-(1000, 13.50, 'No ice in the Sprite, please.', '2024-05-18 16:00', 'ordered', '2024-05-18 15:00');
+(1000, 25.00, 'Add whipped cream to the coffee.', '2024-06-01 10:00', 'collected', '2024-06-01 09:00'), -- Order 1
+(1000, 18.50, 'No onions in the burger, please.', '2024-06-01 12:00', 'collected', '2024-06-01 11:00'), -- Order 2
+(1000, 15.00, 'Extra cheese on the pizza.', '2024-05-31 14:00', 'cancelled', '2024-05-31 13:00'), -- Order 3
+(1000, 22.50, 'No ice in the lemonade.', '2024-05-30 16:00', 'cancelled', '2024-05-30 15:00'), -- Order 4
+(1000, 30.00, 'Add extra napkins.', '2024-06-04 20:00', 'ordered', '2024-06-04 16:00'), -- Order 5
+(1001, 20.00, 'Extra hot, please.', '2024-05-28 10:00', 'collected', '2024-05-28 09:00'), -- Order 6
+(1001, 15.00, 'No sugar in the coffee.', '2024-05-27 12:00', 'collected', '2024-05-27 11:00'), -- Order 7
+(1001, 12.50, 'Add extra cream.', '2024-05-26 14:00', 'cancelled', '2024-05-26 13:00'), -- Order 8
+(1002, 18.00, 'Less ice.', '2024-05-25 10:00', 'collected', '2024-05-25 09:00'), -- Order 9
+(1002, 22.00, 'Extra spicy.', '2024-06-04 20:00', 'ordered', '2024-06-03 11:00'), -- Order 10
+(1002, 19.50, 'No dairy.', '2024-06-05 14:00', 'ordered', '2024-06-05 12:00'), -- Order 11
+(1000, 20.00, 'Add extra sugar.', '2024-06-06 09:00', 'ordered', '2024-06-03 10:00'), -- Order 12
+(1000, 22.50, 'No ice.', '2024-06-06 14:00', 'ordered', '2024-06-03 11:00'), -- Order 13
+(1001, 18.00, 'Less salt.', '2024-06-06 10:00', 'ordered', '2024-06-03 12:00'), -- Order 14
+(1001, 25.00, 'Add extra cheese.', '2024-06-06 15:00', 'ordered', '2024-06-03 13:00'), -- Order 15
+(1002, 19.00, 'More napkins.', '2024-06-06 11:00', 'ordered', '2024-06-03 14:00'), -- Order 16
+(1002, 21.50, 'No pickles.', '2024-06-06 16:00', 'ordered', '2024-06-03 15:00'); -- Order 17
+
 
 -- 11. Insert into order_item
+-- Insert into order_item
 INSERT INTO `order_item` (`order_id`, `product_id`, `quantity`) VALUES 
+-- Order 1 items
 (1, 1, 1), -- Espresso
 (1, 6, 1), -- Hot Chocolate
 (1, 9, 2), -- Coca-Cola
+-- Add-ons for Order 1
+(1, 22, 1), -- Gluten-Free Bun
+(1, 23, 1), -- Sesame Bun
+
+-- Order 2 items
 (2, 4, 1), -- Flat White
 (2, 10, 1), -- Sprite
-(2, 11, 1); -- Fanta
+(2, 11, 1), -- Fanta
+-- Add-ons for Order 2
+(2, 24, 1), -- Extra Cheese
+(2, 25, 1), -- Bacon
+
+-- Order 3 items
+(3, 2, 1), -- Latte
+(3, 12, 1), -- Pepsi
+(3, 13, 2), -- Ginger Ale
+-- Add-ons for Order 3
+(3, 26, 1), -- Grilled Onions
+(3, 27, 1), -- BBQ Sauce
+
+-- Order 4 items
+(4, 3, 1), -- Cappuccino
+(4, 14, 1), -- Classic Vanilla Milkshake
+(4, 15, 1), -- Rich Chocolate Milkshake
+-- Add-ons for Order 4
+(4, 28, 1), -- Mustard
+(4, 29, 1), -- Mayo
+
+-- Order 5 items
+(5, 5, 1), -- Mocha
+(5, 16, 1), -- Strawberry Delight Milkshake
+(5, 17, 1), -- Caramel Swirl Milkshake
+-- Add-ons for Order 5
+(5, 30, 1), -- Light Ice
+(5, 31, 1), -- No Ice
+
+-- Order 6 items
+(6, 1, 1), -- Espresso
+(6, 2, 1), -- Latte
+(6, 3, 1), -- Cappuccino
+-- Add-ons for Order 6
+(6, 22, 1), -- Gluten-Free Bun
+
+-- Order 7 items
+(7, 4, 1), -- Flat White
+(7, 5, 1), -- Mocha
+-- Add-ons for Order 7
+(7, 23, 1), -- Sesame Bun
+(7, 24, 1), -- Extra Cheese
+
+-- Order 8 items
+(8, 6, 1), -- Hot Chocolate
+(8, 7, 1), -- Herbal Tea
+(8, 8, 1), -- Chai Latte
+-- Add-ons for Order 8
+(8, 25, 1), -- Bacon
+(8, 26, 1), -- Grilled Onions
+
+-- Order 9 items
+(9, 9, 1), -- Coca-Cola
+(9, 10, 1), -- Sprite
+(9, 11, 1), -- Fanta
+-- Add-ons for Order 9
+(9, 27, 1), -- BBQ Sauce
+
+-- Order 10 items
+(10, 12, 1), -- Pepsi
+(10, 13, 1), -- Ginger Ale
+(10, 14, 1), -- Classic Vanilla Milkshake
+-- Add-ons for Order 10
+(10, 28, 1), -- Mustard
+
+-- Order 11 items
+(11, 15, 1), -- Rich Chocolate Milkshake
+(11, 16, 1), -- Strawberry Delight Milkshake
+(11, 17, 1), -- Caramel Swirl Milkshake
+-- Add-ons for Order 11
+(11, 29, 1), -- Mayo
+(11, 30, 1), -- Light Ice
+
+(12, 1, 1), -- Espresso
+(12, 15, 1), -- Rich Chocolate Milkshake
+(13, 2, 1), -- Latte
+(13, 16, 1), -- Strawberry Delight Milkshake
+(14, 3, 1), -- Cappuccino
+(14, 17, 1), -- Caramel Swirl Milkshake
+(15, 4, 1), -- Flat White
+(15, 18, 1), -- Banana Bliss Milkshake
+(16, 5, 1), -- Mocha
+(16, 19, 1), -- Cookies and Cream Milkshake
+(17, 6, 1), -- Hot Chocolate
+(17, 20, 1); -- Seasonal Berry Milkshake
 
 
 -- 13. insert accommodation
