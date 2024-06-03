@@ -192,9 +192,9 @@
                             <td>
                                 <form action="{{ url_for('manager.toggle_product_status', product_id=product.product_id) }}" method="post">
                                     {% if product.is_available %}
-                                    <button class="btn btn-danger" type="submit">Inactive</button>    
+                                    <button class="btn btn-danger" type="submit">Deactivate</button>    
                                     {% else %}
-                                    <button class="btn btn-success" type="submit">Active</button>
+                                    <button class="btn btn-success" type="submit">Activate</button>
                                     {% endif %}
                                 </form>
                             </td>
