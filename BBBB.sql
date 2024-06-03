@@ -156,7 +156,7 @@ CREATE TABLE `blocked_dates` (
     `is_active` BOOLEAN DEFAULT TRUE,
     `manager_id` INT,
     PRIMARY KEY (`block_id`),
-    FOREIGN KEY (`accommodation_id`) REFERENCES `accommodation` (`accommodation_id`)
+    FOREIGN KEY (`accommodation_id`) REFERENCES `accommodation` (`accommodation_id`),
     FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`)
 )AUTO_INCREMENT=1;
 
