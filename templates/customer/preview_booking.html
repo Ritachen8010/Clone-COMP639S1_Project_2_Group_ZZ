@@ -113,6 +113,7 @@
                         <input type="hidden" name="adults" value="{{ adults }}">
                         <input type="hidden" name="children_0_2" value="{{ children0_2 }}">
                         <input type="hidden" name="children_2_17" value="{{ children2_17 }}">
+                        <input type="hidden" name="total_price_hidden" value="{{ '%.2f'|format(total_price) }}"> 
                         <div class="mb-3">
                             <label for="card_number" class="form-label">Card number:<span class="require-star">*</span></label>
                             <input type="text" class="form-control" id="card_number" name="card_number" maxlength="19" required>

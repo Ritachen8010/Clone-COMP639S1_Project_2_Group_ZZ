@@ -1,0 +1,118 @@
+{% extends 'base.html' %}
+
+{% block title %}Manage Accommodation{% endblock %}
+
+{% block navbar %}
+{% include 'home/home_nav.html' %}
+{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2>Manage Accommodation</h2>
+
+    <!-- Form to Block/Unblock Dates -->
+    <form id="blockForm" class="mb-4" method="post" action="{{ url_for('manager.manage_accommodation') }}">
+        <div class="row g-3">
+            <div class="col-md-3">
+                <label for="accommodation_id" class="form-label">Accommodation Type</label>
+                <select id="accommodation_id" name="accommodation_id" class="form-control" required>
+                    {% for accommodation in accommodations %}
+                        <option value="{{ accommodation.accommodation_id }}">{{ accommodation.type }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label for="start_date" class="form-label">Start Date</label>
+                <input type="date" id="start_date" name="start_date" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+                <label for="end_date" class="form-label">End Date</label>
+                <input type="date" id="end_date" name="end_date" class="form-control" required>
+            </div>
+            <div class="col-md-3">
+                <label for="action" class="form-label">&nbsp;</label>
+                <div>
+                    <button type="submit" name="action" value="block" class="btn btn-warning">Block Dates</button>
+                    <button type="submit" name="action" value="unblock" class="btn btn-primary">Unblock Dates</button>
+                </div>
+            </div>
+        </div>
+    </form>
+
+    <!-- Tabs for Current Blocked Dates and Blocked Dates History -->
+    <ul class="nav nav-tabs" id="myTab" role="tablist">
+        <li class="nav-item" role="presentation">
+            <button class="nav-link active" id="current-tab" data-bs-toggle="tab" data-bs-target="#current" type="button" role="tab" aria-controls="current" aria-selected="true">Active Blocked Dates</button>
+        </li>
+        <li class="nav-item" role="presentation">
+            <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab" aria-controls="history" aria-selected="false">Blocked Dates History</button>
+        </li>
+    </ul>
+    <div class="tab-content" id="myTabContent">
+        <!-- Current Blocked Dates -->
+        <div class="tab-pane fade show active" id="current" role="tabpanel" aria-labelledby="current-tab">
+            <div class="table-responsive mt-3">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Accommodation Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Blocked By</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for block in current_blocked_dates %}
+                            <tr>
+                                <td>{{ block.type }}</td>
+                                <td>{{ block.start_date.strftime('%d-%m-%Y') }}</td>
+                                <td>{{ block.end_date.strftime('%d-%m-%Y') }}</td>
+                                <td>{{ block.first_name }} {{ block.last_name }}</td>
+                                <td>
+                                    <form method="post" action="{{ url_for('manager.manage_accommodation') }}">
+                                        <input type="hidden" name="accommodation_id" value="{{ block.accommodation_id }}">
+                                        <input type="hidden" name="start_date" value="{{ block.start_date }}">
+                                        <input type="hidden" name="end_date" value="{{ block.end_date }}">
+                                        <button type="submit" name="action" value="unblock" class="btn btn-primary btn-sm">Unblock</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Blocked Dates History -->
+        <div class="tab-pane fade" id="history" role="tabpanel" aria-labelledby="history-tab">
+            <div class="table-responsive mt-3">
+                <table class="table table-bordered">
+                    <thead>
+                        <tr>
+                            <th>Accommodation Type</th>
+                            <th>Start Date</th>
+                            <th>End Date</th>
+                            <th>Status</th>
+                            <th>Action By</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for block in blocked_dates_history %}
+                            <tr>
+                                <td>{{ block.type }}</td>
+                                <td>{{ block.start_date.strftime('%d-%m-%Y') }}</td>
+                                <td>{{ block.end_date.strftime('%d-%m-%Y') }}</td>
+                                <td>{{ 'Blocked' if block.is_active else 'Unblocked' }}</td>
+                                <td>{{ block.first_name }} {{ block.last_name }}</td>
+                            </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+{% endblock %}

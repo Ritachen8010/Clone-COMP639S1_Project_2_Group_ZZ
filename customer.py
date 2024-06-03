@@ -57,6 +57,7 @@ def customer():
     unread_messages = get_unread_messages(customer_info['customer_id'])
     return render_template('customer/customer_dashboard.html', customer_info=customer_info, unread_messages=unread_messages)
 
+#search booking availability
 @customer_blueprint.route('/booking')
 def booking_room():
     return render_template('customer/booking_room.html')
@@ -75,6 +76,15 @@ def search():
     results = []
 
     try:
+        # Check for blocked dates
+        cursor.execute("""
+            SELECT accommodation_id FROM blocked_dates
+            WHERE is_active = TRUE
+            AND (start_date < %s AND end_date > %s)
+        """, (end_date, start_date))
+        blocked_accommodations = cursor.fetchall()
+        blocked_accommodation_ids = [row['accommodation_id'] for row in blocked_accommodations]
+
         sql = """
         SELECT a.accommodation_id, a.type, a.description, a.capacity, a.price_per_night, a.space,
                EXISTS (
@@ -88,7 +98,9 @@ def search():
         rooms = cursor.fetchall()
 
         for room in rooms:
-            if total_guests > room['capacity']:
+            if room['accommodation_id'] in blocked_accommodation_ids:
+                room['availability'] = 'Room Closed due to maintenance'
+            elif total_guests > room['capacity']:
                 room['availability'] = 'Guest number exceeds capacity'
             elif room['type'] in ['Twin', 'Queen']:
                 room['availability'] = 'Fully Booked' if room['is_booked'] else '1 Room Left'
@@ -120,6 +132,7 @@ def search():
 
 import decimal
 
+#preview booking info
 @customer_blueprint.route('/preview_booking', methods=['GET'])
 @role_required(['customer'])
 def preview_booking():
@@ -167,42 +180,67 @@ def preview_booking():
         cursor.close()
         connection.close()
 
+# make booking payment
 @customer_blueprint.route('/booking_payment', methods=['POST'])
 @role_required(['customer'])
 def booking_payment():
-    room_id = request.form['room_id']
-    start_date = datetime.strptime(request.form['start_date'], '%d/%m/%Y').strftime('%Y-%m-%d')
-    end_date = datetime.strptime(request.form['end_date'], '%d/%m/%Y').strftime('%Y-%m-%d')
-    adults = request.form['adults']
-    children_0_2 = request.form['children_0_2']
-    children_2_17 = request.form['children_2_17']
-    card_number = request.form['card_number']
-    card_holder = request.form['card_holder']
-    expiry_m = request.form['expiry_m']
-    expiry_y = request.form['expiry_y']
-    cvc = request.form['cvc']
-    total_guests = int(adults) + int(children_2_17)
-    customer_id = session.get('customer_id')
-    is_paid = True
-    total_price = decimal.Decimal(request.form.get('total_price', 0))
-
-    connection, cursor = get_cursor()
-
     try:
-        # Insert booking first
-        sql_booking = """
-        INSERT INTO booking (customer_id, accommodation_id, start_date, end_date, adults, children, is_paid, status)
-        VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
-        """
-        cursor.execute(sql_booking, (customer_id, room_id, start_date, end_date, adults, int(children_0_2) + int(children_2_17), is_paid, 'confirmed'))
-        booking_id = cursor.lastrowid
+        # Get data from the form
+        room_id = request.form['room_id']
+        start_date = datetime.strptime(request.form['start_date'], '%d/%m/%Y').strftime('%Y-%m-%d')
+        end_date = datetime.strptime(request.form['end_date'], '%d/%m/%Y').strftime('%Y-%m-%d')
+        adults = request.form['adults']
+        children_0_2 = request.form['children_0_2']
+        children_2_17 = request.form['children_2_17']
+        card_number = request.form['card_number']
+        expiry_m = request.form['expiry_m']
+        expiry_y = request.form['expiry_y']
+        total_price = decimal.Decimal(request.form['total_price_hidden'])
 
-        # Insert payment and get payment_id
+        # Get the email from the session
+        email = session.get('email')
+        is_paid = True
+
+        connection, cursor = get_cursor()
+
+        # Get customer_id
+        cursor.execute("SELECT customer_id FROM customer WHERE account_id = (SELECT account_id FROM account WHERE email = %s)", (email,))
+        customer_info = cursor.fetchone()
+        if customer_info:
+            customer_id = customer_info['customer_id']
+        else:
+            flash('Error: Unable to find customer information.', 'danger')
+            return redirect(url_for('customer.preview_booking', room_id=room_id, start_date=request.form['start_date'], end_date=request.form['end_date'], adults=adults, children_0_2=children_0_2, children_2_17=children_2_17, total_price=total_price))
+
+        # Insert bank card information
+        expiry_date = f"{expiry_y}-{expiry_m}-01"  # Construct the expiry date
+        sql_card = """
+        INSERT INTO bank_card (card_num, expire_date, payment_type_id)
+        VALUES (%s, %s, %s)
+        """
+        cursor.execute(sql_card, (card_number, expiry_date, 2))
+
+        # Insert payment information and get payment_id
         sql_payment = """
-        INSERT INTO payment (customer_id, booking_id, payment_type_id, paid_amount)
+        INSERT INTO payment (customer_id, payment_type_id, booking_id, paid_amount)
         VALUES (%s, %s, %s, %s)
         """
-        cursor.execute(sql_payment, (customer_id, booking_id, 2, total_price))
+        cursor.execute(sql_payment, (customer_id, 2, None, total_price))
+        payment_id = cursor.lastrowid
+
+        # Insert booking information and get booking_id
+        sql_booking = """
+        INSERT INTO booking (customer_id, payment_id, accommodation_id, start_date, end_date, adults, children, is_paid, status)
+        VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+        """
+        cursor.execute(sql_booking, (customer_id, payment_id, room_id, start_date, end_date, adults, int(children_0_2) + int(children_2_17), is_paid, 'confirmed'))
+        booking_id = cursor.lastrowid
+
+        # Update the payment record with booking_id
+        sql_update_payment = """
+        UPDATE payment SET booking_id = %s WHERE payment_id = %s
+        """
+        cursor.execute(sql_update_payment, (booking_id, payment_id))
         connection.commit()
 
         flash('Booking Successful and Payment Confirmed', 'success')
@@ -212,12 +250,11 @@ def booking_payment():
         print("Error: ", str(e))
         connection.rollback()
         flash('An error occurred while processing your booking. Please try again.', 'danger')
-        return redirect(url_for('customer.preview_booking', room_id=room_id, start_date=request.form['start_date'], end_date=request.form['end_date'], adults=adults, children_0_2=children_0_2, children_2_17=children_2_17))
+        return redirect(url_for('customer.preview_booking', room_id=room_id, start_date=request.form['start_date'], end_date=request.form['end_date'], adults=adults, children_0_2=children_0_2, children_2_17=children_2_17, total_price=total_price))
 
     finally:
         cursor.close()
         connection.close()
-
 
 # Define a name for upload image profile
 def upload_image_profile(customer_id, file):
