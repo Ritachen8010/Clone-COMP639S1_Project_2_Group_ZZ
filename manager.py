@@ -5,7 +5,7 @@ from config import get_cursor, allowed_file, MAX_FILENAME_LENGTH
 from auth import role_required
 import re
 import os
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 from werkzeug.utils import secure_filename
 
 
@@ -1183,3 +1183,72 @@ def toggle_status():
         connection.close()
 
     return redirect(url_for('manager.manage_accounts', role=role))
+
+@manager_blueprint.route('/manage_accommodation', methods=['GET', 'POST'])
+@role_required(['manager'])
+def manage_accommodation():
+    connection, cursor = get_cursor()
+    try:
+        if request.method == 'POST':
+            action = request.form['action']
+            accommodation_id = request.form['accommodation_id']
+            start_date = datetime.strptime(request.form['start_date'], '%Y-%m-%d')
+            end_date = datetime.strptime(request.form['end_date'], '%Y-%m-%d')
+            manager_id = session.get('id')
+
+            if end_date < start_date:
+                flash('End date must be later than start date.', 'danger')
+            else:
+                if action == 'block':
+                    # Insert blocked dates into the database
+                    cursor.execute("""
+                        INSERT INTO blocked_dates (accommodation_id, start_date, end_date, is_active, manager_id)
+                        VALUES (%s, %s, %s, TRUE, %s)
+                    """, (accommodation_id, start_date, end_date, manager_id))
+                    connection.commit()
+                    flash('Dates successfully blocked.', 'success')
+                elif action == 'unblock':
+                    # Update blocked dates to inactive
+                    cursor.execute("""
+                        UPDATE blocked_dates
+                        SET is_active = FALSE, manager_id = %s
+                        WHERE accommodation_id = %s AND start_date = %s AND end_date = %s
+                    """, (manager_id, accommodation_id, start_date, end_date))
+                    connection.commit()
+                    flash('Dates successfully unblocked.', 'success')
+
+        # Fetch accommodations for the dropdown
+        cursor.execute("SELECT * FROM accommodation")
+        accommodations = cursor.fetchall()
+
+        # Fetch current blocked dates (only the latest status for each date range)
+        cursor.execute("""
+            SELECT bd.*, a.type, m.first_name, m.last_name
+            FROM blocked_dates bd
+            JOIN accommodation a ON bd.accommodation_id = a.accommodation_id
+            LEFT JOIN manager m ON bd.manager_id = m.manager_id
+            WHERE bd.is_active = TRUE
+            AND bd.block_id = (SELECT MAX(block_id) FROM blocked_dates WHERE accommodation_id = bd.accommodation_id AND start_date = bd.start_date AND end_date = bd.end_date)
+            ORDER BY bd.start_date ASC
+        """)
+        current_blocked_dates = cursor.fetchall()
+
+        # Fetch blocked dates history (include all dates)
+        cursor.execute("""
+            SELECT bd.*, a.type, m.first_name, m.last_name
+            FROM blocked_dates bd
+            JOIN accommodation a ON bd.accommodation_id = a.accommodation_id
+            LEFT JOIN manager m ON bd.manager_id = m.manager_id
+            ORDER BY bd.start_date ASC
+        """)
+        blocked_dates_history = cursor.fetchall()
+
+    except Exception as e:
+        print("Error: ", str(e))
+        flash('An error occurred while managing accommodation.', 'danger')
+    finally:
+        cursor.close()
+        connection.close()
+
+    return render_template('manager/manage_accommodation.html', accommodations=accommodations, current_blocked_dates=current_blocked_dates, blocked_dates_history=blocked_dates_history)
+

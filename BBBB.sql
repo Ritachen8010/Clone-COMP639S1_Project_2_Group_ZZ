@@ -154,8 +154,10 @@ CREATE TABLE `blocked_dates` (
     `start_date` DATE,
     `end_date` DATE,
     `is_active` BOOLEAN DEFAULT TRUE,
+    `manager_id` INT,
     PRIMARY KEY (`block_id`),
     FOREIGN KEY (`accommodation_id`) REFERENCES `accommodation` (`accommodation_id`)
+    FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`)
 )AUTO_INCREMENT=1;
 
 -- 15. booking
@@ -257,8 +259,8 @@ CREATE TABLE `payment` (
     `payment_id` INT AUTO_INCREMENT,
     `customer_id` INT,
     `payment_type_id` INT,
-    `order_id` INT,
-    `booking_id` INT,
+    `order_id` INT DEFAULT NULL,
+    `booking_id` INT DEFAULT NULL,
     `paid_amount` DECIMAL(10,2),
     PRIMARY KEY (`payment_id`),
     FOREIGN KEY (`payment_type_id`) REFERENCES `payment_type` (`payment_type_id`),

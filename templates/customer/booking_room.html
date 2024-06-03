@@ -85,7 +85,7 @@
                             <label for="child_${i}_age">Child ${i + 1} Age</label>
                             <select id="child_${i}_age" class="form-control child-age-select">
                                 <option disabled selected value="">Select child age</option>
-                                <option value="0-2">0-2 years old</option>
+                                <option value="0-2">under 2 years old (doesn't incude 2)</option>
                                 <option value="2-17">2-17 years old</option>
                             </select>
                         </div>
@@ -167,7 +167,7 @@
     <script>
         $('#group_adults').on('input', function() {
             $('#adultsCount').text($(this).val());
-            $('#adults').val($(this).val());  // 同步成人人数
+            $('#adults').val($(this).val());  // Update adult count
         });
 
         $('#group_children').on('input', function() {
@@ -181,7 +181,7 @@
                         <label for="child_${i}_age">Child ${i + 1} Age</label>
                         <select id="child_${i}_age" class="form-control child-age-select">
                             <option disabled selected value="">Select child age</option>
-                            <option value="0-2">0-2 years old</option>
+                            <option value="0-2">under 2 years old (doesn't incude 2)</option>
                             <option value="2-17">2-17 years old</option>
                         </select>
                     </div>
@@ -213,7 +213,9 @@
                             break;
                     }
                     var actionHtml = '';
-                    if (room.availability === 'Fully Booked') {
+                    if (room.availability === 'Room Closed due to maintenance') {
+                        actionHtml = '<button class="btn btn-warning" disabled>Room Closed due to maintenance</button>';
+                    } else if (room.availability === 'Fully Booked') {
                         actionHtml = '<button class="btn btn-secondary" disabled>Fully Booked</button>';
                     } else if (room.availability === 'Guest number exceeds capacity') {
                         actionHtml = '<button class="btn btn-danger" disabled>Unavailable</button>';
