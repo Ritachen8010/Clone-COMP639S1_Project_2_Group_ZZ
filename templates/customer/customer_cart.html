@@ -97,6 +97,7 @@
                 <!-- End Cart-item Section -->
 
                 <!-- Start Cart-payment Section -->
+                <!-- Start Cart-payment Section -->
                 <div class="row">
                     <div class="col-md-6">
                         <div class="row custom-margin">
@@ -104,6 +105,19 @@
                                 <label for="special_requests" class="text-black">Special Requests</label>
                                 <textarea class="form-control" id="special_requests" name="special_requests" rows="3">{{ special_requests }}</textarea>
                             </div>
+                        </div>
+                        <div class="row">
+                            <form id="promo-code-form" action="{{ url_for('customer.apply_promo_code') }}" method="post">
+                                <div class="col-md-12">
+                                    <p>Enter your promotion code if you have one.</p>
+                                </div>
+                                <div class="col-md-8 mb-3 mb-md-0">
+                                    <input type="text" class="form-control py-3" id="promo_code" name="promo_code" placeholder="Promotion Code">
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <button type="submit" id="apply_promo" class="btn btn-custom">Apply Promotion Code</button>
+                                </div>
+                            </form>
                         </div>
                         <div class="row custom-margin">
                             <div class="col-md-6">
@@ -117,19 +131,8 @@
                                 </select>
                             </div>
                         </div>
-                        
-                        <div class="row">
-                            <div class="col-md-12">
-                                <p>Enter your coupon code if you have one.</p>
-                            </div>
-                            <div class="col-md-8 mb-3 mb-md-0">
-                                <input type="text" class="form-control py-3" id="coupon" placeholder="Coupon Code">
-                            </div>
-                            <div class="col-md-4">
-                                <button class="btn btn-custom">Apply Coupon</button>
-                            </div>
-                        </div>
                     </div>
+
                     <div class="col-md-6 pl-5">
                         <div class="row justify-content-end">
                             <div class="col-md-7">
@@ -156,10 +159,18 @@
                                 </div>
                                 <div class="row mb-3">
                                     <div class="col-md-6">
+                                        <span class="text-black">Discount</span>
+                                    </div>
+                                    <div class="col-md-6 text-right">
+                                        <strong class="text-black">-${{ discount | round(2) if discount is defined else '0.00' }}</strong>
+                                    </div>
+                                </div>
+                                <div class="row mb-3">
+                                    <div class="col-md-6">
                                         <span class="text-black">Total with GST (15%)</span>
                                     </div>
                                     <div class="col-md-6 text-right">
-                                        <strong class="text-black">${{ total }}</strong>
+                                        <strong class="text-black">${{ total | round(2) }}</strong>
                                     </div>
                                 </div>
                                 <div class="row">
@@ -191,6 +202,8 @@
                 <form id="payment-form" action="{{ url_for('customer.checkout') }}" method="post" class="needs-validation" novalidate>
                     <input type="hidden" name="special_requests" id="hidden_special_requests">
                     <input type="hidden" name="scheduled_pickup_time" id="hidden_scheduled_pickup_time">
+                    <input type="hidden" name="promo_code" value="{{ promo_code }}">
+                    <input type="hidden" name="discount" value="{{ discount }}">
                     <div class="mb-3">
                         <label for="card_number" class="form-label">Card number:<span class="require-star">*</span></label>
                         <input type="text" class="form-control" id="card_number" name="card_number" maxlength="19" required>
@@ -321,6 +334,16 @@ document.getElementById('checkoutModal').addEventListener('show.bs.modal', funct
     var scheduledPickupTime = document.getElementById('scheduled_pickup_time').value;
     document.getElementById('hidden_special_requests').value = specialRequests;
     document.getElementById('hidden_scheduled_pickup_time').value = `${scheduledPickupDate}T${scheduledPickupTime}`;
+
+    if (!scheduledPickupDate || !scheduledPickupTime) {
+        alert('Please select a pickup date and time.');
+        return;
+    }
+
+    var promoCode = document.getElementById('promo_code').value;
+    var discount = {{ discount }};
+    document.querySelector("input[name='promo_code']").value = promoCode;
+    document.querySelector("input[name='discount']").value = discount;
 });
 
 document.addEventListener("DOMContentLoaded", function() {
@@ -387,7 +410,6 @@ document.getElementById('proceed-to-checkout-form').addEventListener('submit', f
     var scheduledPickupDateTime = `${scheduledPickupDate} ${scheduledPickupTime}`;
     document.getElementById('hidden_scheduled_pickup_time').value = scheduledPickupDateTime;
 });
-
 
 
 </script>

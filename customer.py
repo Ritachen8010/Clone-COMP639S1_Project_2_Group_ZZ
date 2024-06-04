@@ -933,7 +933,15 @@ def customer_checkout():
     return render_template('customer/customer_checkout.html', customer_info=customer_info)
 
 
-
+def get_promotion_details(promotion_id):
+    connection, cursor = get_cursor()
+    try:
+        cursor.execute("SELECT * FROM promotions WHERE promotion_id = %s", (promotion_id,))
+        promotion_details = cursor.fetchone()
+        return promotion_details
+    finally:
+        cursor.close()
+        connection.close()
 # Handling checkout request
 
 
@@ -949,7 +957,10 @@ def checkout():
 
     customer_id = customer_info['customer_id']
     special_requests = request.form.get('special_requests', '')
-    scheduled_pickup_datetime_str = request.form.get('scheduled_pickup_time', '')
+
+    scheduled_pickup_datetime_str = request.form.get('scheduled_pickup_time', '').replace(' ', 'T')
+    print(f"Scheduled pickup time string: {scheduled_pickup_datetime_str}")
+
     promo_code = request.form.get('promo_code', '')
     discount = Decimal(request.form.get('discount', '0.00'))
 
@@ -963,10 +974,12 @@ def checkout():
 
     connection, cursor = get_cursor()
     try:
+        promotion_id = None  # 初始化 promotion_id
+
         cursor.execute("""
-            INSERT INTO orders (customer_id, total_price, status, created_at, special_requests, scheduled_pickup_time) 
-            VALUES (%s, %s, 'ordered', NOW(), %s, %s)
-        """, (customer_id, 0, special_requests, scheduled_pickup_datetime_nz))
+            INSERT INTO orders (customer_id, total_price, status, created_at, special_requests, scheduled_pickup_time, promotion_id) 
+            VALUES (%s, %s, 'ordered', NOW(), %s, %s, %s)
+        """, (customer_id, 0, special_requests, scheduled_pickup_datetime_nz, promotion_id))
         order_id = cursor.lastrowid
         print(f"Order ID: {order_id}")
 
@@ -992,7 +1005,7 @@ def checkout():
             unit_price = item['unit_price']
             options = item['options'] if item['options'] else ''
             option_costs = item['option_costs'].split(',') if item['option_costs'] else []
-            option_costs = [Decimal(cost) for cost in option_costs]  # Ensure all costs are Decimals
+            option_costs = [Decimal(cost) for cost in option_costs]  # 确保所有成本都是 Decimal 类型
             total_option_cost = sum(option_costs)
             total_price += (unit_price + total_option_cost) * quantity
 
@@ -1025,7 +1038,6 @@ def checkout():
                 """, (quantity, product_id, quantity))
                 print(f"Updated inventory: Product ID: {product_id}, Quantity: {quantity}")
 
-        promotion_id = None
         if promo_code:
             promo_code_info = validate_promo_code(promo_code, total_price)
             print(f"Promo code info: {promo_code_info}")
@@ -1063,6 +1075,7 @@ def checkout():
         cursor.close()
         connection.close()
     return redirect(url_for('customer.orders'))
+
 
 ## View Customer Orders
 @customer_blueprint.route('/orders', methods=['GET'])
