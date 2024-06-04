@@ -701,7 +701,7 @@ def get_options_for_type():
 
     return jsonify({'options': options})
 
-    
+
 
 @manager_blueprint.route('/edit_option_type', methods=['POST'])
 @role_required(['manager'])
@@ -710,10 +710,17 @@ def edit_option_type():
     option_ids = request.form.getlist('option_id[]')
     option_names = request.form.getlist('edit_option_name[]')
     additional_costs = request.form.getlist('edit_additional_cost[]')
+    remove_option_ids = request.form.getlist('remove_option_id[]')  
 
     connection, cursor = get_cursor()
 
-    # Update existing options
+    if remove_option_ids:
+        for remove_option_id in remove_option_ids:
+            cursor.execute("""
+                DELETE FROM product_option
+                WHERE option_id = %s AND option_type = %s
+            """, (remove_option_id, option_type))
+
     for option_id, option_name, additional_cost in zip(option_ids, option_names, additional_costs):
         cursor.execute("""
             UPDATE product_option
@@ -721,7 +728,6 @@ def edit_option_type():
             WHERE option_id = %s AND option_type = %s
         """, (option_name, additional_cost, option_id, option_type))
 
-    # Add new options
     new_option_names = request.form.getlist('new_option_name[]')
     new_additional_costs = request.form.getlist('new_additional_cost[]')
 
@@ -731,18 +737,27 @@ def edit_option_type():
             VALUES (%s, %s, %s)
         """, (option_type, option_name, additional_cost))
 
-    # Commit the additions and updates
     connection.commit()
 
-   # Identify and remove deleted options
-    existing_option_ids = set(int(id) for id in option_ids)
-    cursor.execute("SELECT option_id FROM product_option WHERE option_type = %s", (option_type,))
-    all_option_ids = {row['option_id'] for row in cursor.fetchall()}
-    removed_option_ids = all_option_ids - existing_option_ids
+    cursor.execute("SELECT DISTINCT product_id FROM product_option WHERE option_type = %s", (option_type,))
+    product_ids = cursor.fetchall()
 
-    for option_id in removed_option_ids:
-        cursor.execute("DELETE FROM product_option WHERE option_id = %s", (option_id,))
+    for product_id in product_ids:
 
+        cursor.execute("DELETE FROM product_option WHERE product_id = %s AND option_type = %s", (product_id['product_id'], option_type))
+        
+ 
+        for option_name, additional_cost in zip(option_names, additional_costs):
+            cursor.execute("""
+                INSERT INTO product_option (product_id, option_type, option_name, additional_cost)
+                VALUES (%s, %s, %s, %s)
+            """, (product_id['product_id'], option_type, option_name, additional_cost))
+
+        for option_name, additional_cost in zip(new_option_names, new_additional_costs):
+            cursor.execute("""
+                INSERT INTO product_option (product_id, option_type, option_name, additional_cost)
+                VALUES (%s, %s, %s, %s)
+            """, (product_id['product_id'], option_type, option_name, additional_cost))
 
     connection.commit()
     cursor.close()
@@ -750,6 +765,8 @@ def edit_option_type():
 
     flash('Option types and options successfully updated.')
     return redirect(url_for('manager.manage_products'))
+
+
 
 @manager_blueprint.route('/get_all_options', methods=['GET'])
 @role_required(['manager'])
@@ -1269,8 +1286,9 @@ def manage_accommodation():
 
     return render_template('manager/manage_accommodation.html', accommodations=accommodations, current_blocked_dates=current_blocked_dates, blocked_dates_history=blocked_dates_history)
 
-# Chat room for managers
 
+
+# Chat room for managers
 def get_chat_history_for_manager_and_customer(customer_id):
     connection, cursor = get_cursor()
     cursor.execute("""

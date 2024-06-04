@@ -325,42 +325,46 @@ document.getElementById('checkoutModal').addEventListener('show.bs.modal', funct
 
 document.addEventListener("DOMContentLoaded", function() {
     var today = new Date();
-    var minDate = today.toISOString().split('T')[0]; // Current date in ISO format (yyyy-MM-dd)
+    var minDate = today.toISOString().split('T')[0]; 
+    var maxDate = new Date(today.getTime() + 48 * 60 * 60 * 1000).toISOString().split('T')[0]; 
 
     var scheduledPickupDateInput = document.getElementById('scheduled_pickup_date');
     scheduledPickupDateInput.min = minDate;
-    scheduledPickupDateInput.value = minDate; // Set default value to today
+    scheduledPickupDateInput.max = maxDate;
+    scheduledPickupDateInput.value = minDate; 
 
     var scheduledPickupTimeInput = document.getElementById('scheduled_pickup_time');
 
-    // Populate the available time slots (9:00 AM to 6:00 PM, every 15 minutes)
+
     var generateTimeSlots = function(selectedDate) {
         var availableTimeSlots = [];
         var currentTime = new Date();
+        var startTime = new Date(selectedDate.getTime());
+        var endTime = new Date(selectedDate.getTime());
+        startTime.setHours(7, 0, 0, 0); 
+        endTime.setHours(22, 0, 0, 0); 
 
         if (selectedDate.toDateString() === today.toDateString()) {
-            if (currentTime.getHours() >= 18) {
-                scheduledPickupDateInput.value = ""; // Clear date input
+            if (currentTime.getHours() >= 22) {
+                scheduledPickupDateInput.value = ""; 
                 scheduledPickupTimeInput.innerHTML = "";
                 return;
             }
-            currentTime.setMinutes(Math.ceil(currentTime.getMinutes() / 15) * 15, 0, 0); // Round up to the next 15-minute interval
-            if (currentTime.getHours() < 9) {
-                currentTime.setHours(9, 0, 0, 0); // Set to 9:00 AM
+            currentTime.setMinutes(Math.ceil(currentTime.getMinutes() / 15) * 15, 0, 0); 
+            if (currentTime.getHours() < 7) {
+                currentTime.setHours(7, 0, 0, 0); 
             }
         } else {
-            currentTime.setHours(9, 0, 0, 0); // Set to 9:00 AM
+            currentTime = startTime; 
         }
 
-        while (currentTime.getHours() < 18) {
-            if (currentTime.getMinutes() === 0 || currentTime.getMinutes() === 15 || currentTime.getMinutes() === 30 || currentTime.getMinutes() === 45) {
-                availableTimeSlots.push(new Date(currentTime));
-            }
+        while (currentTime < endTime) {
+            availableTimeSlots.push(new Date(currentTime));
             currentTime.setMinutes(currentTime.getMinutes() + 15);
         }
 
         return availableTimeSlots.map(function(slot) {
-            var value = slot.toISOString().slice(11, 16);
+            var value = slot.toTimeString().slice(0, 5);
             var text = slot.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
             return '<option value="' + value + '">' + text + '</option>';
         }).join('');
@@ -371,7 +375,6 @@ document.addEventListener("DOMContentLoaded", function() {
         scheduledPickupTimeInput.innerHTML = generateTimeSlots(selectedDate);
     });
 
-    // Initialize with today's date
     scheduledPickupTimeInput.innerHTML = generateTimeSlots(today);
 });
 
@@ -381,17 +384,10 @@ document.getElementById('proceed-to-checkout-form').addEventListener('submit', f
     var scheduledPickupTime = document.getElementById('scheduled_pickup_time').value;
     document.getElementById('hidden_special_requests').value = specialRequests;
 
-
-    var nzDateTime = new Date(`${scheduledPickupDate}T${scheduledPickupTime}:00`);
-    var nzOffset = 12 * 60; 
-    var nzDstOffset = (new Date().getTimezoneOffset() === -780) ? 13 * 60 : nzOffset; 
-
-    nzDateTime.setMinutes(nzDateTime.getMinutes() - nzDateTime.getTimezoneOffset() + nzDstOffset);
-
-    var isoDateTime = nzDateTime.toISOString().replace('Z', nzDstOffset === 780 ? '+13:00' : '+12:00'); // Manually adjust the timezone offset
-
-    document.getElementById('hidden_scheduled_pickup_time').value = isoDateTime;
+    var scheduledPickupDateTime = `${scheduledPickupDate} ${scheduledPickupTime}`;
+    document.getElementById('hidden_scheduled_pickup_time').value = scheduledPickupDateTime;
 });
+
 
 
 </script>

@@ -234,50 +234,51 @@
 
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var addEditOptionButton = document.getElementById('addEditOptionButton');
-        var addOptionButton = document.getElementById('addOptionButton');
-        var editOptionsContainer = document.getElementById('edit-options-container');
-        var optionsContainer = document.getElementById('options-container');
-        var editOptionCount = 0;
-        var optionCount = 1;
+document.addEventListener('DOMContentLoaded', function() {
+    var addEditOptionButton = document.getElementById('addEditOptionButton');
+    var addOptionButton = document.getElementById('addOptionButton');
+    var editOptionsContainer = document.getElementById('edit-options-container');
+    var optionsContainer = document.getElementById('options-container');
+    var editOptionCount = document.querySelectorAll('#edit-options-container .option-group').length; 
+    var optionCount = document.querySelectorAll('#options-container .option-group').length + 1;
 
-        addEditOptionButton.addEventListener('click', function() {
-            editOptionCount++;
-            var newOptionGroup = document.createElement('div');
-            newOptionGroup.classList.add('form-group', 'option-group');
-            newOptionGroup.innerHTML = `
-                <label for="edit_option_name_${editOptionCount}">Option Name:</label>
-                <input type="text" class="form-control" id="edit_option_name_${editOptionCount}" name="edit_option_name[]" required>
-                <label for="edit_additional_cost_${editOptionCount}">Additional Cost ($):</label>
-                <input type="text" class="form-control" id="edit_additional_cost_${editOptionCount}" name="edit_additional_cost[]">
-                <button type="button" class="btn btn-danger remove-option-button">Remove</button>
-            `;
-            editOptionsContainer.appendChild(newOptionGroup);
+    var removedOptionIds = []; 
 
-            // Attach event listener for remove button
-            newOptionGroup.querySelector('.remove-option-button').addEventListener('click', function() {
-                newOptionGroup.remove();
-            });
+    addEditOptionButton.addEventListener('click', function() {
+        editOptionCount++;
+        var newOptionGroup = document.createElement('div');
+        newOptionGroup.classList.add('form-group', 'option-group');
+        newOptionGroup.innerHTML = `
+            <label for="edit_option_name_${editOptionCount}">Option Name:</label>
+            <input type="text" class="form-control" id="edit_option_name_${editOptionCount}" name="edit_option_name[]" required>
+            <label for="edit_additional_cost_${editOptionCount}">Additional Cost ($):</label>
+            <input type="text" class="form-control" id="edit_additional_cost_${editOptionCount}" name="edit_additional_cost[]">
+            <button type="button" class="btn btn-danger remove-option-button">Remove</button>
+        `;
+        editOptionsContainer.appendChild(newOptionGroup);
+
+        // Attach event listener for remove button
+        newOptionGroup.querySelector('.remove-option-button').addEventListener('click', function() {
+            newOptionGroup.remove();
         });
+    });
 
-        addOptionButton.addEventListener('click', function() {
-            optionCount++;
-            var newOptionGroup = document.createElement('div');
-            newOptionGroup.classList.add('form-group', 'option-group');
-            newOptionGroup.innerHTML = `
-                <label for="option_name_${optionCount}">Option Name:</label>
-                <input type="text" class="form-control" id="option_name_${optionCount}" name="option_name[]" required>
-                <label for="additional_cost_${optionCount}">Additional Cost ($):</label>
-                <input type="text" class="form-control" id="additional_cost_${optionCount}" name="additional_cost[]">
-                <button type="button" class="btn btn-danger remove-option-button">Remove</button>
-            `;
-            optionsContainer.appendChild(newOptionGroup);
+    addOptionButton.addEventListener('click', function() {
+        optionCount++;
+        var newOptionGroup = document.createElement('div');
+        newOptionGroup.classList.add('form-group', 'option-group');
+        newOptionGroup.innerHTML = `
+            <label for="option_name_${optionCount}">Option Name:</label>
+            <input type="text" class="form-control" id="option_name_${optionCount}" name="option_name[]" required>
+            <label for="additional_cost_${optionCount}">Additional Cost ($):</label>
+            <input type="text" class="form-control" id="additional_cost_${optionCount}" name="additional_cost[]">
+            <button type="button" class="btn btn-danger remove-option-button">Remove</button>
+        `;
+        optionsContainer.appendChild(newOptionGroup);
 
-            // Attach event listener for remove button
-            newOptionGroup.querySelector('.remove-option-button').addEventListener('click', function() {
-                newOptionGroup.remove();
-            });
+        // Attach event listener for remove button
+        newOptionGroup.querySelector('.remove-option-button').addEventListener('click', function() {
+            newOptionGroup.remove();
         });
     });
 
@@ -309,6 +310,7 @@
         });
     });
 
+
     function loadOptionsForEditing(optionType) {
         $('#editOptionTypeListModal').modal('hide');
         $('#editOptionTypeModal').modal('show');
@@ -336,13 +338,14 @@
                             <label for="edit_additional_cost_${index}">Additional Cost ($):</label>
                             <input type="text" class="form-control" id="edit_additional_cost_${index}" name="edit_additional_cost[]" value="${option.additional_cost}">
                             <input type="hidden" name="option_id[]" value="${option.option_id}">
-                            <button type="button" class="btn btn-danger remove-option-button">Remove</button>
+                            <button type="button" class="btn btn-danger remove-option-button" data-option-id="${option.option_id}">Remove</button>
                         `;
                         editOptionsContainer.appendChild(optionGroup);
                         seen.add(option.option_name); // Add option name to the set
 
                         // Attach event listener for remove button
                         optionGroup.querySelector('.remove-option-button').addEventListener('click', function() {
+                            removedOptionIds.push(option.option_id);  // Add to removedOptionIds
                             optionGroup.remove();
                         });
                     }
@@ -353,6 +356,18 @@
             }
         });
     }
+
+    var form = document.querySelector('form[action="{{ url_for('manager.edit_option_type') }}"]');
+    form.addEventListener('submit', function() {
+        removedOptionIds.forEach(id => {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'remove_option_id[]';
+            input.value = id;
+            form.appendChild(input);
+        });
+    });
+});
 
     function previewImage(event) {
         var reader = new FileReader();
