@@ -652,3 +652,7 @@ a:hover .card-img::after {
 .custom-margin-top {
     margin-top: 100px; 
 }
+
+.card-container {
+    height: 100%;
+}

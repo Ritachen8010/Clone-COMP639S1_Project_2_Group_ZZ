@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for,\
     session, request, flash, jsonify
-from flask_hashing import Hashing
 from config import get_cursor, allowed_file, MAX_FILENAME_LENGTH
 from werkzeug.utils import secure_filename
 from zoneinfo import ZoneInfo 
@@ -13,8 +12,14 @@ from datetime import date,timedelta,datetime
 import pytz
 from auth import role_required
 
+from extensions import socketio, hashing  
+from config import get_cursor, get_customer_info_by_id, get_staff_info_by_id
+from flask_socketio import join_room, leave_room, send
+
+
 customer_blueprint = Blueprint('customer', __name__)
-hashing = Hashing()
+
+customer_rooms = {}
 nz_tz = pytz.timezone('Pacific/Auckland')
 
 # Get customer information + account information
@@ -827,7 +832,7 @@ def customer_checkout():
         flash("Please login to proceed to checkout.", "info")
         return redirect(url_for('customer.login'))
 
-    return render_template('customer/customer_checkout.html', customer_info=customer_info, special_requests=special_requests)
+    return render_template('customer/customer_checkout.html', customer_info=customer_info)
 
 
 
@@ -1033,4 +1038,74 @@ def cancel_order(order_id):
         cursor.close()
         connection.close()
     return redirect(url_for('customer.orders'))
+
+
+
+
+# Chat room for customers
+
+@customer_blueprint.route('/chat')
+@role_required(['customer'])
+def customer_chat():
+    email = session.get('email')
+    customer_info = get_customer_info(email)
+    return render_template('customer/customer_chat.html', customer_info=customer_info)
+@socketio.on('message', namespace='/customer')
+def handle_message_customer(data):
+    user_id = data.get('user_id')
+    message = data.get('message')
+    room = data.get('room')
+    
+    customer_id = user_id
+    
+    connection, cursor = get_cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO message (customer_id, sender_type, content, sent_at) VALUES (%s, 'customer', %s, NOW())
+        """, (customer_id, message))
+        connection.commit()
+
+        cursor.execute("SELECT sent_at FROM message WHERE message_id = LAST_INSERT_ID()")
+        sent_at = cursor.fetchone()['sent_at']
+    except Exception as e:
+        print(f"Error saving message: {e}")
+        connection.rollback()
+    finally:
+        cursor.close()
+        connection.close()
+    
+    if room:
+        send({
+            'message': message,
+            'user_type': 'customer',
+            'username': 'Customer',
+            'sent_at': sent_at.strftime('%d-%m-%Y %H:%M:%S')
+        }, to=room, namespace='/customer')
+
+
+
+def get_chat_history_for_customer(customer_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT content, sent_at, sender_type, staff_id, manager_id
+        FROM message
+        WHERE customer_id = %s
+        ORDER BY sent_at ASC
+    """, (customer_id,))
+    messages = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return messages
+
+
+@customer_blueprint.route('/chat_history')
+@role_required(['customer'])
+def get_chat_history_customer():
+    email = session.get('email')
+    customer_info = get_customer_info(email)
+    customer_id = customer_info['customer_id']
+
+    messages = get_chat_history_for_customer(customer_id)
+
+    return jsonify(messages)
 
