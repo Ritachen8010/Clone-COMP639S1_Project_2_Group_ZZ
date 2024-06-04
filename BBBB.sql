@@ -186,6 +186,7 @@ CREATE TABLE `message` (
     `customer_id` INT,
     `manager_id` INT,
     `staff_id` INT,
+    `sender_type` ENUM('customer', 'staff', 'manager') NOT NULL,
     `content` TEXT,
     `sent_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `time_responded` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -194,8 +195,7 @@ CREATE TABLE `message` (
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
     FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`),
     FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`)
-)AUTO_INCREMENT=1;
-
+) AUTO_INCREMENT=1;
 -- 17. loyalty_point
 CREATE TABLE `loyalty_point` (
 	`loyalty_point_id`INT AUTO_INCREMENT,
@@ -879,7 +879,7 @@ VALUES
 
 -- 16. insert message table--
 INSERT INTO `message` (`message_id`, `customer_id`, `manager_id`, `staff_id`, `content`)
-VALUES (1, 1000, NULL, 1, 'This is a test message.');
+VALUES (1, 1000, NULL, NULL, 'This is a test message.');
 
 -- 18. insert into payment_type
 INSERT INTO `payment_type` (`payment_type_id`, `payment_type`)VALUES

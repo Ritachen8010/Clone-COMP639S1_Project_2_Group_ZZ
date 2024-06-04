@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+
+{% block title %}Customer List{% endblock %}
+
+{% block content %}
+<div class="content">
+    <!-- insert staff_top_nav.html -->
+    {% include 'dashboard_nav/staff_top_nav.html' %}
+    <div class="container-fluid">
+        <div class="row">
+            <!-- insert staff_side_nav.html -->
+            {% include 'dashboard_nav/staff_side_nav.html' %}
+            <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
+                <h1>Customer List</h1>
+                <div class="list-group">
+                    {% for customer in customers %}
+                    <a href="{{ url_for('staff.staff_chat', customer_id=customer.customer_id) }}" class="list-group-item list-group-item-action">
+                        {{ customer.first_name }} {{ customer.last_name }}
+                    </a>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
