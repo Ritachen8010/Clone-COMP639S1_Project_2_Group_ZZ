@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for,\
     session, request, flash, jsonify
-from flask_hashing import Hashing
 from config import get_cursor, allowed_file, MAX_FILENAME_LENGTH
 from auth import role_required
 import re
@@ -9,10 +8,14 @@ from datetime import date, timedelta, datetime
 from werkzeug.utils import secure_filename
 
 
+from extensions import socketio, hashing  
+from config import get_cursor, get_customer_info_by_id, get_staff_info_by_id
+from flask_socketio import join_room, leave_room, send
+
 # create manager blueprint view
 manager_blueprint = Blueprint('manager', __name__)
 #create an instance of hashing
-hashing = Hashing()
+manager_rooms = {}
 
 # Get manager information + account information
 def get_manager_info(email):
@@ -1266,3 +1269,84 @@ def manage_accommodation():
 
     return render_template('manager/manage_accommodation.html', accommodations=accommodations, current_blocked_dates=current_blocked_dates, blocked_dates_history=blocked_dates_history)
 
+# Chat room for managers
+
+def get_chat_history_for_manager_and_customer(customer_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT content, sent_at, sender_type, staff_id, manager_id, customer_id
+        FROM message
+        WHERE customer_id = %s
+        ORDER BY sent_at ASC
+    """, (customer_id,))
+    messages = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return messages
+
+
+@manager_blueprint.route('/chat/<int:customer_id>')
+@role_required(['manager'])
+def manager_chat(customer_id):
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+    customer_info = get_customer_info_by_id(customer_id)
+    chat_history = get_chat_history_for_manager_and_customer(customer_id)
+    return render_template('manager/manager_chat.html', manager_info=manager_info, customer_info=customer_info, chat_history=chat_history)
+
+@manager_blueprint.route('/customers')
+@role_required(['manager'])
+def list_customers():
+    connection, cursor = get_cursor()
+    cursor.execute("SELECT customer_id, first_name, last_name FROM customer")
+    customers = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return render_template('manager/manager_list_customers.html', customers=customers, manager_info=get_manager_info(session.get('email')))
+@socketio.on('message', namespace='/manager')
+def handle_message_manager(data):
+    user_id = data.get('user_id')
+    message = data.get('message')
+    room = data.get('room')
+    
+    manager_id = user_id
+    customer_id = data.get('partner_id')
+    
+    connection, cursor = get_cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO message (manager_id, customer_id, sender_type, content, sent_at) VALUES (%s, %s, 'manager', %s, NOW())
+        """, (manager_id, customer_id, message))
+        connection.commit()
+
+        cursor.execute("SELECT message_id, sent_at FROM message WHERE message_id = LAST_INSERT_ID()")
+        msg_data = cursor.fetchone()
+        sent_at = msg_data['sent_at']
+        message_id = msg_data['message_id']
+    except Exception as e:
+        print(f"Error saving message: {e}")
+        connection.rollback()
+    finally:
+        cursor.close()
+        connection.close()
+    
+    if room:
+        send({
+            'message_id': message_id,
+            'message': message,
+            'user_type': 'manager',
+            'username': 'Manager',
+            'sent_at': sent_at.strftime('%d-%m-%Y %H:%M:%S'),
+            'manager_id': manager_id
+        }, to=room, namespace='/manager')
+
+@manager_blueprint.route('/chat_history/<int:customer_id>')
+@role_required(['manager'])
+def get_chat_history_manager(customer_id):
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+    manager_id = manager_info['manager_id']
+
+    messages = get_chat_history_for_manager_and_customer(customer_id)
+
+    return jsonify(messages)

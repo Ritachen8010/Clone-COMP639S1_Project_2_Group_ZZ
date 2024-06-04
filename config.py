@@ -67,3 +67,39 @@ def format_time(value, format='%d/%m/%Y %I:%M %p'):
             return value 
     else:
         return value
+def get_staff_info_by_id(staff_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT *
+        FROM staff 
+        WHERE staff_id = %s
+    """, (staff_id,))
+    staff_info = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    return staff_info
+
+def get_customer_info_by_id(customer_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT *
+        FROM customer 
+        WHERE customer_id = %s
+    """, (customer_id,))
+    customer_info = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    return customer_info
+
+def get_manager_info_by_id(manager_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT *
+        FROM manager
+        WHERE manager_id = %s
+    """, (manager_id,))
+    manager_info = cursor.fetchone()
+    cursor.close()
+    connection.close()
+    return manager_info 
+
