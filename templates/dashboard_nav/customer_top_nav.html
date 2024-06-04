@@ -36,10 +36,10 @@
                             <!-- Counter - Unread Messages  -->
                             <span>{{ unread_messages | length }}</span>
                         </a>
-                        <!-- Dropdown - Messages -->
+                       <!-- Dropdown - Messages -->
                         <div class="dropdown-list dropdown-menu dropdown-menu-right" aria-labelledby="messagesDropdown">
                             {% for message in unread_messages %}
-                            <a class="dropdown-item" href="#">
+                            <a class="dropdown-item" href="{% if message.staff_id %}{{ url_for('customer.customer_chat', staff_id=message.staff_id) }}{% else %}{{ url_for('customer.customer_chat', staff_id=0) }}{% endif %}">
                                 <div>
                                     <strong>Message ID: {{ message.message_id }}</strong>
                                     <div>Sender: {{ message.sender_type | capitalize }}</div>
@@ -48,6 +48,7 @@
                             </a>
                             {% endfor %}
                         </div>
+
                     </li>
                     <!-- Nav Item - User Information -->
                     <li class="nav-item dropdown">

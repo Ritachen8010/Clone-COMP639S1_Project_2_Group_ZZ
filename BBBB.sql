@@ -107,6 +107,20 @@ CREATE TABLE `inventory` (
     FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`)
 )AUTO_INCREMENT=1;
 
+-- 9. promotion
+CREATE TABLE `promotion` (
+    `promotion_id` INT AUTO_INCREMENT,
+    `code` VARCHAR(255),
+    `description` TEXT,
+    `discount_value` DECIMAL(10,2),
+    `valid_from` DATE,
+    `valid_until` DATE,
+    `usage_limit` INT,
+    `minimum_amount` DECIMAL(10,2) NOT NULL,
+    `is_active` BOOLEAN DEFAULT TRUE,
+    PRIMARY KEY (`promotion_id`)
+)AUTO_INCREMENT=1;
+
 -- 10. orders
 CREATE TABLE `orders` (
     `order_id` INT AUTO_INCREMENT,
@@ -117,8 +131,10 @@ CREATE TABLE `orders` (
     `status` ENUM('ordered', 'preparing', 'ready for collection', 'collected', 'cancelled') NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `promotion_id` INT DEFAULT NULL,
     PRIMARY KEY (`order_id`),
-    FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
+    FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
+    FOREIGN KEY (`promotion_id`) REFERENCES `promotion` (`promotion_id`)
 )AUTO_INCREMENT=1;
 
 -- 11. order_item
@@ -240,20 +256,6 @@ CREATE TABLE `gift_card` (
 	FOREIGN KEY (`payment_type_id`) REFERENCES `payment_type` (`payment_type_id`)
 )AUTO_INCREMENT=1;
 
--- 21. promotion
-CREATE TABLE `promotion` (
-    `promotion_id` INT AUTO_INCREMENT,
-    `code` VARCHAR(255),
-    `description` TEXT,
-    `discount_value` DECIMAL(10,2),
-    `valid_from` DATE,
-    `valid_until` DATE,
-    `usage_limit` INT,
-    `payment_type_id` INT,
-    PRIMARY KEY (`promotion_id`),
-    FOREIGN KEY (`payment_type_id`) REFERENCES `payment_type` (`payment_type_id`)
-)AUTO_INCREMENT=1;
-
 -- 22. payment
 CREATE TABLE `payment` (
     `payment_id` INT AUTO_INCREMENT,
@@ -262,11 +264,13 @@ CREATE TABLE `payment` (
     `order_id` INT DEFAULT NULL,
     `booking_id` INT DEFAULT NULL,
     `paid_amount` DECIMAL(10,2),
+    `promotion_id` INT DEFAULT NULL,
     PRIMARY KEY (`payment_id`),
     FOREIGN KEY (`payment_type_id`) REFERENCES `payment_type` (`payment_type_id`),
     FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`),
     FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`),
-    FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
+    FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
+    FOREIGN KEY (`promotion_id`) REFERENCES `promotion` (`promotion_id`)
 )AUTO_INCREMENT=1;
 
 -- 23. news
@@ -739,6 +743,9 @@ VALUES
 (1, 1, 56, 50), -- Rain Gear
 (1, 1, 57, 50); -- Greenstone Jewelry
 
+-- 9. promotion
+INSERT INTO `promotion` (`code`, `description`, `discount_value`,  `valid_from`, `valid_until`, `usage_limit`, `is_active`, `minimum_amount`)
+VALUES ('SUMMER2024', 'Summer 2024 discount - 10% off', 10.00, '2024-06-01', '2024-08-31', 100, TRUE, 20.00);
 
 -- 11. Insert into orders
 INSERT INTO `orders` (`customer_id`, `total_price`, `special_requests`, `scheduled_pickup_time`, `status`, `created_at`) VALUES 
