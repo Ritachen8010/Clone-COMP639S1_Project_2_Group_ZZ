@@ -214,7 +214,7 @@
                     }
                     var actionHtml = '';
                     if (room.availability === 'Room Closed due to maintenance') {
-                        actionHtml = '<button class="btn btn-warning" disabled>Room Closed due to maintenance</button>';
+                        actionHtml = '<button class="btn btn-warning" disabled>Room Temporarily Closed</button>';
                     } else if (room.availability === 'Fully Booked') {
                         actionHtml = '<button class="btn btn-secondary" disabled>Fully Booked</button>';
                     } else if (room.availability === 'Guest number exceeds capacity') {
@@ -243,6 +243,9 @@
                         </div>
                     `;
                 });
+                if (!rows) {
+                    rows = '<div class="col-12"><div class="alert alert-danger">No rooms available for the selected dates. Please choose different dates.</div></div>';
+                }
                 $('#resultsTable').html(`<div class="row">${rows}</div>`);
             });
         });
