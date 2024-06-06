@@ -1188,7 +1188,7 @@ def toggle_status():
     connection, cursor = get_cursor()
 
     try:
-        # 根据角色获取当前状态
+
         if role == 'customer':
             cursor.execute("SELECT status FROM customer WHERE customer_id = %s", (account_id,))
         elif role == 'staff':
@@ -1199,7 +1199,7 @@ def toggle_status():
         current_status = cursor.fetchone()['status']
         new_status = 'inactive' if current_status == 'active' else 'active'
 
-        # 更新状态
+
         if role == 'customer':
             cursor.execute("UPDATE customer SET status = %s WHERE customer_id = %s", (new_status, account_id))
         elif role == 'staff':
@@ -1368,3 +1368,457 @@ def get_chat_history_manager(customer_id):
     messages = get_chat_history_for_manager_and_customer(customer_id)
 
     return jsonify(messages)
+
+
+#check in daily bookings
+@manager_blueprint.route('/manager_checkin', methods=['GET', 'POST'])
+@role_required(['manager'])
+def view_checkin_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+
+    if request.method == 'POST':
+        selected_date = request.form.get('selected_date')
+        selected_date = datetime.strptime(selected_date, '%Y-%m-%d').date()
+    else:
+        selected_date = datetime.now().date()
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, b.adults, b.children, 
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.start_date = %s AND b.status = 'confirmed'
+    ''', (selected_date,))
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('manager/manager_checkin.html', bookings=bookings, selected_date=selected_date, manager_info=manager_info)
+
+
+@manager_blueprint.route('/update_booking/<int:booking_id>', methods=['GET', 'POST'])
+@role_required(['manager'])
+def update_booking(booking_id):
+    connection, cursor = get_cursor()
+    
+    # Fetch booking details along with customer and accommodation details
+    cursor.execute('''
+        SELECT b.booking_id, c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num, 
+               b.start_date, b.end_date, b.is_paid, b.status, a.type AS accommodation_type
+        FROM booking b
+        JOIN customer c ON b.customer_id = c.customer_id
+        JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.booking_id = %s
+    ''', (booking_id,))
+    booking = cursor.fetchone()
+    
+    if not booking:
+        flash('Booking not found.', 'danger')
+        return redirect(url_for('manager.view_checkin_bookings'))
+    
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+    today = datetime.today().date()
+    
+    original_duration = (booking['end_date'] - booking['start_date']).days
+    
+    if request.method == 'POST':
+        # Update customer info
+        first_name = request.form.get('first_name')
+        last_name = request.form.get('last_name')
+        phone_number = request.form.get('phone_number')
+        date_of_birth = request.form.get('date_of_birth')
+        id_num = request.form.get('id_num')
+        start_date = datetime.strptime(request.form.get('start_date'), '%Y-%m-%d').date()
+        end_date = booking['end_date']  # Checkout date remains fixed
+        check_in = request.form.get('check_in') == 'on'
+        
+        # Validate the dates
+        if start_date < today:
+            flash('Check-in date cannot be earlier than today.', 'danger')
+            return redirect(url_for('manager.update_booking', booking_id=booking_id))
+        
+        new_duration = (end_date - start_date).days
+        if new_duration > original_duration:
+            flash('The new check-in date cannot extend the total nights beyond the original booking duration.', 'danger')
+            return redirect(url_for('manager.update_booking', booking_id=booking_id))
+        
+        cursor.execute('''
+            UPDATE customer
+            SET first_name = %s, last_name = %s, phone_number = %s, date_of_birth = %s, id_num = %s
+            WHERE customer_id = (SELECT customer_id FROM booking WHERE booking_id = %s)
+        ''', (first_name, last_name, phone_number, date_of_birth, id_num, booking_id))
+        
+        # Update booking info
+        new_status = 'checked in' if check_in and start_date <= today else booking['status']
+        cursor.execute('''
+            UPDATE booking
+            SET start_date = %s, end_date = %s, status = %s
+            WHERE booking_id = %s
+        ''', (start_date, end_date, new_status, booking_id))
+        
+        connection.commit()
+        cursor.close()
+        connection.close()
+        
+        flash('Booking updated successfully.', 'success')
+        return redirect(url_for('manager.view_checkin_bookings'))
+    
+    return render_template('manager/manager_updatebooking.html', booking=booking, manager_info=manager_info, today=today)
+
+
+#view all bookings
+@manager_blueprint.route('/manager_view_all_bookings', methods=['GET'])
+@role_required(['manager'])
+def view_all_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+    today = datetime.now().date()
+    
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'confirmed' AND b.end_date >= %s
+        ORDER BY b.start_date ASC
+    ''', (today,))
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('manager/manager_view_all_bookings.html', title='All Confirmed Bookings', bookings=bookings, manager_info=manager_info)
+
+
+@manager_blueprint.route('/view_all_no_show_bookings', methods=['GET'])
+@role_required(['manager'])
+def view_all_no_show_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+    today = datetime.now().date()
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'confirmed' AND b.end_date < %s
+        ORDER BY b.start_date DESC
+    ''', (today,))
+    bookings = cursor.fetchall()
+
+    # Update the status to 'No Show'
+    for booking in bookings:
+        booking['status'] = 'no show'
+
+    cursor.close()
+    connection.close()
+
+    return render_template('manager/manager_view_all_bookings.html', title='All No Show Bookings', bookings=bookings, manager_info=manager_info)
+
+
+
+
+@manager_blueprint.route('/view_all_cancelled_bookings', methods=['GET'])
+@role_required(['manager'])
+def view_all_cancelled_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'cancelled'
+        ORDER BY b.start_date DESC
+    ''')
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('manager/manager_view_all_bookings.html', bookings=bookings, manager_info=manager_info, title='All Cancelled Bookings')
+
+
+@manager_blueprint.route('/view_all_checked_out_bookings', methods=['GET'])
+@role_required(['manager'])
+def view_all_checked_out_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'checked out'
+        ORDER BY b.start_date DESC
+    ''')
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('manager/manager_view_all_bookings.html', bookings=bookings, manager_info=manager_info, title='All Checked Out Bookings')
+
+
+@manager_blueprint.route('/view_all_checked_in_bookings', methods=['GET'])
+@role_required(['manager'])
+def view_all_checked_in_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'checked in'
+        ORDER BY b.start_date DESC
+    ''')
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+
+    return render_template('manager/manager_view_all_bookings.html', bookings=bookings, manager_info=manager_info, title='All Checked In Bookings')
+
+#search bookings by last name and booking ID
+@manager_blueprint.route('/search_bookings', methods=['GET'])
+@role_required(['manager'])
+def search_bookings():
+    search_query = request.args.get('search_query')
+    
+    if not search_query:
+        flash('Please enter a last name or booking ID to search.', 'warning')
+        return redirect(url_for('manager.view_all_bookings'))
+
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+    today = datetime.now().date()
+
+    # Determine if search_query is a booking ID or a last name  
+    if search_query.isdigit():
+        cursor.execute('''
+            SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid,
+                   c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+                   a.type AS accommodation_type, a.capacity, a.price_per_night,
+                   (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount,
+                   b.adults, b.children
+            FROM booking b
+            INNER JOIN customer c ON b.customer_id = c.customer_id
+            INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+            WHERE b.booking_id = %s
+            ORDER BY b.start_date DESC
+        ''', (search_query,))
+    else:
+        cursor.execute('''
+            SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid,
+                   c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+                   a.type AS accommodation_type, a.capacity, a.price_per_night,
+                   (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount,
+                   b.adults, b.children
+            FROM booking b
+            INNER JOIN customer c ON b.customer_id = c.customer_id
+            INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+            WHERE c.last_name LIKE %s
+            ORDER BY b.start_date DESC
+        ''', (f'%{search_query}%',))
+    
+    bookings = cursor.fetchall()
+
+    # Update the status to 'No Show' if the end date is in the past and the status is 'confirmed'
+    for booking in bookings:
+        if booking['status'] == 'confirmed' and booking['end_date'] < today:
+            booking['status'] = 'no show'
+
+    cursor.close()
+    connection.close()
+
+    return render_template('manager/manager_view_all_bookings.html', title="Search Results", bookings=bookings, manager_info=manager_info)
+
+
+#manager checkout bookings
+@manager_blueprint.route('/manager_checkout_booking', methods=["GET", "POST"])
+@role_required(['manager'])
+def view_checked_in_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
+               c.first_name, c.last_name, c.phone_number, c.date_of_birth, c.id_num,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'checked in'
+        ORDER BY b.end_date DESC
+    ''')
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return render_template('manager/manager_checkout_booking.html', bookings=bookings, manager_info=manager_info, title='All Checked In Bookings')
+
+@manager_blueprint.route('/checkout_booking/<int:booking_id>', methods=['POST'])
+@role_required(['manager'])
+def checkout_booking(booking_id):
+    connection, cursor = get_cursor()
+    cursor.execute('''
+        UPDATE booking
+        SET status = 'checked out'
+        WHERE booking_id = %s
+    ''', (booking_id,))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    flash('Booking checked out successfully.', 'success')
+    return redirect(url_for('manager.view_checked_in_bookings'))
+
+#manager cancel bookings
+@manager_blueprint.route('/manager_cancelbooking', methods=["GET", "POST"])
+@role_required(['manager'])
+def view_confirmed_bookings():
+    connection, cursor = get_cursor()
+    email = session.get('email')
+    manager_info = get_manager_info(email)
+
+    search_term = request.args.get('search_term', '')
+    cursor.execute('''
+        SELECT b.booking_id, b.start_date AS check_in_date, b.end_date AS check_out_date, b.status, b.is_paid, 
+               CONCAT(c.first_name, ' ', c.last_name) AS customer_name,
+               a.type AS accommodation_type, a.capacity, a.price_per_night,
+               b.adults, b.children, b.booking_date,
+               (SELECT SUM(p.paid_amount) FROM payment p WHERE p.booking_id = b.booking_id) AS paid_amount
+        FROM booking b
+        INNER JOIN customer c ON b.customer_id = c.customer_id
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        WHERE b.status = 'confirmed' AND (b.booking_id = %s OR c.first_name LIKE %s OR c.last_name LIKE %s)
+        ORDER BY b.end_date DESC
+    ''', (search_term, f'%{search_term}%', f'%{search_term}%'))
+    bookings = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return render_template('manager/manager_cancelbooking.html', bookings=bookings, manager_info=manager_info, title='All Confirmed Bookings')
+
+
+
+
+@manager_blueprint.route('/cancel_booking/<int:booking_id>', methods=['POST'])
+@role_required(['manager'])
+def cancel_booking(booking_id):
+    connection, cursor = get_cursor()
+    cursor.execute('''
+        SELECT b.*, a.price_per_night, p.payment_type_id, p.paid_amount, pt.payment_type 
+        FROM booking b 
+        JOIN accommodation a ON b.accommodation_id = a.accommodation_id
+        JOIN payment p ON b.booking_id = p.booking_id
+        JOIN payment_type pt ON p.payment_type_id = pt.payment_type_id
+        WHERE b.booking_id = %s
+    ''', (booking_id,))
+    booking = cursor.fetchall()
+    cursor.close()
+
+    if not booking:
+        connection.close()
+        flash('Booking not found.', 'error')
+        return redirect(url_for('manager.manager_cancelbooking'))
+
+    booking = booking[0]  # Get the first result
+
+    # Calculate refund amount
+    payment_type_id = booking['payment_type_id']
+    paid_amount = booking['paid_amount']
+    payment_type_name = booking['payment_type']
+    price_per_night = booking['price_per_night']
+    start_date = booking['start_date']
+    end_date = booking['end_date']
+    customer_id= booking['customer_id']
+    nights = (end_date - start_date).days
+    refund_amount = calculate_refund_amount(price_per_night, nights, start_date, paid_amount)
+    
+    # insert negative payment entry only if there's a refund
+    if refund_amount > 0:
+        if payment_type_name == 'gift_card':
+            cursor = connection.cursor()
+            cursor.execute('UPDATE gift_card SET balance = balance + %s WHERE gift_card_id = %s', 
+                           (refund_amount, booking['payment_id']))
+            cursor.close()
+        elif payment_type_name == 'bank_card':
+            cursor = connection.cursor()
+            cursor.execute('''
+                INSERT INTO payment (customer_id, booking_id, payment_type_id, paid_amount)
+                VALUES (%s, %s, %s, %s)
+            ''', (customer_id, booking_id, payment_type_id, -refund_amount))
+            cursor.close()
+
+    # Update the booking status to cancelled
+    cursor = connection.cursor()
+    cursor.execute('''
+        UPDATE booking 
+        SET status = 'cancelled' 
+        WHERE booking_id = %s
+    ''', (booking_id,))
+    cursor.close()
+    
+    # Remove blocked dates
+    cursor = connection.cursor()
+    cursor.execute('''
+        DELETE FROM blocked_dates 
+        WHERE accommodation_id = %s AND start_date = %s AND end_date = %s
+    ''', (booking['accommodation_id'], start_date, end_date))
+    cursor.close()
+
+    connection.commit()
+    connection.close()
+
+    payment_type_name = payment_type_name.replace('_', ' ').title()
+
+    if refund_amount > 0:
+        flash(f'Booking cancelled and ${refund_amount} refunded to {payment_type_name}.', 'success')
+    else:
+        flash(f'Booking cancelled but no refund as per the cancellation policy.', 'info')
+    return redirect(url_for('manager.view_confirmed_bookings', booking_id=booking_id))
+
+
+def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
+    today = datetime.now().date()
+    days_to_start = (start_date - today).days
+
+    # Refund policy
+    if days_to_start >= 1:
+        return paid_amount  # Full refund
+    else:
+        return 0 #no refund

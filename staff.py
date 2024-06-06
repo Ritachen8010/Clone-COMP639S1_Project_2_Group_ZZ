@@ -917,7 +917,7 @@ def cancel_booking(booking_id):
     connection.commit()
     connection.close()
 
-    # Payment type name display fixed
+
     payment_type_name = payment_type_name.replace('_', ' ').title()
 
     if refund_amount > 0:
