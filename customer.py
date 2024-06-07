@@ -76,7 +76,6 @@ def search():
     results = []
 
     try:
-        # Check for blocked dates
         cursor.execute("""
             SELECT accommodation_id FROM blocked_dates
             WHERE is_active = TRUE
@@ -112,7 +111,7 @@ def search():
                     AND start_date <= %s AND end_date >= %s
                 """, (room['accommodation_id'], start_date, end_date))
                 total_booked = cursor.fetchone()['total_booked'] or 0
-                remaining_beds = 4 - total_booked  # Dorm has 4 beds
+                remaining_beds = 4 - total_booked
 
                 if remaining_beds <= 0:
                     room['availability'] = 'Fully Booked'
@@ -128,7 +127,11 @@ def search():
         cursor.close()
         connection.close()
 
-    return jsonify(results)
+    if all(room['availability'] == 'Fully Booked' for room in results):
+        return jsonify({'success': True, 'rooms': results, 'no_rooms': True})
+    else:
+        return jsonify({'success': True, 'rooms': results})
+
 
 import decimal
 

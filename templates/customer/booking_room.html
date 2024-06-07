@@ -19,9 +19,13 @@
     <script src="https://cdn.jsdelivr.net/npm/daterangepicker/daterangepicker.min.js"></script>
     <script>
         $(function() {
+            var today = moment();
+            var tomorrow = moment().add(1, 'day');
             $('input[name="daterange"]').daterangepicker({
                 opens: 'left',
-                minDate: moment(),
+                startDate: today,
+                endDate: tomorrow,
+                minDate: today,
                 maxDate: moment().add(1, 'year'),
                 locale: {
                     format: 'DD/MM/YYYY'
@@ -85,12 +89,86 @@
                             <label for="child_${i}_age">Child ${i + 1} Age</label>
                             <select id="child_${i}_age" class="form-control child-age-select">
                                 <option disabled selected value="">Select child age</option>
-                                <option value="0-2">under 2 years old (doesn't incude 2)</option>
+                                <option value="0-2">under 2 years old (doesn't include 2)</option>
                                 <option value="2-17">2-17 years old</option>
                             </select>
                         </div>
                     `);
                 }
+            });
+
+            $('#searchForm').on('submit', function(e) {
+                var daterange = $('#daterange').val();
+                if (!daterange) {
+                    alert("Please select a valid date range.");
+                    return false;
+                }
+                e.preventDefault();
+                var data = $(this).serialize();
+                $.post('/customer/search', data, function(response) {
+                    var rows = '';
+                    if (response.no_rooms) {
+                        $('.alert-warning').remove();
+                        rows = '<div class="col-12"><div class="alert alert-warning">No rooms available for the selected dates. Please choose different dates.</div></div>';
+                    } else {
+                        response.rooms.forEach(function(room) {
+                            var imagePath = '';
+                            switch(room.type.toLowerCase()) {
+                                case 'dorm':
+                                    imagePath = "{{ url_for('static', filename='home/dorm.jpg') }}";
+                                    break;
+                                case 'twin':
+                                    imagePath = "{{ url_for('static', filename='home/twin.jpg') }}";
+                                    break;
+                                case 'queen':
+                                    imagePath = "{{ url_for('static', filename='home/queen.jpg') }}";
+                                    break;
+                            }
+                            var actionHtml = '';
+                            if (room.availability === 'Room Closed due to maintenance') {
+                                actionHtml = '<button class="btn btn-warning" disabled>Room Temporarily Closed</button>';
+                            } else if (room.availability === 'Fully Booked') {
+                                actionHtml = '<button class="btn btn-secondary" disabled>Fully Booked</button>';
+                            } else if (room.availability === 'Guest number exceeds capacity') {
+                                actionHtml = '<button class="btn btn-danger" disabled>Unavailable</button>';
+                            } else {
+                                actionHtml = `<button class="btn btn-success reserveBtn" data-room-id="${room.accommodation_id}" data-start-date="${$('#daterange').data('daterangepicker').startDate.format('DD/MM/YYYY')}" data-end-date="${$('#daterange').data('daterangepicker').endDate.format('DD/MM/YYYY')}" data-guests="${$('#number_of_guests').val()}">Reserve</button>`;
+                            }
+
+                            var personIcons = '';
+                            for (var i = 0; i < room.capacity; i++) {
+                                personIcons += '<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/icons/person.svg" alt="Person Icon" style="width: 20px; height: 20px;">';
+                            }
+
+                            rows += `
+                                <div class="col-4">
+                                    <div class="card mb-4 shadow-sm">
+                                        <img class="card-img-top" src="${imagePath}" alt="${room.type}">
+                                        <div class="card-body">
+                                            <h5 class="card-title">${room.type}</h5>
+                                            <p class="card-text">${room.availability}</p>
+                                            <p class="card-text">Price: $${room.price_per_night}</p>
+                                            <p class="card-text">Max Guests: ${personIcons}</p>
+                                            ${actionHtml}
+                                        </div>
+                                    </div>
+                                </div>
+                            `;
+                        });
+                    }
+                    if (rows === '') {
+                        rows = '<div class="col-12"><div class="alert alert-warning">No rooms available for the selected dates. Please choose different dates.</div></div>';
+                    }
+                    $('#resultsTable').html(`<div class="row">${rows}</div>`);
+                });
+            });
+
+            $(document).on('click', '.reserveBtn', function() {
+                var roomId = $(this).data('room-id');
+                var startDate = $(this).data('start-date');
+                var endDate = $(this).data('end-date');
+                var guests = $(this).data('guests');
+                window.location.href = `/customer/preview_booking?room_id=${roomId}&start_date=${startDate}&end_date=${endDate}&adults=${$('#adults').val()}&children_0_2=${$('#children_0_2').val()}&children_2_17=${$('#children_2_17').val()}`;
             });
         });
     </script>
@@ -125,6 +203,15 @@
                 </div>
             </div>
         </form>
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }}" role="alert">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
         <div id="resultsTable">
             <!-- Results will be dynamically loaded here -->
         </div>
@@ -181,81 +268,12 @@
                         <label for="child_${i}_age">Child ${i + 1} Age</label>
                         <select id="child_${i}_age" class="form-control child-age-select">
                             <option disabled selected value="">Select child age</option>
-                            <option value="0-2">under 2 years old (doesn't incude 2)</option>
+                            <option value="0-2">under 2 years old (doesn't include 2)</option>
                             <option value="2-17">2-17 years old</option>
                         </select>
                     </div>
                 `);
             }
-        });
-
-        $('#searchForm').on('submit', function(e) {
-            var daterange = $('#daterange').val();
-            if (!daterange) {
-                alert("Please select a valid date range.");
-                return false;
-            }
-            e.preventDefault();
-            var data = $(this).serialize();
-            $.post('/customer/search', data, function(rooms) {
-                var rows = '';
-                rooms.forEach(function(room) {
-                    var imagePath = '';
-                    switch(room.type.toLowerCase()) {
-                        case 'dorm':
-                            imagePath = "{{ url_for('static', filename='home/dorm.jpg') }}";
-                            break;
-                        case 'twin':
-                            imagePath = "{{ url_for('static', filename='home/twin.jpg') }}";
-                            break;
-                        case 'queen':
-                            imagePath = "{{ url_for('static', filename='home/queen.jpg') }}";
-                            break;
-                    }
-                    var actionHtml = '';
-                    if (room.availability === 'Room Closed due to maintenance') {
-                        actionHtml = '<button class="btn btn-warning" disabled>Room Temporarily Closed</button>';
-                    } else if (room.availability === 'Fully Booked') {
-                        actionHtml = '<button class="btn btn-secondary" disabled>Fully Booked</button>';
-                    } else if (room.availability === 'Guest number exceeds capacity') {
-                        actionHtml = '<button class="btn btn-danger" disabled>Unavailable</button>';
-                    } else {
-                        actionHtml = `<button class="btn btn-success reserveBtn" data-room-id="${room.accommodation_id}" data-start-date="${$('#daterange').data('daterangepicker').startDate.format('DD/MM/YYYY')}" data-end-date="${$('#daterange').data('daterangepicker').endDate.format('DD/MM/YYYY')}" data-guests="${$('#number_of_guests').val()}">Reserve</button>`;
-                    }
-
-                    var personIcons = '';
-                    for (var i = 0; i < room.capacity; i++) {
-                        personIcons += '<img src="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/icons/person.svg" alt="Person Icon" style="width: 20px; height: 20px;">';
-                    }
-
-                    rows += `
-                        <div class="col-4">
-                            <div class="card mb-4 shadow-sm">
-                                <img class="card-img-top" src="${imagePath}" alt="${room.type}">
-                                <div class="card-body">
-                                    <h5 class="card-title">${room.type}</h5>
-                                    <p class="card-text">${room.availability}</p>
-                                    <p class="card-text">Price: $${room.price_per_night}</p>
-                                    <p class="card-text">Max Guests: ${personIcons}</p>
-                                    ${actionHtml}
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                });
-                if (!rows) {
-                    rows = '<div class="col-12"><div class="alert alert-danger">No rooms available for the selected dates. Please choose different dates.</div></div>';
-                }
-                $('#resultsTable').html(`<div class="row">${rows}</div>`);
-            });
-        });
-
-        $(document).on('click', '.reserveBtn', function() {
-            var roomId = $(this).data('room-id');
-            var startDate = $(this).data('start-date');
-            var endDate = $(this).data('end-date');
-            var guests = $(this).data('guests');
-            window.location.href = `/customer/preview_booking?room_id=${roomId}&start_date=${startDate}&end_date=${endDate}&adults=${$('#adults').val()}&children_0_2=${$('#children_0_2').val()}&children_2_17=${$('#children_2_17').val()}`;
         });
     </script>
 </body>
