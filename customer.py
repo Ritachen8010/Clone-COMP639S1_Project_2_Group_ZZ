@@ -438,6 +438,7 @@ def customer_managebookings():
     account_id = session.get('id')    
     connection, cursor = get_cursor()
     customer_info = get_customer_info(email)
+    today = datetime.now().date()
 
     cursor.execute(
         'SELECT a.email, c.customer_id FROM account a INNER JOIN customer c ON a.account_id = c.account_id WHERE a.account_id = %s', 
@@ -453,9 +454,14 @@ def customer_managebookings():
 
     # Fetch the confirmed bookings
     connection, cursor = get_cursor()
-    cursor.execute(
-            'SELECT b.*, a.type, a.description, a.image, a.price_per_night FROM booking b INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id WHERE b.customer_id = %s AND b.status = "confirmed"', 
-            (customer_id,))
+    cursor.execute('''
+        SELECT b.*, a.type, a.description, a.image, a.price_per_night 
+        FROM booking b 
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id 
+        WHERE b.customer_id = %s 
+          AND b.status = 'confirmed'
+          AND b.end_date >= %s
+    ''', (customer_id, today))
     bookings = cursor.fetchall()
     cursor.close()
     connection.close()

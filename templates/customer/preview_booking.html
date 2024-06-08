@@ -78,7 +78,7 @@
                         <p>Guests: {{ adults }} Adults{% if children2_17 != '0' %}, {{ children2_17 }} Children (2-17 years old){% endif %}{% if children0_2 != '0' %}, {{ children0_2 }} Children (0-2 years old){% endif %}</p>
                         <p>Room Type: {{ room.type }}</p>
                         <div class="cancellation-policy">
-                            <p><b>Cancellation Policy:</b> Full refund if canceled 24 hours before check-in. No refund otherwise.</p>
+                            <p><b>Cancellation Policy:</b> Full refund if canceled 24 hours in advance. No refund otherwise.</p>
                         </div>
                         <form method="post" action="{{ url_for('customer.booking_payment') }}">
                             <input type="hidden" name="room_id" value="{{ room.accommodation_id }}">

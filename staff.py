@@ -826,6 +826,7 @@ def checkout_booking(booking_id):
 def view_confirmed_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
+    today = datetime.now().date()
     staff_info = get_staff_info(email)
 
     search_term = request.args.get('search_term', '')
@@ -838,9 +839,9 @@ def view_confirmed_bookings():
         FROM booking b
         INNER JOIN customer c ON b.customer_id = c.customer_id
         INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
-        WHERE b.status = 'confirmed' AND (b.booking_id = %s OR c.first_name LIKE %s OR c.last_name LIKE %s)
+        WHERE b.status = 'confirmed' AND b.end_date >= %s AND (b.booking_id = %s OR c.first_name LIKE %s OR c.last_name LIKE %s)
         ORDER BY b.end_date DESC
-    ''', (search_term, f'%{search_term}%', f'%{search_term}%'))
+    ''', (today, search_term, f'%{search_term}%', f'%{search_term}%'))
     bookings = cursor.fetchall()
     cursor.close()
     connection.close()
