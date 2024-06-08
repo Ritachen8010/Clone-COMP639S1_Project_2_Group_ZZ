@@ -67,24 +67,6 @@
                     <li><a class="dropdown-item" href="#">...</a></li>
                 </ul>
             </li>
-
-            <!-- Link to the feedback | edit feedback or manage visible or invisible -->
-            <a href="#" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
-                <i class="bi bi-chat-dots me-2"></i>
-                <span class="ms-1 nav-text d-sm-inline">Feedback</span>
-            </a>
-
-            <!-- Link to the promotion -->
-            <a href="#" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
-                <i class="bi bi-megaphone me-2"></i>
-                <span class="ms-1 nav-text d-sm-inline">Promotion</span>
-            </a>
-
-            <!-- Link to the news -->
-            <a href="#" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
-                <i class="bi bi-newspaper me-2"></i>
-                <span class="ms-1 nav-text d-sm-inline">News</span>
-            </a>
             
             <!-- Link to the manage account -->
             <a href="{{ url_for('manager.manage_accounts')}}" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
@@ -92,17 +74,5 @@
                 <span class="ms-1 nav-text d-sm-inline">Manage Accounts</span>
             </a>
             
-            <!-- Link to the report -->
-            <li class="list-group-item list-group-item-action py-2 ripple">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-file-earmark-text me-2"></i>
-                    <a href="#reportSubmenu" data-bs-toggle="collapse" aria-expanded="false"
-                        class="dropdown-toggle ms-1 nav-text d-sm-inline">Report</a>
-                </div>
-                <ul class="collapse list-unstyled" id="reportSubmenu">
-                    <li><a class="dropdown-item" href="#">Financial Report</a></li>
-                    <li><a class="dropdown-item" href="#">Food Popularity Report</a></li>
-                </ul>
-            </li>
         </div>
     </nav>
