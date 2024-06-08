@@ -39,13 +39,12 @@
                             <!-- Counter - Unread Messages  -->
                             <span>{{ unread_messages | length }}</span>
                         </a>
-                       <!-- Dropdown - Messages -->
+                        <!-- Dropdown - Messages -->
                         <div class="dropdown-list dropdown-menu dropdown-menu-right" aria-labelledby="messagesDropdown">
                             {% for message in unread_messages %}
-                            <a class="dropdown-item" href="{% if message.staff_id %}{{ url_for('customer.customer_chat', staff_id=message.staff_id) }}{% else %}{{ url_for('customer.customer_chat', staff_id=0) }}{% endif %}">
+                            <a class="dropdown-item unread-message" href="{% if message.staff_id %}{{ url_for('customer.customer_chat', staff_id=message.staff_id) }}{% else %}{{ url_for('customer.customer_chat', staff_id=0) }}{% endif %}" data-message-id="{{ message.message_id }}">
                                 <div>
-                                    <strong>Message ID: {{ message.message_id }}</strong>
-                                    <div>Sender: {{ message.sender_type | capitalize }}</div>
+                                    <strong>Message from {{ message.sender_type | capitalize }}</strong>
                                     <div>{{ message.content }}</div>
                                 </div>
                             </a>
@@ -70,3 +69,34 @@
             </div>
         </div>
     </nav>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.unread-message').forEach(function(element) {
+                element.addEventListener('click', function(event) {
+                    event.preventDefault();
+                    var messageId = this.getAttribute('data-message-id');
+                    var href = this.getAttribute('href');
+                    markAsRead(messageId, this, href);
+                });
+            });
+        });
+        
+        function markAsRead(messageId, element, href) {
+            fetch(`/customer/mark_message_as_read/${messageId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            }).then(response => {
+                if (response.ok) {
+                    element.classList.remove('unread-message');
+                    element.classList.add('read-message');
+                    element.style.backgroundColor = '#f1f1f1';  // Change background color to indicate it is read
+                    window.location.href = href;  // Redirect to the chat page
+                } else {
+                    console.error('Failed to mark message as read');
+                }
+            });
+        }
+        </script>

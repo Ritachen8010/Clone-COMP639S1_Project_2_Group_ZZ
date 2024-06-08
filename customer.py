@@ -40,14 +40,33 @@ def get_customer_info(email):
 def get_unread_messages(customer_id):
     connection, cursor = get_cursor()
     cursor.execute("""
-        SELECT COUNT(*) AS unread_count
+        SELECT message.*,
+               CASE
+                   WHEN staff_id IS NOT NULL THEN 'staff'
+                   WHEN manager_id IS NOT NULL THEN 'manager'
+                   WHEN customer_id IS NOT NULL THEN 'customer'
+               END AS sender_type
         FROM message
-        WHERE message.customer_id = %s AND message.is_read = FALSE
+        WHERE customer_id = %s AND is_read = FALSE AND sender_type != 'customer'
     """, (customer_id,))
-    unread_count = cursor.fetchone()['unread_count']
+    unread_messages = cursor.fetchall()
     cursor.close()
     connection.close()
-    return unread_count
+    return unread_messages
+
+@customer_blueprint.route('/mark_message_as_read/<int:message_id>', methods=['POST'])
+@role_required(['customer'])
+def mark_message_as_read(message_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        UPDATE message
+        SET is_read = TRUE
+        WHERE message_id = %s
+    """, (message_id,))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return '', 204  # Return a no content response
 
 
 # Dashboard
@@ -56,8 +75,9 @@ def get_unread_messages(customer_id):
 def customer():
     email = session.get('email')
     customer_info = get_customer_info(email)
-    unread_count = get_unread_messages(customer_info['customer_id'])
-    return render_template('customer/customer_dashboard.html', customer_info=customer_info, unread_count=unread_count)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_count = len(unread_messages)
+    return render_template('customer/customer_dashboard.html', customer_info=customer_info, unread_messages=unread_messages, unread_count=unread_count)
 
 #search booking availability
 @customer_blueprint.route('/booking')

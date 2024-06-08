@@ -31,13 +31,42 @@ def get_manager_info(email):
     connection.close()
     return manager_info
 
+def get_unread_messages_for_manager(manager_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT message.*, customer.first_name, customer.last_name
+        FROM message
+        JOIN customer ON message.customer_id = customer.customer_id
+        WHERE (manager_id = %s OR manager_id IS NULL) AND is_read = FALSE AND sender_type = 'customer'
+    """, (manager_id,))
+    unread_messages = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return unread_messages
+
+@manager_blueprint.route('/mark_message_as_read/<int:message_id>', methods=['POST'])
+@role_required(['manager'])
+def mark_message_as_read_manager(message_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        UPDATE message
+        SET is_read = TRUE
+        WHERE message_id = %s
+    """, (message_id,))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return '', 204  # Return a no content response
+
+
 # Dashboard
 @manager_blueprint.route('/')
 @role_required(['manager'])
 def manager():
     email = session.get('email')
     manager_info = get_manager_info(email)
-    return render_template('manager/manager_dashboard.html', manager_info=manager_info) 
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
+    return render_template('manager/manager_dashboard.html', manager_info=manager_info, unread_messages=unread_messages) 
 
 
 # Define a name for upload image profile

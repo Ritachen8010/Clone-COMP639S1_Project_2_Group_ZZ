@@ -26,3 +26,5 @@ app.register_blueprint(customer_blueprint, url_prefix='/customer')
 
 if __name__ == '__main__':
     socketio.run(app, debug=True)
+    
+    

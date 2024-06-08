@@ -27,13 +27,40 @@ def get_staff_info(email):
     connection.close()
     return staff_info
 
+def get_unread_messages_for_staff(staff_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT message.*, customer.first_name, customer.last_name
+        FROM message
+        JOIN customer ON message.customer_id = customer.customer_id
+        WHERE (staff_id = %s OR staff_id IS NULL)AND is_read = FALSE AND sender_type = 'customer'
+    """, (staff_id,))
+    unread_messages = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return unread_messages
+
+@staff_blueprint.route('/mark_message_as_read/<int:message_id>', methods=['POST'])
+@role_required(['staff'])
+def mark_message_as_read_staff(message_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        UPDATE message
+        SET is_read = TRUE
+        WHERE message_id = %s
+    """, (message_id,))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return '', 204  # Return a no content response
+
 @staff_blueprint.route('/')
 @role_required(['staff'])
 def staff():
     email = session.get('email')
     staff_info = get_staff_info(email)
-    return render_template('staff/staff_dashboard.html',active='dashboard', staff_info=staff_info) 
-
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
+    return render_template('staff/staff_dashboard.html', staff_info=staff_info, unread_messages=unread_messages)
 
 # Define a name for upload image profile
 def upload_image_profile(staff_id, file):
