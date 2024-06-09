@@ -898,8 +898,7 @@ VALUES (1, 1000, NULL, NULL, 'This is a test message.');
 -- 18. insert into payment_type
 INSERT INTO `payment_type` (`payment_type_id`, `payment_type`)VALUES
 (1, 'gift_card'),
-(2, 'bank_card'),
-(3, 'promotion');
+(2, 'bank_card');
 
 -- 19. insert into bank_card
 INSERT INTO `bank_card` (`bank_card_id`, `card_num`, `expire_Date`, `payment_type_id`) VALUES
