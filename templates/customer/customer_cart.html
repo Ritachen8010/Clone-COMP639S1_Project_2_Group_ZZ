@@ -305,27 +305,36 @@ document.addEventListener("DOMContentLoaded", function() {
     });
 
     var today = new Date();
-    var currentMonth = today.getMonth() + 2; // Months are zero-based
+    var currentMonth = today.getMonth() + 2; // Current month start with 0
     var currentYear = today.getFullYear();
 
     var expiryMonthSelect = document.getElementById('expiry_m');
     var expiryYearSelect = document.getElementById('expiry_y');
 
-    // Populate expiry month options
-    for (var month = currentMonth; month <= 12; month++) {
-        var option = document.createElement('option');
-        option.value = month < 10 ? '0' + month : month;
-        option.text = month < 10 ? '0' + month : month;
-        expiryMonthSelect.appendChild(option);
-    }
-
-    // Populate expiry year options (next 10 years)
+    // Populate next 10 years
     for (var year = currentYear; year <= currentYear + 10; year++) {
         var option = document.createElement('option');
-        option.value = year % 100; // Use last two digits
+        option.value = year; // Full year
         option.text = year;
         expiryYearSelect.appendChild(option);
     }
+
+    // Poulate months
+    function populateExpiryMonths(selectedYear) {
+        expiryMonthSelect.innerHTML = ''; // Remove all options
+        var startMonth = selectedYear == currentYear ? currentMonth : 1; // Start from current month
+        for (var month = startMonth; month <= 12; month++) {
+            var option = document.createElement('option');
+            option.value = month < 10 ? '0' + month : month;
+            option.text = month < 10 ? '0' + month : month;
+            expiryMonthSelect.appendChild(option);
+        }
+    }
+
+    // When the year changes, update the months
+    expiryYearSelect.addEventListener('change', function() {
+        populateExpiryMonths(parseInt(this.value)); // Use current year
+    });
 });
 
 document.getElementById('checkoutModal').addEventListener('show.bs.modal', function (event) {

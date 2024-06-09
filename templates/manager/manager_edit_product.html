@@ -170,6 +170,7 @@
                             <th style="width: 10%;">Category</th>
                             <th style="width: 35%;">Description</th>
                             <th style="width: 10%;">Unit Price</th>
+                            <th style="width: 5%;">Status</th>
                             <th style="width: 5%;">Edit</th>
                             <th style="width: 5%;">Action</th>
                         </tr>
@@ -185,6 +186,8 @@
                             <td>{{ product.category | title }}</td>
                             <td class="text-start">{{ product.description | capitalize }}</td>
                             <td>${{ product.unit_price }}</td>
+                            <td>
+                                {{ 'Active' if product.is_available else 'Inactive' }}
                             <td>
                                 <a class="btn btn-theme" 
                                 href="{{ url_for('manager.edit_product', product_id=product.product_id) }}">Edit</a>
