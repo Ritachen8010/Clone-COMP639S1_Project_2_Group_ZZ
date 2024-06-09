@@ -196,7 +196,7 @@
             <h1 data-aos="fade-up" style="margin-top: 10px;">Our Team</h1>
             <div class="row" style="margin-top: 50px;">  
                 {% for manager in manager %}
-                <div class="col-md-4">
+                <div class="col-md-4 mb-5">
                     <div class="team-member">
                       <img src="{{ url_for('static', filename='manager/' + manager.profile_image) }}" alt="{{ manager.first_name }}'s Profile Image" class="img-fluid rounded-circle">
                       <h4>{{ manager.first_name | capitalize }} {{ manager.last_name | capitalize }}</h4>
@@ -207,7 +207,7 @@
                 {% for staff in staff %}
                 <div class="col-md-4">
                   <div class="team-member">
-                    <img src="{{ url_for('static', filename='staff/%s' % staff.profile_image) }}" class="img-fluid rounded-circle">
+                    <img src="{{ url_for('static', filename='staff/' + staff.profile_image) }}" alt="{{ staff.first_name }}'s Profile Image" class="img-fluid rounded-circle">
                     <h4>{{ staff.first_name | capitalize }} {{ staff.last_name | capitalize }}</h4>
                     <p>{{ staff.position }}</p>
                   </div>

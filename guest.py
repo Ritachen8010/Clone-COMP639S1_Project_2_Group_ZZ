@@ -34,6 +34,7 @@ def get_manager():
         SELECT manager.first_name, manager.last_name, manager.profile_image, manager.position
         FROM manager
         JOIN account ON manager.account_id = account.account_id
+        WHERE manager.status = 'active'
     """)
     manager_info = cursor.fetchall()
     cursor.close()
@@ -47,12 +48,12 @@ def get_all_staff():
         SELECT staff.first_name, staff.last_name, staff.profile_image, staff.position
         FROM staff
         JOIN account ON staff.account_id = account.account_id
+        WHERE staff.status = 'active'
     """)
     staff_info = cursor.fetchall()
     cursor.close()
     connection.close()
     return staff_info
-
 
 
 @guest_blueprint.route('/about_us')

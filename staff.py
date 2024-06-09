@@ -412,7 +412,7 @@ def monitor_inventory():
     page = request.args.get('page', 1, type=int)
     items_per_page = 10
     offset = (page - 1) * items_per_page
-    category_filter = request.args.get('category')
+    category_filter = request.args.get('category', '')
 
     connection, cursor = get_cursor()
 
@@ -471,7 +471,7 @@ def update_inventory():
     product_id = request.form.get('product_id')
     new_quantity = request.form.get('quantity')
     page = request.form.get('page', 1, type=int)
-    category = request.form.get('category')
+    category = request.form.get('category', '')
     connection, cursor = get_cursor()
 
     # Validate new_quantity
