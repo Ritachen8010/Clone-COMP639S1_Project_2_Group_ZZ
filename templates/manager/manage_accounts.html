@@ -38,19 +38,19 @@
                 <form method="POST" action="{{ url_for('manager.manage_accounts', role=role) }}"
                     class="search-form mb-4">
                     <div class="row">
-                        <div class="col-md-6 mb-3">
+                        <div class="col-md-6 mb-3 d-flex align-items-center">
                             <input type="text" class="form-control" name="query"
                                 placeholder="Search by name, email, or phone">
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <select name="status" class="form-select">
+                        <div class="col-md-4 mb-3 d-flex align-items-center">
+                            <select name="status" class="form-select form-control">
                                 <option value="">All Status</option>
                                 <option value="active">Active</option>
                                 <option value="inactive">Inactive</option>
                             </select>
                         </div>
-                        <div class="col-md-3 mb-3">
-                            <button type="submit" class="btn btn-custom btn-block">
+                        <div class="col-md-2 mb-3 d-flex align-items-center">
+                            <button type="submit" class="btn btn-custom btn-block form-control">
                                 <i class="fa fa-search"></i>
                                 Search</button>
                         </div>
@@ -99,7 +99,7 @@
                                 <td>{{ account.status | title }}</td>
                                 <td>
                                     {% if role != 'manager' %}
-                                    <button class="btn btn-sm btn-primary" data-bs-toggle="modal"
+                                    <button class="btn btn-sm btn-primary mb-2" data-bs-toggle="modal"
                                         data-bs-target="#editAccountModal" 
                                         data-account-id="{{ account.id }}"
                                         data-first-name="{{ account.first_name }}"
@@ -117,14 +117,14 @@
                                     <form action="{{ url_for('manager.reset_password') }}" method="post" class="d-inline">
                                         <input type="hidden" name="account_id" value="{{ account.id }}">
                                         <input type="hidden" name="role" value="{{ role }}">
-                                        <button type="submit" class="btn btn-sm btn-warning">Reset Password</button>
+                                        <button type="submit" class="btn btn-sm btn-warning mb-2">Reset Password</button>
                                     </form>
                                     <form action="{{ url_for('manager.toggle_status') }}" method="post" class="d-inline">
                                         <input type="hidden" name="account_id" value="{{ account.id }}">
                                         <input type="hidden" name="role" value="{{ role }}">
-                                        <button type="submit" class="btn btn-sm {{ 'btn-danger' if account.status == 'active' else 'btn-success' }}">{{ 'Deactivate' if account.status == 'active' else 'Activate' }}</button>
+                                        <button type="submit" class="btn btn-sm mb-2 {{ 'btn-danger' if account.status == 'active' else 'btn-success' }}">{{ 'Deactivate' if account.status == 'active' else 'Activate' }}</button>
                                     </form>
-                                </td>
+                                </td>                                
                             </tr>
                         {% endfor %}
                         </tbody>
@@ -185,7 +185,7 @@
                     <div class="mb-3" id="customer_fields">
                         <label for="edit_id_num" class="form-label">ID Number</label>
                         <input type="text" class="form-control" id="edit_id_num" name="id_num"
-                         pattern="[A-Za-z0-9]+" maxlength="50">
+                        pattern="[A-Za-z0-9]+" maxlength="10" title="Please enter a valid driver's license or passport">
                     </div>
 
                     <!-- Fields specific to staff accounts -->

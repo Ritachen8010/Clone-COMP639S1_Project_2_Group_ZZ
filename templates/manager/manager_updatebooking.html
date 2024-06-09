@@ -36,7 +36,8 @@
                             </div>
                             <div class="form-group">
                                 <label for="id_num">ID Number</label>
-                                <input type="text" class="form-control" name="id_num" value="{{ booking.id_num }}">
+                                <input type="text" class="form-control" name="id_num" value="{{ booking.id_num }}"
+                                pattern="[A-Za-z0-9]+" maxlength="10" title="Please enter a valid driver's license or passport">
                             </div>
                             <div class="form-group">
                                 <label for="start_date">Check-in Date （cannot set to be earlier than the initial booking date）</label>
