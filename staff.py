@@ -578,7 +578,7 @@ def update_booking(booking_id):
         end_date = booking['end_date']  # Checkout date remains fixed
         check_in = request.form.get('check_in') == 'on'
         
-        # Validate the dates
+# Validate the dates
         if start_date < today:
             flash('Check-in date cannot be earlier than today.', 'danger')
             return redirect(url_for('staff.update_booking', booking_id=booking_id))
@@ -594,7 +594,28 @@ def update_booking(booking_id):
             WHERE customer_id = (SELECT customer_id FROM booking WHERE booking_id = %s)
         ''', (first_name, last_name, phone_number, date_of_birth, id_num, booking_id))
         
-        # Update booking info
+# Validate date of birth
+        try:
+            new_date_of_birth = datetime.strptime(date_of_birth, '%Y-%m-%d').date()
+            today = date.today()
+            age = today.year - new_date_of_birth.year - ((today.month, today.day) < (new_date_of_birth.month, new_date_of_birth.day))
+        except ValueError:
+            flash("Invalid date format for date of birth.", "danger")
+            return redirect(url_for('staff.update_booking', booking_id=booking_id))
+
+        if age < 18:
+            flash("Customer must be over 18 years old.", "danger")
+            cursor.close()
+            connection.close()
+            return redirect(url_for('staff.update_booking', booking_id=booking_id))
+        
+        cursor.execute('''
+            UPDATE customer
+            SET first_name = %s, last_name = %s, phone_number = %s, date_of_birth = %s, id_num = %s
+            WHERE customer_id = (SELECT customer_id FROM booking WHERE booking_id = %s)
+        ''', (first_name, last_name, phone_number, new_date_of_birth, id_num, booking_id))
+        
+# Update booking info
         new_status = 'checked in' if check_in and start_date <= today else booking['status']
         cursor.execute('''
             UPDATE booking
