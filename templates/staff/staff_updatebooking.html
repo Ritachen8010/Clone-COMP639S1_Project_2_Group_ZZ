@@ -17,15 +17,18 @@
                         <form method="POST" action="{{ url_for('staff.update_booking', booking_id=booking.booking_id) }}" class="booking-form">
                             <div class="form-group">
                                 <label for="first_name">First Name</label>
-                                <input type="text" class="form-control" name="first_name" value="{{ booking.first_name }}" required>
+                                <input type="text" class="form-control" name="first_name" value="{{ booking.first_name }}" 
+                                pattern="[A-Za-z]+" title="Name must be a letter" required>
                             </div>
                             <div class="form-group">
                                 <label for="last_name">Last Name</label>
-                                <input type="text" class="form-control" name="last_name" value="{{ booking.last_name }}" required>
+                                <input type="text" class="form-control" name="last_name" value="{{ booking.last_name }}" 
+                                pattern="[A-Za-z]+" title="Name must be a letter" required>
                             </div>
                             <div class="form-group">
                                 <label for="phone_number">Phone Number</label>
-                                <input type="text" class="form-control" name="phone_number" value="{{ booking.phone_number }}" required>
+                                <input type="text" class="form-control" name="phone_number" value="{{ booking.phone_number }}" 
+                                pattern="\d{8,11}" title="Phone number must be between 8 and 11 digits" required>
                             </div>
                             <div class="form-group">
                                 <label for="date_of_birth">Date of Birth</label>

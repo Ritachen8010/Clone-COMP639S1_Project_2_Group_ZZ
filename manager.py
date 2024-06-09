@@ -1250,6 +1250,8 @@ def toggle_status():
 @manager_blueprint.route('/manage_accommodation', methods=['GET', 'POST'])
 @role_required(['manager'])
 def manage_accommodation():
+    email = session.get('email')
+    manager_info = get_manager_info(email)
     connection, cursor = get_cursor()
     current_blocked_dates = []
     blocked_dates_history = []
@@ -1374,7 +1376,11 @@ def manage_accommodation():
         flash('No blocked dates history found for the selected date.', 'info')
 
 
-    return render_template('manager/manage_accommodation.html', accommodations=accommodations, current_blocked_dates=current_blocked_dates, blocked_dates_history=blocked_dates_history, total_pages_current=total_pages_current, total_pages_history=total_pages_history, current_page=current_page, history_page=history_page, current_tab=current_tab)
+    return render_template('manager/manage_accommodation.html', accommodations=accommodations, 
+                           current_blocked_dates=current_blocked_dates, blocked_dates_history=blocked_dates_history, 
+                           total_pages_current=total_pages_current, total_pages_history=total_pages_history, 
+                           current_page=current_page, history_page=history_page, current_tab=current_tab,
+                           manager_info=manager_info)
 
 
 

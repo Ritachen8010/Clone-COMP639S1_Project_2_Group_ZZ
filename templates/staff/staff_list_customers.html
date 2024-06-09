@@ -15,7 +15,7 @@
                 <div class="list-group">
                     {% for customer in customers %}
                     <a href="{{ url_for('staff.staff_chat', customer_id=customer.customer_id) }}" class="list-group-item list-group-item-action">
-                        {{ customer.first_name }} {{ customer.last_name }}
+                        {{ customer.first_name | capitalize }} {{ customer.last_name | capitalize }}
                     </a>
                     {% endfor %}
                 </div>
