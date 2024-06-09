@@ -11,14 +11,14 @@
             <!-- insert manager_side_nav.html -->
             {% include 'dashboard_nav/manager_side_nav.html' %}
             <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
-                <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="align-items-center justify-content-between mb-4">
                     <h1 class="mb-4">View Bookings Sorted by Status</h1> 
                     <a href="{{ url_for('manager.view_checkin_bookings') }}" class="btn btn-theme">Update/Check-in Bookings</a>
-                    <a href="{{ url_for('manager.view_checked_in_bookings') }}" class="btn btn-theme-2">Checkout Bookings</a>
+                    <a href="{{ url_for('manager.view_checked_in_bookings') }}" class="btn btn-custom">Checkout Bookings</a>
                 </div>
                 <form method="GET" action="{{ url_for('manager.search_bookings') }}" class="search-form mb-4">
                     <input type="text" class="form-control mb-2" name="search_query" placeholder="Search by Last Name or Booking ID">
-                    <button type="submit" class="btn btn-primary ml-2">Search</button>
+                    <button type="submit" class="btn btn-theme ml-2 mb-4">Search</button>
                 </form>
                 <ul class="nav nav-tabs mb-4" id="bookingTabs" role="tablist">
                     <li class="nav-item">
@@ -68,7 +68,7 @@
                                         <td>{{ booking.children }}</td>
                                         <td>{{ booking.accommodation_type }}</td>
                                         <td>${{ booking.paid_amount }}</td>
-                                        <td>{{ booking.status }}</td>
+                                        <td>{{ booking.status | title }}</td>
                                     </tr>
                                 {% endfor %}
                             </tbody>

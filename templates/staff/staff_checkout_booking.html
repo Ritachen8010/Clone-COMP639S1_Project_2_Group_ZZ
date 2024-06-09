@@ -40,7 +40,7 @@
                                         <td>{{ (booking.end_date - booking.start_date).days }}</td>
                                         <td>{{ booking.accommodation_type }}</td>
                                         <td>${{ booking.paid_amount }}</td>
-                                        <td>{{ booking.status }}</td>
+                                        <td>{{ booking.status | title }}</td>
                                         <td>
                                             <form id="checkoutForm" action="{{ url_for('staff.checkout_booking', booking_id=booking.booking_id) }}" method="post">
                                                 <input type="hidden" name="confirm_checkout" value="yes">

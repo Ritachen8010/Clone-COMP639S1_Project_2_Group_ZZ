@@ -1068,7 +1068,7 @@ def add_staff():
         flash('All fields are required.', 'error')
         return redirect(url_for('manager.manage_accounts', role='staff'))
 
-    hashed_password = hashing.hash_value(password)
+    hashed_password = hashing.hash_value(password,salt='S1#e2!r3@t4$')
     default_image = '123.jpg'
 
     connection, cursor = get_cursor()
@@ -1116,7 +1116,7 @@ def add_manager():
         flash('All fields are required.', 'error')
         return redirect(url_for('manager.manage_accounts', role='manager'))
 
-    hashed_password = hashing.hash_value(password)
+    hashed_password = hashing.hash_value(password,salt='S1#e2!r3@t4$')
     default_image = '123.jpg'
 
     connection, cursor = get_cursor()
