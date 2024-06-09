@@ -959,18 +959,7 @@ def customer_checkout():
     return render_template('customer/customer_checkout.html', customer_info=customer_info)
 
 
-def get_promotion_details(promotion_id):
-    connection, cursor = get_cursor()
-    try:
-        cursor.execute("SELECT * FROM promotions WHERE promotion_id = %s", (promotion_id,))
-        promotion_details = cursor.fetchone()
-        return promotion_details
-    finally:
-        cursor.close()
-        connection.close()
 # Handling checkout request
-
-
 @customer_blueprint.route('/checkout', methods=['POST'])
 @role_required(['customer'])
 def checkout():
