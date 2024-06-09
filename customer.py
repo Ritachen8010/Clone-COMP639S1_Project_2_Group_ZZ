@@ -154,9 +154,6 @@ def search():
     else:
         return jsonify({'success': True, 'rooms': results})
 
-
-import decimal
-
 #preview booking info
 @customer_blueprint.route('/preview_booking', methods=['GET'])
 @role_required(['customer'])
@@ -344,6 +341,8 @@ def customer_updateprofile():
     email = session.get('email')
     account_id = session.get('id')
     customer_info = get_customer_info(email)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_count = len(unread_messages)
     connection, cursor = get_cursor()
     
     # Set the validation for birthday ages from 16-100
@@ -412,7 +411,9 @@ def customer_updateprofile():
         return redirect(url_for('customer.customer'))
 
     # Render page with current account information
-    return render_template('customer/customer_updateprofile.html', account=account, customer_info=customer_info,max_date=max_date_str, min_date=min_date_str)
+    return render_template('customer/customer_updateprofile.html', account=account, 
+                           customer_info=customer_info,max_date=max_date_str, min_date=min_date_str,
+                           unread_messages=unread_messages, unread_count=unread_count)
 
 
 
@@ -425,6 +426,8 @@ def customer_viewbookings():
     account_id = session.get('id')    
     connection, cursor = get_cursor()
     customer_info = get_customer_info(email)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_count = len(unread_messages)
 
     cursor.execute(
         'SELECT a.email, c.customer_id FROM account a INNER JOIN customer c ON a.account_id = c.account_id WHERE a.account_id = %s', 
@@ -452,7 +455,8 @@ def customer_viewbookings():
     if not bookings:
         flash('No bookings found.', 'info')
 
-    return render_template('customer/customer_viewbookings.html', bookings=bookings, customer_info=customer_info)
+    return render_template('customer/customer_viewbookings.html', bookings=bookings, customer_info=customer_info,
+                           unread_messages=unread_messages, unread_count=unread_count)
 
 
 #manage bookings
@@ -463,6 +467,8 @@ def customer_managebookings():
     account_id = session.get('id')    
     connection, cursor = get_cursor()
     customer_info = get_customer_info(email)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_count = len(unread_messages)
     today = datetime.now().date()
 
     cursor.execute(
@@ -494,7 +500,8 @@ def customer_managebookings():
     if not bookings:
         flash('No bookings found.', 'info')
 
-    return render_template('customer/customer_managebookings.html', bookings=bookings, customer_info=customer_info)
+    return render_template('customer/customer_managebookings.html', bookings=bookings, customer_info=customer_info,
+                           unread_messages=unread_messages, unread_count=unread_count)
 
 
 
@@ -598,6 +605,8 @@ def customer_viewallbookings():
     account_id = session.get('id')
     connection, cursor = get_cursor()
     customer_info = get_customer_info(email)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_count = len(unread_messages)
 
     cursor.execute(
         'SELECT a.email, c.customer_id FROM account a INNER JOIN customer c ON a.account_id = c.account_id WHERE a.account_id = %s', 
@@ -636,7 +645,8 @@ def customer_viewallbookings():
     if not all_bookings:
         flash('No bookings found.', 'info')
 
-    return render_template('customer/customer_viewallbookings.html', all_bookings=all_bookings, customer_info=customer_info)
+    return render_template('customer/customer_viewallbookings.html', all_bookings=all_bookings, customer_info=customer_info,
+                           unread_messages=unread_messages, unread_count=unread_count)
 
 # Product to cart
 def get_products(category_id=None):
@@ -736,17 +746,23 @@ def add_to_cart(customer_id, product_id, quantity, options):
     finally:
         cursor.close()
         connection.close()
+
+# Product
 @customer_blueprint.route('/product')
 @role_required(['customer'])
 def product():
     email = session.get('email')
     customer_info = get_customer_info(email)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_count = len(unread_messages)
     categories = get_categories()
     category_id = request.args.get('category_id')
     products = get_products(category_id=category_id)
     product_options = get_product_options()
     
-    return render_template('customer/customer_product.html', customer_info=customer_info, products=products, categories=categories, product_options=product_options)
+    return render_template('customer/customer_product.html', customer_info=customer_info, products=products, 
+                           categories=categories, product_options=product_options, unread_messages=unread_messages,
+                           unread_count=unread_count)
 
 @customer_blueprint.route('/add_cart', methods=['POST'])
 @role_required(['customer'])
@@ -764,6 +780,8 @@ def add_cart():
     
     email = session.get('email')
     customer_info = get_customer_info(email)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_count = len(unread_messages)
     
     if add_to_cart(customer_info['customer_id'], product_id, quantity, options):
         flash('Product added to cart successfully', 'success')
@@ -778,6 +796,8 @@ def add_cart():
 def cart():
     email = session.get('email')
     customer_info = get_customer_info(email)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_count = len(unread_messages)
     
     if not customer_info:
         flash("Customer information not found.", "error")
@@ -833,7 +853,8 @@ def cart():
     cursor.close()
     connection.close()
     return render_template('customer/customer_cart.html', cart_items=cart_items, total=total, gst=gst, 
-                           subtotal=subtotal, customer_info=customer_info, discount=discount, promo_code=promo_code)
+                           subtotal=subtotal, customer_info=customer_info, discount=discount, promo_code=promo_code,
+                           unread_messages=unread_messages, unread_count=unread_count)
 
 # Remove from cart
 @customer_blueprint.route('/remove_from_cart', methods=["POST"])
@@ -957,11 +978,14 @@ def apply_promo_code():
 def customer_checkout():
     email = session.get('email')
     customer_info = get_customer_info(email)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_count = len(unread_messages)
     if not customer_info:
         flash("Please login to proceed to checkout.", "info")
         return redirect(url_for('customer.login'))
 
-    return render_template('customer/customer_checkout.html', customer_info=customer_info)
+    return render_template('customer/customer_checkout.html', customer_info=customer_info,
+                           unread_messages=unread_messages, unread_count=unread_count)
 
 
 # Handling checkout request
@@ -1103,6 +1127,8 @@ def checkout():
 def orders():
     email = session.get('email')
     customer_info = get_customer_info(email)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_count = len(unread_messages)
     if not customer_info:
         flash("Customer information not found.", "error")
         return redirect(url_for('customer_dashboard'))
@@ -1133,7 +1159,8 @@ def orders():
     finally:
         cursor.close()
         connection.close()
-    return render_template('customer/customer_orders.html', orders=orders, history_orders=history_orders, customer_info=customer_info)
+    return render_template('customer/customer_orders.html', orders=orders, history_orders=history_orders, 
+                           customer_info=customer_info, unread_messages=unread_messages, unread_count=unread_count)
 
 # View Customer Order Details
 @customer_blueprint.route('/order_details/<int:order_id>', methods=['GET'])
@@ -1141,6 +1168,8 @@ def orders():
 def order_details(order_id):
     email = session.get('email')
     customer_info = get_customer_info(email)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_count = len(unread_messages)
     if not customer_info:
         flash("Customer information not found.", "error")
         return redirect(url_for('customer.orders'))
@@ -1165,7 +1194,8 @@ def order_details(order_id):
     order_items = cursor.fetchall()
     cursor.close()
     connection.close()
-    return render_template('customer/customer_order_details.html', order=order, order_items=order_items, customer_info=customer_info)
+    return render_template('customer/customer_order_details.html', order=order, order_items=order_items, 
+                           customer_info=customer_info, unread_messages=unread_messages, unread_count=unread_count)
 
 @customer_blueprint.route('/cancel_order/<int:order_id>', methods=['POST'])
 @role_required(['customer'])
@@ -1211,7 +1241,11 @@ def cancel_order(order_id):
 def customer_chat():
     email = session.get('email')
     customer_info = get_customer_info(email)
-    return render_template('customer/customer_chat.html', customer_info=customer_info)
+    unread_messages = get_unread_messages(customer_info['customer_id'])
+    unread_count = len(unread_messages)
+    return render_template('customer/customer_chat.html', customer_info=customer_info, unread_messages=unread_messages, 
+                           unread_count=unread_count)
+
 @socketio.on('message', namespace='/customer')
 def handle_message_customer(data):
     user_id = data.get('user_id')

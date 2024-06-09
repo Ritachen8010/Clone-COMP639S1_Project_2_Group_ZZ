@@ -130,6 +130,7 @@ def manager_updateprofile():
     email = session.get('email')
     account_id = session.get('id')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     connection, cursor = get_cursor()
 
     # Set the validation for birthday ages from 16-100
@@ -163,7 +164,8 @@ def manager_updateprofile():
         # Update password check
         if new_password and new_password != confirm_password:
             flash('New passwords do not match.', 'error')
-            return render_template('manager/manager_updateprofile.html', account=account, manager_info=manager_info)
+            return render_template('manager/manager_updateprofile.html', account=account, manager_info=manager_info, 
+                                   unread_messages=unread_messages, max_date=max_date_str, min_date=min_date_str)
 
         if new_password and (len(new_password) < 8 or not any(char.isupper() for char in new_password) 
             or not any(char.islower() for char in new_password) or not any(char.isdigit() for char in new_password)):
@@ -184,7 +186,8 @@ def manager_updateprofile():
         #set the validation for birthday ages from 16-100
         if date_of_birth < min_date_str or date_of_birth > max_date_str:
             flash('Date of birth must be between 16 and 100 years ago.', 'error')
-            return render_template('manager/manager_updateprofile.html', account=account, manager_info=manager_info, max_date=max_date_str, min_date=min_date_str)
+            return render_template('manager/manager_updateprofile.html', account=account, manager_info=manager_info, 
+                                   max_date=max_date_str, min_date=min_date_str, unread_messages=unread_messages)
 
 
         # Update the manager table using manager_id 
@@ -200,7 +203,8 @@ def manager_updateprofile():
         return redirect(url_for('manager.manager'))
 
     # Render page with current account information
-    return render_template('manager/manager_updateprofile.html', account=account, manager_info=manager_info, max_date=max_date_str, min_date=min_date_str)
+    return render_template('manager/manager_updateprofile.html', account=account, manager_info=manager_info, 
+                           max_date=max_date_str, min_date=min_date_str, unread_messages=unread_messages)
 
 
 # Get customer information
@@ -218,6 +222,7 @@ def get_customer_info(email):
 def manage_orders():
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     filter_status = request.args.get('status', 'active')
     search_email = request.args.get('search_email', '').strip()
     pickup_date = request.args.get('pickup_date', '').strip()
@@ -273,7 +278,8 @@ def manage_orders():
             flash(f"Order {order_id} status updated to {new_status}.", "success")
         else:
             flash(f"Invalid status value: {new_status}", "danger")
-        return redirect(url_for('manager.manage_orders', status=filter_status, search_email=search_email, pickup_date=pickup_date, sort_by=sort_by, sort_order=sort_order))
+        return redirect(url_for('manager.manage_orders', status=filter_status, search_email=search_email, 
+                                pickup_date=pickup_date, sort_by=sort_by, sort_order=sort_order))
 
     cursor.close()
     connection.close()
@@ -286,7 +292,7 @@ def manage_orders():
                            pickup_date=pickup_date, 
                            sort_by=sort_by, 
                            sort_order=sort_order, 
-                           next_sort_order=next_sort_order)
+                           next_sort_order=next_sort_order, unread_messages=unread_messages)
 
 #order details
 @manager_blueprint.route('/order_details/<int:order_id>', methods=['GET'])
@@ -325,6 +331,7 @@ def order_details(order_id):
 def history_orders():
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     if not manager_info:
         flash("Manager information not found.", "error")
         return redirect(url_for('manager_dashboard'))
@@ -364,7 +371,9 @@ def history_orders():
     cursor.close()
     connection.close()
 
-    return render_template('manager/manager_history_orders.html', history_orders=history_orders, manager_info=manager_info, filter_status=filter_status, search_email=search_email, pickup_date=pickup_date)
+    return render_template('manager/manager_history_orders.html', history_orders=history_orders, manager_info=manager_info, 
+                           filter_status=filter_status, search_email=search_email, pickup_date=pickup_date,
+                           unread_messages=unread_messages)
 
 # Manager search product
 @manager_blueprint.route('/search_product', methods=['GET'])
@@ -372,6 +381,7 @@ def history_orders():
 def search_product():
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     product_name = request.args.get('product_name')
     connection, cursor = get_cursor()
 
@@ -383,13 +393,15 @@ def search_product():
     cursor.close()
     connection.close()
 
-    return render_template('manager/manager_edit_inventory.html', manager_info=manager_info, products=products)
+    return render_template('manager/manager_edit_inventory.html', manager_info=manager_info, products=products,
+                           unread_messages=unread_messages)
 
 @manager_blueprint.route('/monitor_inventory')
 @role_required(['manager'])
 def monitor_inventory():
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     page = request.args.get('page', 1, type=int)
     items_per_page = 10
     offset = (page - 1) * items_per_page
@@ -444,7 +456,7 @@ def monitor_inventory():
 
     return render_template('manager/manager_inventory.html', manager_info=manager_info, inventory=inventory, 
                            categories=categories, page=page, items_per_page=items_per_page, 
-                           category=category_filter)
+                           category=category_filter, unread_messages=unread_messages)
 
 # Manager update inventory
 @manager_blueprint.route('/update_inventory', methods=['POST'])
@@ -631,6 +643,7 @@ def add_inventory():
 def manage_products():
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     page = request.args.get('page', 1, type=int)
     items_per_page = 10
     offset = (page - 1) * items_per_page
@@ -679,7 +692,7 @@ def manage_products():
                            categories=categories, 
                            manager_info=manager_info, 
                            page=page, 
-                           items_per_page=items_per_page)
+                           items_per_page=items_per_page, unread_messages=unread_messages)
 
 
 #option type
@@ -825,6 +838,7 @@ def get_all_options():
 def edit_product(product_id):
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     connection, cursor = get_cursor()
 
     cursor.execute("SELECT * FROM product_category")
@@ -894,7 +908,8 @@ def edit_product(product_id):
         all_options = cursor.fetchall() or []
 
         return render_template('manager/manager_edit_details.html', product=product, manager_info=manager_info, 
-                               categories=categories, option_types=option_types, all_options=all_options)
+                               categories=categories, option_types=option_types, all_options=all_options,
+                               unread_messages=unread_messages)
     
     flash('Product not found.', 'error')
     return redirect(url_for('manager.manage_products'))
@@ -932,6 +947,7 @@ def toggle_product_status(product_id):
 def manage_accounts():
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     role = request.args.get('role', 'customer')  # Default role set to 'customer'
     connection, cursor = get_cursor()
     
@@ -990,7 +1006,8 @@ def manage_accounts():
     max_date = (today - timedelta(days=365 * 16)).strftime('%Y-%m-%d')
 
     return render_template('manager/manage_accounts.html', accounts=accounts, title=f"Manage {role.capitalize()}s", 
-                           manager_info=manager_info, role=role, min_date=min_date, max_date=max_date)
+                           manager_info=manager_info, role=role, min_date=min_date, max_date=max_date, 
+                           unread_messages=unread_messages)
 
 # Manage edit account
 @manager_blueprint.route('/edit_account/<account_id>/<role>', methods=['GET', 'POST'])
@@ -1252,6 +1269,7 @@ def toggle_status():
 def manage_accommodation():
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     connection, cursor = get_cursor()
     current_blocked_dates = []
     blocked_dates_history = []
@@ -1380,7 +1398,7 @@ def manage_accommodation():
                            current_blocked_dates=current_blocked_dates, blocked_dates_history=blocked_dates_history, 
                            total_pages_current=total_pages_current, total_pages_history=total_pages_history, 
                            current_page=current_page, history_page=history_page, current_tab=current_tab,
-                           manager_info=manager_info)
+                           manager_info=manager_info, unread_messages=unread_messages)
 
 
 
@@ -1405,8 +1423,10 @@ def manager_chat(customer_id):
     email = session.get('email')
     manager_info = get_manager_info(email)
     customer_info = get_customer_info_by_id(customer_id)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     chat_history = get_chat_history_for_manager_and_customer(customer_id)
-    return render_template('manager/manager_chat.html', manager_info=manager_info, customer_info=customer_info, chat_history=chat_history)
+    return render_template('manager/manager_chat.html', manager_info=manager_info, customer_info=customer_info, 
+                           unread_messages=unread_messages,chat_history=chat_history)
 
 @manager_blueprint.route('/customers')
 @role_required(['manager'])
@@ -1416,7 +1436,9 @@ def list_customers():
     customers = cursor.fetchall()
     cursor.close()
     connection.close()
-    return render_template('manager/manager_list_customers.html', customers=customers, manager_info=get_manager_info(session.get('email')))
+    return render_template('manager/manager_list_customers.html', customers=customers, 
+                           manager_info=get_manager_info(session.get('email')), 
+                           unread_messages=get_unread_messages_for_manager(session.get('id')))
 @socketio.on('message', namespace='/manager')
 def handle_message_manager(data):
     user_id = data.get('user_id')
@@ -1473,6 +1495,7 @@ def view_checkin_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
 
     if request.method == 'POST':
         selected_date = request.form.get('selected_date')
@@ -1494,7 +1517,8 @@ def view_checkin_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('manager/manager_checkin.html', bookings=bookings, selected_date=selected_date, manager_info=manager_info)
+    return render_template('manager/manager_checkin.html', bookings=bookings, selected_date=selected_date, 
+                           manager_info=manager_info, unread_messages=unread_messages)
 
 
 @manager_blueprint.route('/update_booking/<int:booking_id>', methods=['GET', 'POST'])
@@ -1519,6 +1543,7 @@ def update_booking(booking_id):
     
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     today = datetime.today().date()
     
     original_duration = (booking['end_date'] - booking['start_date']).days
@@ -1586,7 +1611,8 @@ def update_booking(booking_id):
         flash('Booking updated successfully.', 'success')
         return redirect(url_for('manager.view_checkin_bookings'))
     
-    return render_template('manager/manager_updatebooking.html', booking=booking, manager_info=manager_info, today=today)
+    return render_template('manager/manager_updatebooking.html', booking=booking, manager_info=manager_info, today=today,
+                           unread_messages=unread_messages)
 
 
 #view all bookings
@@ -1596,6 +1622,7 @@ def view_all_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     today = datetime.now().date()
     
     cursor.execute('''
@@ -1614,7 +1641,8 @@ def view_all_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('manager/manager_view_all_bookings.html', title='All Confirmed Bookings', bookings=bookings, manager_info=manager_info)
+    return render_template('manager/manager_view_all_bookings.html', title='All Confirmed Bookings', 
+                           bookings=bookings, manager_info=manager_info, unread_messages=unread_messages)
 
 
 @manager_blueprint.route('/view_all_no_show_bookings', methods=['GET'])
@@ -1623,6 +1651,7 @@ def view_all_no_show_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     today = datetime.now().date()
 
     cursor.execute('''
@@ -1646,7 +1675,8 @@ def view_all_no_show_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('manager/manager_view_all_bookings.html', title='All No Show Bookings', bookings=bookings, manager_info=manager_info)
+    return render_template('manager/manager_view_all_bookings.html', title='All No Show Bookings', 
+                           bookings=bookings, manager_info=manager_info, unread_messages=unread_messages)
 
 
 
@@ -1657,6 +1687,7 @@ def view_all_cancelled_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
 
     cursor.execute('''
         SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
@@ -1674,7 +1705,8 @@ def view_all_cancelled_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('manager/manager_view_all_bookings.html', bookings=bookings, manager_info=manager_info, title='All Cancelled Bookings')
+    return render_template('manager/manager_view_all_bookings.html', bookings=bookings, 
+                           manager_info=manager_info, title='All Cancelled Bookings', unread_messages=unread_messages)
 
 
 @manager_blueprint.route('/view_all_checked_out_bookings', methods=['GET'])
@@ -1683,6 +1715,7 @@ def view_all_checked_out_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
 
     cursor.execute('''
         SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
@@ -1700,7 +1733,8 @@ def view_all_checked_out_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('manager/manager_view_all_bookings.html', bookings=bookings, manager_info=manager_info, title='All Checked Out Bookings')
+    return render_template('manager/manager_view_all_bookings.html', bookings=bookings, 
+                           manager_info=manager_info, title='All Checked Out Bookings', unread_messages=unread_messages)
 
 
 @manager_blueprint.route('/view_all_checked_in_bookings', methods=['GET'])
@@ -1709,6 +1743,7 @@ def view_all_checked_in_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
 
     cursor.execute('''
         SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
@@ -1726,7 +1761,8 @@ def view_all_checked_in_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('manager/manager_view_all_bookings.html', bookings=bookings, manager_info=manager_info, title='All Checked In Bookings')
+    return render_template('manager/manager_view_all_bookings.html', bookings=bookings, manager_info=manager_info, 
+                           title='All Checked In Bookings', unread_messages=unread_messages)
 
 #search bookings by last name and booking ID
 @manager_blueprint.route('/search_bookings', methods=['GET'])
@@ -1741,6 +1777,7 @@ def search_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     today = datetime.now().date()
 
     # Determine if search_query is a booking ID or a last name  
@@ -1781,7 +1818,8 @@ def search_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('manager/manager_view_all_bookings.html', title="Search Results", bookings=bookings, manager_info=manager_info)
+    return render_template('manager/manager_view_all_bookings.html', title="Search Results", 
+                           bookings=bookings, manager_info=manager_info, unread_messages=unread_messages)
 
 
 #manager checkout bookings
@@ -1791,6 +1829,7 @@ def view_checked_in_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
 
     cursor.execute('''
         SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
@@ -1807,7 +1846,8 @@ def view_checked_in_bookings():
     bookings = cursor.fetchall()
     cursor.close()
     connection.close()
-    return render_template('manager/manager_checkout_booking.html', bookings=bookings, manager_info=manager_info, title='All Checked In Bookings')
+    return render_template('manager/manager_checkout_booking.html', bookings=bookings, manager_info=manager_info, 
+                           title='All Checked In Bookings', unread_messages=unread_messages)
 
 @manager_blueprint.route('/checkout_booking/<int:booking_id>', methods=['POST'])
 @role_required(['manager'])
@@ -1832,6 +1872,7 @@ def view_confirmed_bookings():
     email = session.get('email')
     today = datetime.now().date()
     manager_info = get_manager_info(email)
+    unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
 
     search_term = request.args.get('search_term', '')
     cursor.execute('''
@@ -1849,7 +1890,8 @@ def view_confirmed_bookings():
     bookings = cursor.fetchall()
     cursor.close()
     connection.close()
-    return render_template('manager/manager_cancelbooking.html', bookings=bookings, manager_info=manager_info, title='All Confirmed Bookings')
+    return render_template('manager/manager_cancelbooking.html', bookings=bookings, manager_info=manager_info, 
+                           title='All Confirmed Bookings', unread_messages=unread_messages)
 
 
 

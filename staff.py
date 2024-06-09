@@ -124,6 +124,7 @@ def staff_updateprofile():
     email = session.get('email')
     account_id = session.get('id')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
     connection, cursor = get_cursor()
     
     # Set the validation for birthday ages from 16-100
@@ -194,7 +195,8 @@ def staff_updateprofile():
         return redirect(url_for('staff.staff'))
 
     # Render page with current account information
-    return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info, max_date=max_date_str, min_date=min_date_str)
+    return render_template('staff/staff_updateprofile.html', account=account, staff_info=staff_info, 
+                           max_date=max_date_str, min_date=min_date_str, unread_messages=unread_messages)
 
 
 @staff_blueprint.route('/orders', methods=['GET', 'POST'])
@@ -202,6 +204,7 @@ def staff_updateprofile():
 def manage_orders():
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
     filter_status = request.args.get('status', 'active')
     search_email = request.args.get('search_email', '').strip()
     pickup_date = request.args.get('pickup_date', '').strip()
@@ -269,7 +272,7 @@ def manage_orders():
                            pickup_date=pickup_date, 
                            sort_by=sort_by, 
                            sort_order=sort_order, 
-                           next_sort_order=next_sort_order)
+                           next_sort_order=next_sort_order, unread_messages=unread_messages)
 
 
 # Staff view order details
@@ -278,6 +281,7 @@ def manage_orders():
 def order_details(order_id):
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
     
     connection, cursor = get_cursor()
     
@@ -313,12 +317,15 @@ def order_details(order_id):
         cursor.close()
         connection.close()
     
-    return render_template('staff/staff_order_details.html', order=order, order_items=order_items, staff_info=staff_info)
+    return render_template('staff/staff_order_details.html', order=order, order_items=order_items, staff_info=staff_info,
+                           unread_messages=unread_messages)
+# Staff view order history
 @staff_blueprint.route('/history_orders', methods=['GET'])
 @role_required(['staff'])
 def view_history_orders():
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
     
     filter_status = request.args.get('status', '').strip()
     search_email = request.args.get('search_email', '').strip()
@@ -360,13 +367,17 @@ def view_history_orders():
         cursor.close()
         connection.close()
     
-    return render_template('staff/staff_history_orders.html', history_orders=history_orders, staff_info=staff_info, filter_status=filter_status, search_email=search_email, pickup_date=pickup_date)
+    return render_template('staff/staff_history_orders.html', history_orders=history_orders, 
+                           staff_info=staff_info, filter_status=filter_status, search_email=search_email, 
+                           pickup_date=pickup_date, unread_messages=unread_messages)
 
+# Staff view order details
 @staff_blueprint.route('/history_order_details/<int:order_id>', methods=['GET'])
 @role_required(['staff'])
 def history_order_details(order_id):
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
     
     connection, cursor = get_cursor()
     
@@ -402,13 +413,16 @@ def history_order_details(order_id):
         cursor.close()
         connection.close()
     
-    return render_template('staff/staff_history_order_details.html', order=order, order_items=order_items, staff_info=staff_info)
+    return render_template('staff/staff_history_order_details.html', order=order, order_items=order_items, 
+                           staff_info=staff_info, unread_messages=unread_messages)
 
+# Staff view inventory
 @staff_blueprint.route('/monitor_inventory')
 @role_required(['staff'])
 def monitor_inventory():
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
     page = request.args.get('page', 1, type=int)
     items_per_page = 10
     offset = (page - 1) * items_per_page
@@ -463,8 +477,9 @@ def monitor_inventory():
 
     return render_template('staff/staff_inventory.html', staff_info=staff_info, inventory=inventory, 
                            categories=categories, page=page, items_per_page=items_per_page, 
-                           category=category_filter)
+                           category=category_filter, unread_messages=unread_messages)
 
+# Staff update inventory
 @staff_blueprint.route('/update_inventory', methods=['POST'])
 @role_required(['staff'])
 def update_inventory():
@@ -517,6 +532,7 @@ def view_checkin_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
 
     if request.method == 'POST':
         selected_date = request.form.get('selected_date')
@@ -538,7 +554,8 @@ def view_checkin_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('staff/staff_checkin.html', bookings=bookings, selected_date=selected_date, staff_info=staff_info)
+    return render_template('staff/staff_checkin.html', bookings=bookings, selected_date=selected_date, staff_info=staff_info,
+                           unread_messages=unread_messages)
 
 
 @staff_blueprint.route('/update_booking/<int:booking_id>', methods=['GET', 'POST'])
@@ -563,6 +580,7 @@ def update_booking(booking_id):
     
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
     today = datetime.today().date()
     
     original_duration = (booking['end_date'] - booking['start_date']).days
@@ -630,7 +648,8 @@ def update_booking(booking_id):
         flash('Booking updated successfully.', 'success')
         return redirect(url_for('staff.view_checkin_bookings'))
     
-    return render_template('staff/staff_updatebooking.html', booking=booking, staff_info=staff_info, today=today)
+    return render_template('staff/staff_updatebooking.html', booking=booking, staff_info=staff_info, today=today,
+                           unread_messages=unread_messages)
 
 
 #view all bookings
@@ -640,6 +659,7 @@ def view_all_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
     today = datetime.now().date()
     
     cursor.execute('''
@@ -658,7 +678,8 @@ def view_all_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('staff/staff_view_all_bookings.html', title='All Confirmed Bookings', bookings=bookings, staff_info=staff_info)
+    return render_template('staff/staff_view_all_bookings.html', title='All Confirmed Bookings', 
+                           bookings=bookings, staff_info=staff_info, unread_messages=unread_messages)
 
 
 @staff_blueprint.route('/view_all_no_show_bookings', methods=['GET'])
@@ -667,6 +688,7 @@ def view_all_no_show_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
     today = datetime.now().date()
 
     cursor.execute('''
@@ -690,7 +712,8 @@ def view_all_no_show_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('staff/staff_view_all_bookings.html', title='All No Show Bookings', bookings=bookings, staff_info=staff_info)
+    return render_template('staff/staff_view_all_bookings.html', title='All No Show Bookings', 
+                           bookings=bookings, staff_info=staff_info, unread_messages=unread_messages)
 
 
 
@@ -701,6 +724,7 @@ def view_all_cancelled_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
 
     cursor.execute('''
         SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
@@ -718,7 +742,8 @@ def view_all_cancelled_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('staff/staff_view_all_bookings.html', bookings=bookings, staff_info=staff_info, title='All Cancelled Bookings')
+    return render_template('staff/staff_view_all_bookings.html', bookings=bookings, staff_info=staff_info, 
+                           title='All Cancelled Bookings', unread_messages=unread_messages)
 
 
 @staff_blueprint.route('/view_all_checked_out_bookings', methods=['GET'])
@@ -727,6 +752,7 @@ def view_all_checked_out_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
 
     cursor.execute('''
         SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
@@ -744,7 +770,8 @@ def view_all_checked_out_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('staff/staff_view_all_bookings.html', bookings=bookings, staff_info=staff_info, title='All Checked Out Bookings')
+    return render_template('staff/staff_view_all_bookings.html', bookings=bookings, staff_info=staff_info, 
+                           title='All Checked Out Bookings', unread_messages=unread_messages)
 
 
 @staff_blueprint.route('/view_all_checked_in_bookings', methods=['GET'])
@@ -753,6 +780,7 @@ def view_all_checked_in_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
 
     cursor.execute('''
         SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
@@ -770,7 +798,8 @@ def view_all_checked_in_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('staff/staff_view_all_bookings.html', bookings=bookings, staff_info=staff_info, title='All Checked In Bookings')
+    return render_template('staff/staff_view_all_bookings.html', bookings=bookings, staff_info=staff_info, 
+                           title='All Checked In Bookings', unread_messages=unread_messages)
 
 #search bookings by last name and booking ID
 @staff_blueprint.route('/search_bookings', methods=['GET'])
@@ -785,6 +814,7 @@ def search_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
     today = datetime.now().date()
 
     # Determine if search_query is a booking ID or a last name  
@@ -825,7 +855,8 @@ def search_bookings():
     cursor.close()
     connection.close()
 
-    return render_template('staff/staff_view_all_bookings.html', title="Search Results", bookings=bookings, staff_info=staff_info)
+    return render_template('staff/staff_view_all_bookings.html', title="Search Results", bookings=bookings, 
+                           staff_info=staff_info, unread_messages=unread_messages)
 
 
 #staff checkout bookings
@@ -835,6 +866,7 @@ def view_checked_in_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
 
     cursor.execute('''
         SELECT b.booking_id, b.start_date, b.end_date, b.status, b.is_paid, 
@@ -851,7 +883,8 @@ def view_checked_in_bookings():
     bookings = cursor.fetchall()
     cursor.close()
     connection.close()
-    return render_template('staff/staff_checkout_booking.html', bookings=bookings, staff_info=staff_info, title='All Checked In Bookings')
+    return render_template('staff/staff_checkout_booking.html', bookings=bookings, staff_info=staff_info, 
+                           title='All Checked In Bookings', unread_messages=unread_messages)
 
 @staff_blueprint.route('/checkout_booking/<int:booking_id>', methods=['POST'])
 @role_required(['staff'])
@@ -876,6 +909,7 @@ def view_confirmed_bookings():
     email = session.get('email')
     today = datetime.now().date()
     staff_info = get_staff_info(email)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
 
     search_term = request.args.get('search_term', '')
     cursor.execute('''
@@ -893,7 +927,8 @@ def view_confirmed_bookings():
     bookings = cursor.fetchall()
     cursor.close()
     connection.close()
-    return render_template('staff/staff_cancelbooking.html', bookings=bookings, staff_info=staff_info, title='All Confirmed Bookings')
+    return render_template('staff/staff_cancelbooking.html', bookings=bookings, staff_info=staff_info, 
+                           title='All Confirmed Bookings', unread_messages=unread_messages)
 
 
 
@@ -1006,8 +1041,10 @@ def staff_chat(customer_id):
     email = session.get('email')
     staff_info = get_staff_info(email)
     customer_info = get_customer_info_by_id(customer_id)
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
     chat_history = get_chat_history_for_staff_and_customer(customer_id)
-    return render_template('staff/staff_chat.html', staff_info=staff_info, customer_info=customer_info, chat_history=chat_history)
+    return render_template('staff/staff_chat.html', staff_info=staff_info, customer_info=customer_info, 
+                           chat_history=chat_history, unread_messages=unread_messages)
 
 @staff_blueprint.route('/customers')
 @role_required(['staff'])
@@ -1017,7 +1054,8 @@ def list_customers():
     customers = cursor.fetchall()
     cursor.close()
     connection.close()
-    return render_template('staff/staff_list_customers.html', customers=customers, staff_info=get_staff_info(session.get('email')))
+    return render_template('staff/staff_list_customers.html', customers=customers, staff_info=get_staff_info(session.get('email')),
+                           unread_messages=get_unread_messages_for_staff(get_staff_info(session.get('email'))['staff_id']))
 @socketio.on('message', namespace='/staff')
 def handle_message_staff(data):
     user_id = data.get('user_id')
