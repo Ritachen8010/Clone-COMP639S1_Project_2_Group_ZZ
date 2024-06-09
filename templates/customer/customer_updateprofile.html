@@ -42,12 +42,14 @@
                                         <div class="col-md-6 mb-3">
                                             <label for="first_name" class="form-label">First Name</label>
                                             <input type="text" class="form-control" id="first_name" name="first_name"
-                                                value="{{ account.first_name }}" required>
+                                                value="{{ account.first_name }}" pattern="[A-Za-z]+" title="Name must be a letter"
+                                                required>
                                         </div>
                                         <div class="col-md-6 mb-3">
                                             <label for="last_name" class="form-label">Last Name</label>
                                             <input type="text" class="form-control" id="last_name" name="last_name"
-                                                value="{{ account.last_name }}" required>
+                                                value="{{ account.last_name }}" pattern="[A-Za-z]+" title="Name must be a letter"
+                                                required>
                                         </div>
                                     </div>
                                     <div class="mb-3">
@@ -82,12 +84,18 @@
                                     <div class="mb-3">
                                         <label for="new_password" class="form-label">New Password</label>
                                         <input type="password" class="form-control" id="new_password"
-                                            name="new_password">
+                                            name="new_password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}" 
+                                            placeholder="Plese enter your New Password*" 
+                                            title="Password must be at least 8 characters long, including an uppercase letter, a lowercase letter, 
+                                                a number, and a special character">
                                     </div>
                                     <div class="mb-3">
                                         <label for="confirm_password" class="form-label">Confirm New Password</label>
                                         <input type="password" class="form-control" id="confirm_password"
-                                            name="confirm_password">
+                                            name="confirm_password" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}" 
+                                            placeholder="Plese enter your New Password*" 
+                                            title="Password must be at least 8 characters long, including an uppercase letter, a lowercase letter, 
+                                                a number, and a special character">
                                     </div>
                                     <button type="submit" class="btn btn-theme">Update Profile</button>
                                 </form>
