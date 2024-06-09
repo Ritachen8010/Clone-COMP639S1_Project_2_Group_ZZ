@@ -88,12 +88,12 @@
                             <input type="hidden" name="children" value="{{ children }}">
                             <input type="hidden" name="children_0_2" value="{{ children0_2 }}">
                             <input type="hidden" name="children_2_17" value="{{ children2_17 }}">
+                            <input type="hidden" name="total_price_hidden" value="{{ '%.2f'|format(total_price) }}"> 
                             <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#checkoutModal">Pay Now</button>
                         </form>
                         <h4 class="mt-4">Price Details</h4>
                         <p>Room Price: NZD ${{ '%.2f'|format(room.price_per_night) }}</p> 
-                        <p>GST (15%): NZD ${{ '%.2f'|format(gst_price) }}</p> 
-                        <p>Total Price: NZD ${{ '%.2f'|format(total_price) }}</p> 
+                        <p>Includes taxes and charges</p> 
                     </div>
                 </div>
             </div>
@@ -190,6 +190,63 @@
     </div>
 
     <script>
+        (function () {
+            'use strict';
+            var forms = document.querySelectorAll('.needs-validation');
+            Array.prototype.slice.call(forms).forEach(function (form) {
+                form.addEventListener('submit', function (event) {
+                    if (!form.checkValidity()) {
+                        event.preventDefault();
+                        event.stopPropagation();
+                    }
+                    form.classList.add('was-validated');
+                }, false);
+            });
+        })();
+
+        document.addEventListener("DOMContentLoaded", function() {
+            const cardNumberInput = document.getElementById('card_number');
+            const feedbackElement = cardNumberInput.nextElementSibling;
+
+            cardNumberInput.addEventListener('input', function() {
+                const value = cardNumberInput.value.replace(/\D/g, '');
+                if (value.length === 16) {
+                    cardNumberInput.classList.remove('is-invalid');
+                    cardNumberInput.classList.add('is-valid');
+                    feedbackElement.textContent = 'Valid card number';
+                    feedbackElement.style.color = 'green';
+                } else {
+                    cardNumberInput.classList.remove('is-valid');
+                    cardNumberInput.classList.add('is-invalid');
+                    feedbackElement.textContent = 'Invalid card number';
+                    feedbackElement.style.color = 'red';
+                }
+            });
+
+            var today = new Date();
+            var currentMonth = today.getMonth() + 2; // Months are zero-based
+            var currentYear = today.getFullYear();
+
+            var expiryMonthSelect = document.getElementById('expiry_m');
+            var expiryYearSelect = document.getElementById('expiry_y');
+
+            // Populate expiry month options
+            for (var month = currentMonth; month <= 12; month++) {
+                var option = document.createElement('option');
+                option.value = month < 10 ? '0' + month : month;
+                option.text = month < 10 ? '0' + month : month;
+                expiryMonthSelect.appendChild(option);
+            }
+
+            // Populate expiry year options (next 10 years)
+            for (var year = currentYear; year <= currentYear + 10; year++) {
+                var option = document.createElement('option');
+                option.value = year % 100; // Use last two digits
+                option.text = year;
+                expiryYearSelect.appendChild(option);
+            }
+        });
+
         $(function() {
             $('input[name="daterange"]').daterangepicker({
                 opens: 'left',

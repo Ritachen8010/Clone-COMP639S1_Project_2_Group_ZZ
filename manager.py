@@ -1251,7 +1251,20 @@ def toggle_status():
 @role_required(['manager'])
 def manage_accommodation():
     connection, cursor = get_cursor()
+    current_blocked_dates = []
+    blocked_dates_history = []
+    total_pages_current = 1
+    total_pages_history = 1
+    current_page = 1
+    history_page = 1
+    current_tab = 'current'
+    accommodations = []
+
     try:
+        # Fetch accommodations for the dropdown
+        cursor.execute("SELECT * FROM accommodation")
+        accommodations = cursor.fetchall()
+
         if request.method == 'POST':
             action = request.form['action']
             accommodation_id = request.form['accommodation_id']
@@ -1262,49 +1275,91 @@ def manage_accommodation():
             if end_date < start_date:
                 flash('End date must be later than start date.', 'danger')
             else:
-                if action == 'block':
-                    # Insert blocked dates into the database
-                    cursor.execute("""
-                        INSERT INTO blocked_dates (accommodation_id, start_date, end_date, is_active, manager_id)
-                        VALUES (%s, %s, %s, TRUE, %s)
-                    """, (accommodation_id, start_date, end_date, manager_id))
-                    connection.commit()
-                    flash('Dates successfully blocked.', 'success')
-                elif action == 'unblock':
-                    # Update blocked dates to inactive
-                    cursor.execute("""
-                        UPDATE blocked_dates
-                        SET is_active = FALSE, manager_id = %s
-                        WHERE accommodation_id = %s AND start_date = %s AND end_date = %s
-                    """, (manager_id, accommodation_id, start_date, end_date))
-                    connection.commit()
-                    flash('Dates successfully unblocked.', 'success')
+                # Check for existing bookings in the date range
+                cursor.execute("""
+                    SELECT * FROM booking 
+                    WHERE accommodation_id = %s 
+                    AND (start_date BETWEEN %s AND %s OR end_date BETWEEN %s AND %s OR (%s BETWEEN start_date AND end_date))
+                """, (accommodation_id, start_date, end_date, start_date, end_date, start_date))
+                existing_bookings = cursor.fetchall()
 
-        # Fetch accommodations for the dropdown
-        cursor.execute("SELECT * FROM accommodation")
-        accommodations = cursor.fetchall()
+                if existing_bookings:
+                    accommodation_type = next((item['type'] for item in accommodations if item['accommodation_id'] == int(accommodation_id)), 'Unknown')
+                    flash(f'Selected block dates {start_date.strftime("%d-%m-%Y")} to {end_date.strftime("%d-%m-%Y")} overlap with existing bookings for {accommodation_type} Room. Please cancel the bookings before blocking.', 'danger')
+                else:
+                    # Check for existing blocks in the date range
+                    cursor.execute("""
+                        SELECT * FROM blocked_dates 
+                        WHERE accommodation_id = %s 
+                        AND is_active = TRUE 
+                        AND (start_date BETWEEN %s AND %s OR end_date BETWEEN %s AND %s OR (%s BETWEEN start_date AND end_date))
+                    """, (accommodation_id, start_date, end_date, start_date, end_date, start_date))
+                    existing_blocks = cursor.fetchall()
+
+                    if existing_blocks and action == 'block':
+                        flash(f'Selected block dates {start_date.strftime("%d-%m-%Y")} to {end_date.strftime("%d-%m-%Y")} overlap with existing block dates. Please select different dates.', 'danger')
+                    else:
+                        if action == 'block':
+                            # Insert blocked dates into the database
+                            cursor.execute("""
+                                INSERT INTO blocked_dates (accommodation_id, start_date, end_date, is_active, manager_id)
+                                VALUES (%s, %s, %s, TRUE, %s)
+                            """, (accommodation_id, start_date, end_date, manager_id))
+                            connection.commit()
+                            flash('Dates successfully blocked.', 'success')
+                        elif action == 'unblock':
+                            # Update blocked dates to inactive
+                            cursor.execute("""
+                                UPDATE blocked_dates
+                                SET is_active = FALSE, manager_id = %s
+                                WHERE accommodation_id = %s AND start_date = %s AND end_date = %s
+                            """, (manager_id, accommodation_id, start_date, end_date))
+                            connection.commit()
+                            flash('Dates successfully unblocked.', 'success')
+
+        # Pagination settings
+        per_page = 10
+        current_page = request.args.get('current_page', 1, type=int)
+        history_page = request.args.get('history_page', 1, type=int)
+        current_tab = request.args.get('tab', 'current')
+        search_start_date = request.args.get('search_start_date')
 
         # Fetch current blocked dates (only the latest status for each date range)
-        cursor.execute("""
+        query = """
             SELECT bd.*, a.type, m.first_name, m.last_name
             FROM blocked_dates bd
             JOIN accommodation a ON bd.accommodation_id = a.accommodation_id
             LEFT JOIN manager m ON bd.manager_id = m.manager_id
-            WHERE bd.is_active = TRUE
-            AND bd.block_id = (SELECT MAX(block_id) FROM blocked_dates WHERE accommodation_id = bd.accommodation_id AND start_date = bd.start_date AND end_date = bd.end_date)
-            ORDER BY bd.start_date ASC
-        """)
-        current_blocked_dates = cursor.fetchall()
+            WHERE bd.is_active = TRUE AND bd.start_date >= CURDATE()
+        """
+        if search_start_date:
+            query += " AND bd.start_date = %s"
+            cursor.execute(query, (search_start_date,))
+        else:
+            query += " ORDER BY bd.start_date ASC"
+            cursor.execute(query)
+        all_current_blocked_dates = cursor.fetchall()
+        total_current = len(all_current_blocked_dates)
+        total_pages_current = (total_current + per_page - 1) // per_page
+        current_blocked_dates = all_current_blocked_dates[(current_page - 1) * per_page:current_page * per_page]
 
         # Fetch blocked dates history (include all dates)
-        cursor.execute("""
+        query = """
             SELECT bd.*, a.type, m.first_name, m.last_name
             FROM blocked_dates bd
             JOIN accommodation a ON bd.accommodation_id = a.accommodation_id
             LEFT JOIN manager m ON bd.manager_id = m.manager_id
-            ORDER BY bd.start_date ASC
-        """)
-        blocked_dates_history = cursor.fetchall()
+        """
+        if search_start_date:
+            query += " WHERE bd.start_date = %s"
+            cursor.execute(query, (search_start_date,))
+        else:
+            query += " ORDER BY bd.start_date ASC"
+            cursor.execute(query)
+        all_blocked_dates_history = cursor.fetchall()
+        total_history = len(all_blocked_dates_history)
+        total_pages_history = (total_history + per_page - 1) // per_page
+        blocked_dates_history = all_blocked_dates_history[(history_page - 1) * per_page:history_page * per_page]
 
     except Exception as e:
         print("Error: ", str(e))
@@ -1313,7 +1368,13 @@ def manage_accommodation():
         cursor.close()
         connection.close()
 
-    return render_template('manager/manage_accommodation.html', accommodations=accommodations, current_blocked_dates=current_blocked_dates, blocked_dates_history=blocked_dates_history)
+    if not current_blocked_dates and current_tab == 'current':
+        flash('No active blocked dates found for the selected date.', 'info')
+    if not blocked_dates_history and current_tab == 'history':
+        flash('No blocked dates history found for the selected date.', 'info')
+
+
+    return render_template('manager/manage_accommodation.html', accommodations=accommodations, current_blocked_dates=current_blocked_dates, blocked_dates_history=blocked_dates_history, total_pages_current=total_pages_current, total_pages_history=total_pages_history, current_page=current_page, history_page=history_page, current_tab=current_tab)
 
 
 
@@ -1852,3 +1913,4 @@ def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
         return paid_amount  # Full refund
     else:
         return 0 #no refund
+

@@ -60,11 +60,11 @@
                 <div class="d-flex align-items-center">
                     <i class="bi bi-book me-2"></i>
                     <a href="#roomsSubmenu" data-bs-toggle="collapse" aria-expanded="false"
-                        class="dropdown-toggle ms-1 nav-text d-sm-inline">Manage Rooms</a>
+                        class="dropdown-toggle ms-1 nav-text d-sm-inline">Manage Block Dates</a>
                 </div>
                 <ul class="collapse list-unstyled" id="roomsSubmenu">
-                    <li><a class="dropdown-item" href="#">Edit Rooms</a></li>
-                    <li><a class="dropdown-item" href="#">...</a></li>
+                    <!--<li><a class="dropdown-item" href="#">Edit Rooms</a></li> -->
+                    <li><a class="dropdown-item" href="{{ url_for('manager.manage_accommodation' )}}">Manage Booking Calendar</a></li>
                 </ul>
             </li>
             

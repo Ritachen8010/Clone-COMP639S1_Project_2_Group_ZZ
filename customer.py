@@ -98,7 +98,6 @@ def search():
     results = []
 
     try:
-        # Check for blocked dates
         cursor.execute("""
             SELECT accommodation_id FROM blocked_dates
             WHERE is_active = TRUE
@@ -134,7 +133,7 @@ def search():
                     AND start_date <= %s AND end_date >= %s
                 """, (room['accommodation_id'], start_date, end_date))
                 total_booked = cursor.fetchone()['total_booked'] or 0
-                remaining_beds = 4 - total_booked  # Dorm has 4 beds
+                remaining_beds = 4 - total_booked
 
                 if remaining_beds <= 0:
                     room['availability'] = 'Fully Booked'
@@ -150,7 +149,11 @@ def search():
         cursor.close()
         connection.close()
 
-    return jsonify(results)
+    if all(room['availability'] == 'Fully Booked' for room in results):
+        return jsonify({'success': True, 'rooms': results, 'no_rooms': True})
+    else:
+        return jsonify({'success': True, 'rooms': results})
+
 
 import decimal
 
@@ -167,7 +170,6 @@ def preview_booking():
     
     connection, cursor = get_cursor()
     room = None
-    gst_rate = decimal.Decimal('0.15')  # GST rate of 15%
 
     try:
         sql = "SELECT * FROM accommodation WHERE accommodation_id = %s"
@@ -175,11 +177,13 @@ def preview_booking():
         room = cursor.fetchone()
 
         if room:
-            accommodation_type = room['type']  # Get accommodation type
-            # Calculate price details
+            accommodation_type = room['type']
             room_price = room['price_per_night']
-            gst_price = room_price * gst_rate
-            total_price = room_price + gst_price
+            if accommodation_type == 'Dorm':
+                total_guests = int(adults) + int(children_2_17)
+                total_price = room_price * total_guests
+            else:
+                total_price = room_price
 
             return render_template('customer/preview_booking.html', 
                                    room=room, 
@@ -189,8 +193,7 @@ def preview_booking():
                                    adults=adults, 
                                    children0_2=children_0_2, 
                                    children2_17=children_2_17, 
-                                   gst_price=gst_price, 
-                                   total_price=total_price,
+                                   total_price=total_price,  # Pass calculated total price
                                    current_year=date.today().year)
         else:
             return "Room not found", 404
@@ -201,6 +204,8 @@ def preview_booking():
     finally:
         cursor.close()
         connection.close()
+
+
 
 # make booking payment
 @customer_blueprint.route('/booking_payment', methods=['POST'])
@@ -266,7 +271,7 @@ def booking_payment():
         connection.commit()
 
         flash('Booking Successful and Payment Confirmed', 'success')
-        return redirect(url_for('customer.customer'))
+        return redirect(url_for('customer.customer_viewallbookings'))
 
     except Exception as e:
         print("Error: ", str(e))
