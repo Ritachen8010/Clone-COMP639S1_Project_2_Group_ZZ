@@ -10,7 +10,7 @@
             <img src="{{ url_for('static', filename='customer/%s' % customer_info.profile_image) }}" alt="profile_image"
                 class="rounded-circle-2">
             <!-- Displaying the first and last name with the first letter capitalized -->
-            <h5 class="mt-3 text-white d-none d-sm-block">{{ customer_info.first_name | capitalize }} {{
+            <h5 class="mt-3 text-black d-none d-sm-block">{{ customer_info.first_name | capitalize }} {{
                 customer_info.last_name | capitalize }}</h5>
         </div>
 
