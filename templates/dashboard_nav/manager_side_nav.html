@@ -9,7 +9,7 @@
             <!-- Displaying the profile image static folder -->
             <img src="{{ url_for('static', filename='manager/%s' % manager_info.profile_image) }}" alt="profile_image" class="rounded-circle-2">
             <!-- Displaying the first and last name with the first letter capitalized -->
-            <h5 class="mt-3 text-white d-none d-sm-block">{{ manager_info.first_name | capitalize }} {{
+            <h5 class="mt-3 text-black d-none d-sm-block">{{ manager_info.first_name | capitalize }} {{
                 manager_info.last_name | capitalize }}</h5>
         </div>
 
@@ -24,15 +24,23 @@
                 </div>
                 <ul class="collapse list-unstyled" id="ordersSubmenu">
                     <li><a class="dropdown-item" href="{{ url_for('manager.manage_orders')}}">Manage Orders</a></li>
-                    <li><a class="dropdown-item" href="{{ url_for('manager.history_orders')}}">History Orders</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('manager.history_orders')}}">Order History</a></li>
                 </ul>
             </li>
 
             <!-- Link to the booking page -->
-            <a href="#" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
-                <i class="bi bi-calendar-check me-2"></i>
-                <span class="ms-1 nav-text d-sm-inline">Manage Bookings</span>
-            </a>
+            <li class="list-group-item list-group-item-action py-2 ripple">
+                <div class="d-flex align-items-center">
+                    <i class="bi bi-cart-check me-2"></i>
+                    <a href="#bookSubmenu" data-bs-toggle="collapse" aria-expanded="false"
+                        class="dropdown-toggle ms-1 nav-text d-sm-inline">Manage bookings</a>
+                </div>
+                <ul class="collapse list-unstyled" id="bookSubmenu">
+                    <li><a class="dropdown-item" href="{{ url_for('manager.view_checkin_bookings')}}">Check-in Bookings</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('manager.view_checked_in_bookings') }}">Check-out Bookings</a></li>
+                    <li><a class="dropdown-item" href="{{ url_for('manager.view_confirmed_bookings') }}">Cancel Bookings</a></li>
+                </ul>
+            </li>
 
             <!-- Link to the inventory -->
             <li class="list-group-item list-group-item-action py-2 ripple">
@@ -59,24 +67,6 @@
                     <li><a class="dropdown-item" href="{{ url_for('manager.manage_accommodation' )}}">Manage Booking Calendar</a></li>
                 </ul>
             </li>
-
-            <!-- Link to the feedback | edit feedback or manage visible or invisible -->
-            <a href="#" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
-                <i class="bi bi-chat-dots me-2"></i>
-                <span class="ms-1 nav-text d-sm-inline">Feedback</span>
-            </a>
-
-            <!-- Link to the promotion -->
-            <a href="#" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
-                <i class="bi bi-megaphone me-2"></i>
-                <span class="ms-1 nav-text d-sm-inline">Promotion</span>
-            </a>
-
-            <!-- Link to the news -->
-            <a href="#" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
-                <i class="bi bi-newspaper me-2"></i>
-                <span class="ms-1 nav-text d-sm-inline">News</span>
-            </a>
             
             <!-- Link to the manage account -->
             <a href="{{ url_for('manager.manage_accounts')}}" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
@@ -84,17 +74,5 @@
                 <span class="ms-1 nav-text d-sm-inline">Manage Accounts</span>
             </a>
             
-            <!-- Link to the report -->
-            <li class="list-group-item list-group-item-action py-2 ripple">
-                <div class="d-flex align-items-center">
-                    <i class="bi bi-file-earmark-text me-2"></i>
-                    <a href="#reportSubmenu" data-bs-toggle="collapse" aria-expanded="false"
-                        class="dropdown-toggle ms-1 nav-text d-sm-inline">Report</a>
-                </div>
-                <ul class="collapse list-unstyled" id="reportSubmenu">
-                    <li><a class="dropdown-item" href="#">Financial Report</a></li>
-                    <li><a class="dropdown-item" href="#">Food Popularity Report</a></li>
-                </ul>
-            </li>
         </div>
     </nav>

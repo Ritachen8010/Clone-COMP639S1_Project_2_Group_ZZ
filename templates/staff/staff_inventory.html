@@ -54,9 +54,9 @@
                                 <form method="post" action="{{ url_for('staff.update_inventory') }}" class="form-inline">
                                     <input type="hidden" name="product_id" value="{{ item.product_id }}">
                                     <input type="hidden" name="page" value="{{ request.args.get('page', 1)|int }}">
-                                    <input type="hidden" name="category" value="{{ category }}">
+                                    <input type="hidden" name="category" value="{{ category|default('') }}">
                                     <div class="form-group mb-2">
-                                        <input type="number" class="form-control" name="quantity" value="{{ item.quantity }}">
+                                        <input type="number" class="form-control" name="quantity" value="1">
                                     </div>
                                     <button type="submit" class="btn btn-theme mb-2">Update</button>
                                 </form>

@@ -4,12 +4,12 @@
 
 {% block content %}
 <div class="content">
-    <!-- insert staff_top_nav.html -->
-    {% include 'dashboard_nav/staff_top_nav.html' %}
+    <!-- insert manager_top_nav.html -->
+    {% include 'dashboard_nav/manager_top_nav.html' %}
     <div class="container-fluid">
         <div class="row">
-            <!-- insert staff_side_nav.html -->
-            {% include 'dashboard_nav/staff_side_nav.html' %}
+            <!-- insert manager_side_nav.html -->
+            {% include 'dashboard_nav/manager_side_nav.html' %}
             <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
                 <h1 class="mb-4">{{ title }}</h1>
                 <div class="tab-content">
@@ -42,7 +42,7 @@
                                         <td>${{ booking.paid_amount }}</td>
                                         <td>{{ booking.status | title }}</td>
                                         <td>
-                                            <form id="checkoutForm" action="{{ url_for('staff.checkout_booking', booking_id=booking.booking_id) }}" method="post">
+                                            <form id="checkoutForm" action="{{ url_for('manager.checkout_booking', booking_id=booking.booking_id) }}" method="post">
                                                 <input type="hidden" name="confirm_checkout" value="yes">
                                                 <button type="button" class="btn btn-danger btn-sm" onclick="confirmCheckout()">Check Out</button>
                                             </form>
@@ -68,4 +68,3 @@
     </div>
 </div>
 {% endblock %}
-

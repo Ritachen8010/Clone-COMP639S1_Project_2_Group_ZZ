@@ -53,7 +53,11 @@
                                                         <select name="option_id_{{ option_type }}" class="form-control">
                                                             <option value="">Select {{ options[0].option_type }}</option>
                                                             {% for option in options %}
-                                                                <option value="{{ option.option_id }}">{{ option.option_name }} (+${{ option.additional_cost }})</option>
+                                                                {% if options[0].option_type == 'Size' and option.option_name == 'Small' %}
+                                                                    <option value="{{ option.option_id }}" selected>{{ option.option_name }} (+${{ option.additional_cost }})</option>
+                                                                {% else %}
+                                                                    <option value="{{ option.option_id }}">{{ option.option_name }} (+${{ option.additional_cost }})</option>
+                                                                {% endif %}
                                                             {% endfor %}
                                                         </select>
                                                     </div>

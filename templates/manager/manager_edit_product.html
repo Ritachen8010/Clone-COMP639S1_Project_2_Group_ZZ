@@ -40,12 +40,12 @@
                     Edit Option Type
                 </button>
 
-                <!-- Add Inventory Modal -->
+                <!-- Add Product Modal -->
                 <div class="modal fade" id="addInventoryModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="addInventoryModalLabel">Add Inventory</h5>
+                                <h5 class="modal-title" id="addInventoryModalLabel">Add Product</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
@@ -59,7 +59,7 @@
                                         <select class="form-control" id="category_id" name="category_id" required>
                                             <option value="">Select a Category</option>
                                             {% for category in categories %}
-                                                <option value="{{ category.category_id }}">{{ category.name }}</option>
+                                                <option value="{{ category.category_id }}" data-category-name="{{ category.name }}">{{ category.name }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -73,7 +73,7 @@
                                         <input type="text" class="form-control" id="unit_price" name="unit_price" min="0" required oninput="validateUnitprice()">
                                         <div id="unitPriceError" style="color: red; display: none;">Unit price cannot be negative.</div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="form-group" id="quantity-field">
                                         <label for="quantity">Quantity:</label>
                                         <input type="text" class="form-control" id="quantity" name="quantity" min="0" required oninput="validateQuantity()">
                                         <div id="quantityError" style="color: red; display: none;">Quantity cannot be negative.</div>
@@ -170,6 +170,7 @@
                             <th style="width: 10%;">Category</th>
                             <th style="width: 35%;">Description</th>
                             <th style="width: 10%;">Unit Price</th>
+                            <th style="width: 5%;">Status</th>
                             <th style="width: 5%;">Edit</th>
                             <th style="width: 5%;">Action</th>
                         </tr>
@@ -186,15 +187,17 @@
                             <td class="text-start">{{ product.description | capitalize }}</td>
                             <td>${{ product.unit_price }}</td>
                             <td>
+                                {{ 'Active' if product.is_available else 'Inactive' }}
+                            <td>
                                 <a class="btn btn-theme" 
                                 href="{{ url_for('manager.edit_product', product_id=product.product_id) }}">Edit</a>
                             </td>
                             <td>
                                 <form action="{{ url_for('manager.toggle_product_status', product_id=product.product_id) }}" method="post">
                                     {% if product.is_available %}
-                                    <button class="btn btn-danger" type="submit">Inactive</button>    
+                                    <button class="btn btn-danger" type="submit">Deactivate</button>    
                                     {% else %}
-                                    <button class="btn btn-success" type="submit">Active</button>
+                                    <button class="btn btn-success" type="submit">Activate</button>
                                     {% endif %}
                                 </form>
                             </td>
@@ -234,50 +237,51 @@
 
 
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        var addEditOptionButton = document.getElementById('addEditOptionButton');
-        var addOptionButton = document.getElementById('addOptionButton');
-        var editOptionsContainer = document.getElementById('edit-options-container');
-        var optionsContainer = document.getElementById('options-container');
-        var editOptionCount = 0;
-        var optionCount = 1;
+document.addEventListener('DOMContentLoaded', function() {
+    var addEditOptionButton = document.getElementById('addEditOptionButton');
+    var addOptionButton = document.getElementById('addOptionButton');
+    var editOptionsContainer = document.getElementById('edit-options-container');
+    var optionsContainer = document.getElementById('options-container');
+    var editOptionCount = document.querySelectorAll('#edit-options-container .option-group').length; 
+    var optionCount = document.querySelectorAll('#options-container .option-group').length + 1;
 
-        addEditOptionButton.addEventListener('click', function() {
-            editOptionCount++;
-            var newOptionGroup = document.createElement('div');
-            newOptionGroup.classList.add('form-group', 'option-group');
-            newOptionGroup.innerHTML = `
-                <label for="edit_option_name_${editOptionCount}">Option Name:</label>
-                <input type="text" class="form-control" id="edit_option_name_${editOptionCount}" name="edit_option_name[]" required>
-                <label for="edit_additional_cost_${editOptionCount}">Additional Cost ($):</label>
-                <input type="text" class="form-control" id="edit_additional_cost_${editOptionCount}" name="edit_additional_cost[]">
-                <button type="button" class="btn btn-danger remove-option-button">Remove</button>
-            `;
-            editOptionsContainer.appendChild(newOptionGroup);
+    var removedOptionIds = []; 
 
-            // Attach event listener for remove button
-            newOptionGroup.querySelector('.remove-option-button').addEventListener('click', function() {
-                newOptionGroup.remove();
-            });
+    addEditOptionButton.addEventListener('click', function() {
+        editOptionCount++;
+        var newOptionGroup = document.createElement('div');
+        newOptionGroup.classList.add('form-group', 'option-group');
+        newOptionGroup.innerHTML = `
+            <label for="edit_option_name_${editOptionCount}">Option Name:</label>
+            <input type="text" class="form-control" id="edit_option_name_${editOptionCount}" name="edit_option_name[]" required>
+            <label for="edit_additional_cost_${editOptionCount}">Additional Cost ($):</label>
+            <input type="text" class="form-control" id="edit_additional_cost_${editOptionCount}" name="edit_additional_cost[]">
+            <button type="button" class="btn btn-danger remove-option-button">Remove</button>
+        `;
+        editOptionsContainer.appendChild(newOptionGroup);
+
+        // Attach event listener for remove button
+        newOptionGroup.querySelector('.remove-option-button').addEventListener('click', function() {
+            newOptionGroup.remove();
         });
+    });
 
-        addOptionButton.addEventListener('click', function() {
-            optionCount++;
-            var newOptionGroup = document.createElement('div');
-            newOptionGroup.classList.add('form-group', 'option-group');
-            newOptionGroup.innerHTML = `
-                <label for="option_name_${optionCount}">Option Name:</label>
-                <input type="text" class="form-control" id="option_name_${optionCount}" name="option_name[]" required>
-                <label for="additional_cost_${optionCount}">Additional Cost ($):</label>
-                <input type="text" class="form-control" id="additional_cost_${optionCount}" name="additional_cost[]">
-                <button type="button" class="btn btn-danger remove-option-button">Remove</button>
-            `;
-            optionsContainer.appendChild(newOptionGroup);
+    addOptionButton.addEventListener('click', function() {
+        optionCount++;
+        var newOptionGroup = document.createElement('div');
+        newOptionGroup.classList.add('form-group', 'option-group');
+        newOptionGroup.innerHTML = `
+            <label for="option_name_${optionCount}">Option Name:</label>
+            <input type="text" class="form-control" id="option_name_${optionCount}" name="option_name[]" required>
+            <label for="additional_cost_${optionCount}">Additional Cost ($):</label>
+            <input type="text" class="form-control" id="additional_cost_${optionCount}" name="additional_cost[]">
+            <button type="button" class="btn btn-danger remove-option-button">Remove</button>
+        `;
+        optionsContainer.appendChild(newOptionGroup);
 
-            // Attach event listener for remove button
-            newOptionGroup.querySelector('.remove-option-button').addEventListener('click', function() {
-                newOptionGroup.remove();
-            });
+        // Attach event listener for remove button
+        newOptionGroup.querySelector('.remove-option-button').addEventListener('click', function() {
+            newOptionGroup.remove();
         });
     });
 
@@ -309,6 +313,7 @@
         });
     });
 
+
     function loadOptionsForEditing(optionType) {
         $('#editOptionTypeListModal').modal('hide');
         $('#editOptionTypeModal').modal('show');
@@ -336,13 +341,14 @@
                             <label for="edit_additional_cost_${index}">Additional Cost ($):</label>
                             <input type="text" class="form-control" id="edit_additional_cost_${index}" name="edit_additional_cost[]" value="${option.additional_cost}">
                             <input type="hidden" name="option_id[]" value="${option.option_id}">
-                            <button type="button" class="btn btn-danger remove-option-button">Remove</button>
+                            <button type="button" class="btn btn-danger remove-option-button" data-option-id="${option.option_id}">Remove</button>
                         `;
                         editOptionsContainer.appendChild(optionGroup);
                         seen.add(option.option_name); // Add option name to the set
 
                         // Attach event listener for remove button
                         optionGroup.querySelector('.remove-option-button').addEventListener('click', function() {
+                            removedOptionIds.push(option.option_id);  // Add to removedOptionIds
                             optionGroup.remove();
                         });
                     }
@@ -353,6 +359,18 @@
             }
         });
     }
+
+    var form = document.querySelector('form[action="{{ url_for('manager.edit_option_type') }}"]');
+    form.addEventListener('submit', function() {
+        removedOptionIds.forEach(id => {
+            var input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'remove_option_id[]';
+            input.value = id;
+            form.appendChild(input);
+        });
+    });
+});
 
     function previewImage(event) {
         var reader = new FileReader();
@@ -405,6 +423,28 @@
             unitPriceError.style.display = 'none';
         }
     }
+
+    function toggleQuantityField() {
+        var selectedCategory = document.getElementById('category_id').selectedOptions[0].getAttribute('data-category-name');
+        var quantityField = document.getElementById('quantity-field');
+        var quantityInput = document.getElementById('quantity');
+        var hiddenCategories = ['Coffee', 'Hot Drinks', 'Milkshakes', 'Iced Teas'];
+
+        if (hiddenCategories.includes(selectedCategory)) {
+            quantityField.style.display = 'none';
+            quantityInput.removeAttribute('required'); // Remove required attribute
+            quantityInput.setAttribute('disabled', 'disabled'); // Disable intup field
+        } else {
+            quantityField.style.display = 'block';
+            quantityInput.setAttribute('required', 'required'); // Add required attribute
+            quantityInput.removeAttribute('disabled'); // Enable input field
+        }
+    }
+
+document.addEventListener('DOMContentLoaded', function() {
+    toggleQuantityField(); // Initialize the quantity field visibility based on the default selected category
+    document.getElementById('category_id').addEventListener('change', toggleQuantityField); // Add event listener for category change
+});
 
 </script>
    

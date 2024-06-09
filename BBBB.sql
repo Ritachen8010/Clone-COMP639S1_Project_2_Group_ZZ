@@ -107,6 +107,20 @@ CREATE TABLE `inventory` (
     FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`)
 )AUTO_INCREMENT=1;
 
+-- 9. promotion
+CREATE TABLE `promotion` (
+    `promotion_id` INT AUTO_INCREMENT,
+    `code` VARCHAR(255),
+    `description` TEXT,
+    `discount_value` DECIMAL(10,2),
+    `valid_from` DATE,
+    `valid_until` DATE,
+    `usage_limit` INT,
+    `minimum_amount` DECIMAL(10,2) NOT NULL,
+    `is_active` BOOLEAN DEFAULT TRUE,
+    PRIMARY KEY (`promotion_id`)
+)AUTO_INCREMENT=1;
+
 -- 10. orders
 CREATE TABLE `orders` (
     `order_id` INT AUTO_INCREMENT,
@@ -117,8 +131,10 @@ CREATE TABLE `orders` (
     `status` ENUM('ordered', 'preparing', 'ready for collection', 'collected', 'cancelled') NOT NULL,
     `created_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `last_updated` TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    `promotion_id` INT DEFAULT NULL,
     PRIMARY KEY (`order_id`),
-    FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
+    FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
+    FOREIGN KEY (`promotion_id`) REFERENCES `promotion` (`promotion_id`)
 )AUTO_INCREMENT=1;
 
 -- 11. order_item
@@ -186,6 +202,7 @@ CREATE TABLE `message` (
     `customer_id` INT,
     `manager_id` INT,
     `staff_id` INT,
+    `sender_type` ENUM('customer', 'staff', 'manager') NOT NULL,
     `content` TEXT,
     `sent_at` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     `time_responded` TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
@@ -194,8 +211,7 @@ CREATE TABLE `message` (
     FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
     FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`),
     FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`)
-)AUTO_INCREMENT=1;
-
+) AUTO_INCREMENT=1;
 -- 17. loyalty_point
 CREATE TABLE `loyalty_point` (
 	`loyalty_point_id`INT AUTO_INCREMENT,
@@ -240,20 +256,6 @@ CREATE TABLE `gift_card` (
 	FOREIGN KEY (`payment_type_id`) REFERENCES `payment_type` (`payment_type_id`)
 )AUTO_INCREMENT=1;
 
--- 21. promotion
-CREATE TABLE `promotion` (
-    `promotion_id` INT AUTO_INCREMENT,
-    `code` VARCHAR(255),
-    `description` TEXT,
-    `discount_value` DECIMAL(10,2),
-    `valid_from` DATE,
-    `valid_until` DATE,
-    `usage_limit` INT,
-    `payment_type_id` INT,
-    PRIMARY KEY (`promotion_id`),
-    FOREIGN KEY (`payment_type_id`) REFERENCES `payment_type` (`payment_type_id`)
-)AUTO_INCREMENT=1;
-
 -- 22. payment
 CREATE TABLE `payment` (
     `payment_id` INT AUTO_INCREMENT,
@@ -262,11 +264,13 @@ CREATE TABLE `payment` (
     `order_id` INT DEFAULT NULL,
     `booking_id` INT DEFAULT NULL,
     `paid_amount` DECIMAL(10,2),
+    `promotion_id` INT DEFAULT NULL,
     PRIMARY KEY (`payment_id`),
     FOREIGN KEY (`payment_type_id`) REFERENCES `payment_type` (`payment_type_id`),
     FOREIGN KEY (`order_id`) REFERENCES `orders` (`order_id`),
     FOREIGN KEY (`booking_id`) REFERENCES `booking` (`booking_id`),
-    FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`)
+    FOREIGN KEY (`customer_id`) REFERENCES `customer` (`customer_id`),
+    FOREIGN KEY (`promotion_id`) REFERENCES `promotion` (`promotion_id`)
 )AUTO_INCREMENT=1;
 
 -- 23. news
@@ -739,6 +743,9 @@ VALUES
 (1, 1, 56, 50), -- Rain Gear
 (1, 1, 57, 50); -- Greenstone Jewelry
 
+-- 9. promotion
+INSERT INTO `promotion` (`code`, `description`, `discount_value`,  `valid_from`, `valid_until`, `usage_limit`, `is_active`, `minimum_amount`)
+VALUES ('SUMMER2024', 'Summer 2024 discount - 10% off', 10.00, '2024-06-01', '2024-08-31', 100, TRUE, 20.00);
 
 -- 11. Insert into orders
 INSERT INTO `orders` (`customer_id`, `total_price`, `special_requests`, `scheduled_pickup_time`, `status`, `created_at`) VALUES 
@@ -873,13 +880,20 @@ VALUES
 INSERT INTO booking 
 VALUES
 (1, 1000, 1, 1, '2024-06-04', '2024-06-05', 1, 0, 1, 1, 'confirmed', '2024-05-11'),
-(2, 1000, 1, 2, '2024-06-17', '2024-06-22', 1, 0, 1, 1, 'confirmed', '2024-05-12'),
-(3, 1000, 1, 3, '2024-06-22', '2024-06-25', 1, 0, 1, 1, 'confirmed', '2024-05-12'),
-(4, 1000, 1, 3, '2024-02-25', '2024-02-26', 1, 0, 1, 1, 'checked out', '2024-01-12');
+(2, 1000, 2, 2, '2024-06-13', '2024-06-14', 2, 0, 1, 1, 'confirmed', '2024-05-12'),
+(3, 1000, 3, 3, '2024-06-22', '2024-06-25', 2, 1, 1, 1, 'confirmed', '2024-04-12'),
+(4, 1000, 4, 3, '2024-02-25', '2024-02-26', 2, 1, 1, 1, 'checked out', '2024-01-20'),
+(5, 1001, 5, 1, '2024-06-13', '2024-06-14', 1, 0, 1, 1, 'confirmed', '2024-01-12'),
+(6, 1001, 6, 2, '2024-02-25', '2024-02-26', 1, 1, 1, 1, 'confirmed', '2024-01-13'),
+(7, 1001, 7, 1, '2024-02-25', '2024-02-27', 2, 0, 1, 1, 'checked out', '2024-01-14'),
+(8, 1002, 8, 1, '2024-06-25', '2024-06-26', 1, 0, 1, 1, 'confirmed', '2024-01-15'),
+(9, 1002, 9, 2, '2024-06-12', '2024-06-13', 1, 1, 1, 1, 'checked in', '2024-01-16'),
+(10, 1002, 10, 3, '2024-06-12', '2024-06-14', 2, 0, 1, 1, 'confirmed', '2024-01-17');
+
 
 -- 16. insert message table--
 INSERT INTO `message` (`message_id`, `customer_id`, `manager_id`, `staff_id`, `content`)
-VALUES (1, 1000, NULL, 1, 'This is a test message.');
+VALUES (1, 1000, NULL, NULL, 'This is a test message.');
 
 -- 18. insert into payment_type
 INSERT INTO `payment_type` (`payment_type_id`, `payment_type`)VALUES
@@ -890,8 +904,15 @@ INSERT INTO `payment_type` (`payment_type_id`, `payment_type`)VALUES
 -- 19. insert into bank_card
 INSERT INTO `bank_card` (`bank_card_id`, `card_num`, `expire_Date`, `payment_type_id`) VALUES
 (1, 1234567812345678, '2025-12-31', 2),
-(2, 8765432187654321, '2024-06-30', 2),
-(3, 1111222233334444, '2026-01-15', 2);
+(2, 8765432187655555, '2025-06-18', 2),
+(3, 8765432187654221, '2025-06-30', 2),
+(4, 8764542187657821, '2026-05-30', 2),
+(5, 5425432187654321, '2024-09-30', 2),
+(6, 5454345687654397, '2027-06-30', 2),
+(7, 8034594387655551, '2028-04-30', 2),
+(8, 1343432187654464, '2027-02-25', 2),
+(9, 7843218734654321, '2026-09-25', 2),
+(10, 1111222233334444, '2026-01-15', 2);
 
 -- 20. insert into gift_Card
 INSERT INTO `gift_card` (`gift_card_id`, `code`, `balance`, `expiration_date`, `is_active`, `purchase_amount`, `payment_type_id`)
@@ -903,10 +924,13 @@ VALUES
 (1000, 1, NULL, 1, 55.00),
 (1000, 2, NULL, 2, 155.00),
 (1000, 2, NULL, 3, 615.00),
-(1000, 2, NULL, 4, 205.00);
+(1000, 2, NULL, 4, 205.00),
+(1001, 2, NULL, 5, 55.00),
+(1001, 2, NULL, 6, 155.00),
+(1001, 2, NULL, 7, 110.00),
+(1002, 2, NULL, 8, 55.00),
+(1002, 2, NULL, 9, 155.00),
+(1002, 2, NULL, 10, 410.00);
 
 
--- 26. insert cart table--
 
-
--- 27. insert cart_item_option table--

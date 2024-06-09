@@ -1,16 +1,18 @@
 from flask import Blueprint, render_template, redirect, url_for,\
     session, request, flash, jsonify
-from flask_hashing import Hashing
 from config import get_cursor, allowed_file, MAX_FILENAME_LENGTH
 import re
 import os
 from datetime import date, timedelta, datetime
 from auth import role_required
 from werkzeug.utils import secure_filename
+from config import get_cursor, get_customer_info_by_id, get_staff_info_by_id
+from extensions import socketio, hashing
+from flask_socketio import join_room, leave_room, send  
 
 staff_blueprint = Blueprint('staff', __name__)
-hashing = Hashing()
- 
+staff_rooms = {}
+
 # Get staff information + account information
 def get_staff_info(email):
     connection, cursor = get_cursor()
@@ -25,13 +27,40 @@ def get_staff_info(email):
     connection.close()
     return staff_info
 
+def get_unread_messages_for_staff(staff_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT message.*, customer.first_name, customer.last_name
+        FROM message
+        JOIN customer ON message.customer_id = customer.customer_id
+        WHERE (staff_id = %s OR staff_id IS NULL)AND is_read = FALSE AND sender_type = 'customer'
+    """, (staff_id,))
+    unread_messages = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return unread_messages
+
+@staff_blueprint.route('/mark_message_as_read/<int:message_id>', methods=['POST'])
+@role_required(['staff'])
+def mark_message_as_read_staff(message_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        UPDATE message
+        SET is_read = TRUE
+        WHERE message_id = %s
+    """, (message_id,))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return '', 204  # Return a no content response
+
 @staff_blueprint.route('/')
 @role_required(['staff'])
 def staff():
     email = session.get('email')
     staff_info = get_staff_info(email)
-    return render_template('staff/staff_dashboard.html',active='dashboard', staff_info=staff_info) 
-
+    unread_messages = get_unread_messages_for_staff(staff_info['staff_id'])
+    return render_template('staff/staff_dashboard.html', staff_info=staff_info, unread_messages=unread_messages)
 
 # Define a name for upload image profile
 def upload_image_profile(staff_id, file):
@@ -383,7 +412,7 @@ def monitor_inventory():
     page = request.args.get('page', 1, type=int)
     items_per_page = 10
     offset = (page - 1) * items_per_page
-    category_filter = request.args.get('category')
+    category_filter = request.args.get('category', '')
 
     connection, cursor = get_cursor()
 
@@ -442,7 +471,7 @@ def update_inventory():
     product_id = request.form.get('product_id')
     new_quantity = request.form.get('quantity')
     page = request.form.get('page', 1, type=int)
-    category = request.form.get('category')
+    category = request.form.get('category', '')
     connection, cursor = get_cursor()
 
     # Validate new_quantity
@@ -824,6 +853,7 @@ def checkout_booking(booking_id):
 def view_confirmed_bookings():
     connection, cursor = get_cursor()
     email = session.get('email')
+    today = datetime.now().date()
     staff_info = get_staff_info(email)
 
     search_term = request.args.get('search_term', '')
@@ -836,9 +866,9 @@ def view_confirmed_bookings():
         FROM booking b
         INNER JOIN customer c ON b.customer_id = c.customer_id
         INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id
-        WHERE b.status = 'confirmed' AND (b.booking_id = %s OR c.first_name LIKE %s OR c.last_name LIKE %s)
+        WHERE b.status = 'confirmed' AND b.end_date >= %s AND (b.booking_id = %s OR c.first_name LIKE %s OR c.last_name LIKE %s)
         ORDER BY b.end_date DESC
-    ''', (search_term, f'%{search_term}%', f'%{search_term}%'))
+    ''', (today, search_term, f'%{search_term}%', f'%{search_term}%'))
     bookings = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -915,7 +945,7 @@ def cancel_booking(booking_id):
     connection.commit()
     connection.close()
 
-    # Payment type name display fixed
+
     payment_type_name = payment_type_name.replace('_', ' ').title()
 
     if refund_amount > 0:
@@ -934,3 +964,79 @@ def calculate_refund_amount(price_per_night, nights, start_date, paid_amount):
         return paid_amount  # Full refund
     else:
         return 0 #no refund
+
+# Chat room for staff
+def get_chat_history_for_staff_and_customer(customer_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT content, sent_at, sender_type, staff_id, manager_id, customer_id
+        FROM message
+        WHERE customer_id = %s
+        ORDER BY sent_at ASC
+    """, (customer_id,))
+    messages = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return messages
+
+@staff_blueprint.route('/chat/<int:customer_id>')
+@role_required(['staff'])
+def staff_chat(customer_id):
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+    customer_info = get_customer_info_by_id(customer_id)
+    chat_history = get_chat_history_for_staff_and_customer(customer_id)
+    return render_template('staff/staff_chat.html', staff_info=staff_info, customer_info=customer_info, chat_history=chat_history)
+
+@staff_blueprint.route('/customers')
+@role_required(['staff'])
+def list_customers():
+    connection, cursor = get_cursor()
+    cursor.execute("SELECT customer_id, first_name, last_name FROM customer")
+    customers = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return render_template('staff/staff_list_customers.html', customers=customers, staff_info=get_staff_info(session.get('email')))
+@socketio.on('message', namespace='/staff')
+def handle_message_staff(data):
+    user_id = data.get('user_id')
+    message = data.get('message')
+    room = data.get('room')
+    
+    staff_id = user_id
+    customer_id = data.get('partner_id')
+    
+    connection, cursor = get_cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO message (customer_id, staff_id, sender_type, content, sent_at) VALUES (%s, %s, 'staff', %s, NOW())
+        """, (customer_id, staff_id, message))
+        connection.commit()
+
+        cursor.execute("SELECT sent_at FROM message WHERE message_id = LAST_INSERT_ID()")
+        sent_at = cursor.fetchone()['sent_at']
+    except Exception as e:
+        print(f"Error saving message: {e}")
+        connection.rollback()
+    finally:
+        cursor.close()
+        connection.close()
+    
+    if room:
+        send({
+            'message': message,
+            'user_type': 'staff',
+            'username': 'Staff',
+            'sent_at': sent_at.strftime('%d-%m-%Y %H:%M:%S')
+        }, to=room, namespace='/staff')
+
+@staff_blueprint.route('/chat_history/<int:customer_id>')
+@role_required(['staff'])
+def get_chat_history_staff(customer_id):
+    email = session.get('email')
+    staff_info = get_staff_info(email)
+    staff_id = staff_info['staff_id']
+
+    messages = get_chat_history_for_staff_and_customer(customer_id)
+
+    return jsonify(messages)

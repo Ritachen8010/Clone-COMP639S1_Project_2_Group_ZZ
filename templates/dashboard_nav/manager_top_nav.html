@@ -16,6 +16,9 @@
                 <li class="nav-item me-2">
                     <a class="nav-link {% if active == 'about_us' %} active {% endif %}" href="{{ url_for('guest.about_us') }}">About Us & Our Policy</a>
                 </li>
+                <li class ="nav-item me-2">
+                    <a class="nav-link" href="#" onclick="history.go(-1);">Back</a>
+                </li>
             </ul>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdownCustomer" aria-controls="navbarNavDropdownCustomer" aria-expanded="false" aria-label="Toggle navigation">
                 <span class="navbar-toggler-icon"></span>
@@ -23,24 +26,23 @@
             <!-- RIGHT - TOP NAV BAR | MESSAGE, DROP DOWN USER INFOR-->
             <div class="collapse navbar-collapse" id="navbarNavDropdownCustomer">
                 <ul class="navbar-nav ms-auto">
-                    <!-- Nav Item - Cart 购物车 -->
-                    <li class="nav-item dropdown d-flex align-items-center">
-                        <a class="nav-link" href="#">
-                            <i class="fas fa-shopping-cart fa-fw"></i>
-                            <!-- Counter - Cart Items -->
-                            <span>...</span>
-                        </a>
-                    </li>
                     <!-- Nav Item - Messages -->
                     <li class="nav-item dropdown d-flex align-items-center">
-                        <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                        <a class="nav-link dropdown-toggle" href="#" id="messagesDropdown" role="button" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
                             <i class="fas fa-envelope fa-fw"></i>
-                            <!-- Counter - Messages 消息提醒 -->
-                            <psan>...</span>
+                            <!-- Counter - Unread Messages  -->
+                            <span>{{ unread_messages | length }}</span>
                         </a>
                         <!-- Dropdown - Messages -->
                         <div class="dropdown-list dropdown-menu dropdown-menu-right" aria-labelledby="messagesDropdown">
-                            <!-- Add your messages here -->
+                            {% for message in unread_messages %}
+                            <a class="dropdown-item unread-message" href="{% if message.customer_id %}{{ url_for('manager.manager_chat', customer_id=message.customer_id) }}{% else %}{{ url_for('manager.manager_chat', customer_id=0) }}{% endif %}" data-message-id="{{ message.message_id }}">
+                                <div>
+                                    <strong>Message from {{ message.sender_type | capitalize }}</strong>
+                                    <div>{{ message.content }}</div>
+                                </div>
+                            </a>
+                            {% endfor %}
                         </div>
                     </li>
                     <!-- Nav Item - User Information -->
@@ -60,3 +62,34 @@
             </div>
         </div>
     </nav>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.unread-message').forEach(function(element) {
+            element.addEventListener('click', function(event) {
+                event.preventDefault();
+                var messageId = this.getAttribute('data-message-id');
+                var href = this.getAttribute('href');
+                markAsRead(messageId, this, href);
+            });
+        });
+    });
+    
+    function markAsRead(messageId, element, href) {
+        fetch(`/manager/mark_message_as_read/${messageId}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        }).then(response => {
+            if (response.ok) {
+                element.classList.remove('unread-message');
+                element.classList.add('read-message');
+                element.style.backgroundColor = '#f1f1f1';  // Change background color to indicate it is read
+                window.location.href = href;  // Redirect to the chat page
+            } else {
+                console.error('Failed to mark message as read');
+            }
+        });
+    }
+    </script>

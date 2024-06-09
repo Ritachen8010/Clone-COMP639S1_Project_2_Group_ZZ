@@ -9,7 +9,7 @@
         <div class="row">
             {% include 'dashboard_nav/manager_side_nav.html' %}
             <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
-                <div class="d-flex align-items-center justify-content-between mb-4">
+                <div class="align-items-center justify-content-between mb-4">
                     <h1 class="mb-4">Manage Accounts</h1>
                     {% if role == 'staff' %}
                         <!-- Button to Open the Add Staff Modal -->
@@ -89,7 +89,7 @@
                                 {% if role == 'customer' %}
                                 <td>{{ account.id_num }}</td>
                                 {% elif role == 'staff' or role == 'manager' %}
-                                <td>{{ account.position }}</td>
+                                <td>{{ account.position | title }}</td>
                                 {% endif %}
                                 {% if role == 'customer' %}
                                 <td>{{ account.created_at | format_date }}</td>
@@ -120,7 +120,7 @@
                                     <form action="{{ url_for('manager.toggle_status') }}" method="post" class="d-inline">
                                         <input type="hidden" name="account_id" value="{{ account.id }}">
                                         <input type="hidden" name="role" value="{{ role }}">
-                                        <button type="submit" class="btn btn-sm {{ 'btn-danger' if account.status == 'active' else 'btn-success' }}">{{ 'Inactivate' if account.status == 'active' else 'Activate' }}</button>
+                                        <button type="submit" class="btn btn-sm {{ 'btn-danger' if account.status == 'active' else 'btn-success' }}">{{ 'Deactivate' if account.status == 'active' else 'Activate' }}</button>
                                     </form>
                                 </td>
                             </tr>

@@ -1,20 +1,20 @@
 {% extends 'base.html' %}
 
-{% block title %}Staff Dashboard{% endblock %}
+{% block title %}manager Dashboard{% endblock %}
 
 {% block content %}
 <div class="content">
-    <!-- insert staff_top_nav.html -->
-    {% include 'dashboard_nav/staff_top_nav.html' %}
+    <!-- insert manager_top_nav.html -->
+    {% include 'dashboard_nav/manager_top_nav.html' %}
     <div class="container-fluid">
         <div class="row">
-            <!-- insert staff_side_nav.html -->
-            {% include 'dashboard_nav/staff_side_nav.html' %}
+            <!-- insert manager_side_nav.html -->
+            {% include 'dashboard_nav/manager_side_nav.html' %}
             <div class="col-xs-12 col-sm-9 ml-sm-auto col-lg-9 px-md-4 py-4 mx-auto mt-5 mb-5">
                 <body>
                     <div class="container">
                         <h1>Update Booking</h1>
-                        <form method="POST" action="{{ url_for('staff.update_booking', booking_id=booking.booking_id) }}" class="booking-form">
+                        <form method="POST" action="{{ url_for('manager.update_booking', booking_id=booking.booking_id) }}" class="booking-form">
                             <div class="form-group">
                                 <label for="first_name">First Name</label>
                                 <input type="text" class="form-control" name="first_name" value="{{ booking.first_name }}" required>
@@ -58,6 +58,4 @@
     </div>
 </div>
 {% endblock %}
-
-
 

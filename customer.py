@@ -1,6 +1,5 @@
 from flask import Blueprint, render_template, redirect, url_for,\
     session, request, flash, jsonify
-from flask_hashing import Hashing
 from config import get_cursor, allowed_file, MAX_FILENAME_LENGTH
 from werkzeug.utils import secure_filename
 from zoneinfo import ZoneInfo 
@@ -13,8 +12,14 @@ from datetime import date,timedelta,datetime
 import pytz
 from auth import role_required
 
+from extensions import socketio, hashing  
+from config import get_cursor, get_customer_info_by_id, get_staff_info_by_id
+from flask_socketio import join_room, leave_room, send
+
+
 customer_blueprint = Blueprint('customer', __name__)
-hashing = Hashing()
+
+customer_rooms = {}
 nz_tz = pytz.timezone('Pacific/Auckland')
 
 # Get customer information + account information
@@ -37,16 +42,32 @@ def get_unread_messages(customer_id):
     cursor.execute("""
         SELECT message.*,
                CASE
-                   WHEN customer_id IS NOT NULL THEN 'customer'
                    WHEN staff_id IS NOT NULL THEN 'staff'
+                   WHEN manager_id IS NOT NULL THEN 'manager'
+                   WHEN customer_id IS NOT NULL THEN 'customer'
                END AS sender_type
         FROM message
-        WHERE message.customer_id = %s AND message.is_read = FALSE
+        WHERE customer_id = %s AND is_read = FALSE AND sender_type != 'customer'
     """, (customer_id,))
     unread_messages = cursor.fetchall()
     cursor.close()
     connection.close()
     return unread_messages
+
+@customer_blueprint.route('/mark_message_as_read/<int:message_id>', methods=['POST'])
+@role_required(['customer'])
+def mark_message_as_read(message_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        UPDATE message
+        SET is_read = TRUE
+        WHERE message_id = %s
+    """, (message_id,))
+    connection.commit()
+    cursor.close()
+    connection.close()
+    return '', 204  # Return a no content response
+
 
 # Dashboard
 @customer_blueprint.route('/')
@@ -55,7 +76,8 @@ def customer():
     email = session.get('email')
     customer_info = get_customer_info(email)
     unread_messages = get_unread_messages(customer_info['customer_id'])
-    return render_template('customer/customer_dashboard.html', customer_info=customer_info, unread_messages=unread_messages)
+    unread_count = len(unread_messages)
+    return render_template('customer/customer_dashboard.html', customer_info=customer_info, unread_messages=unread_messages, unread_count=unread_count)
 
 #search booking availability
 @customer_blueprint.route('/booking')
@@ -441,6 +463,7 @@ def customer_managebookings():
     account_id = session.get('id')    
     connection, cursor = get_cursor()
     customer_info = get_customer_info(email)
+    today = datetime.now().date()
 
     cursor.execute(
         'SELECT a.email, c.customer_id FROM account a INNER JOIN customer c ON a.account_id = c.account_id WHERE a.account_id = %s', 
@@ -456,9 +479,14 @@ def customer_managebookings():
 
     # Fetch the confirmed bookings
     connection, cursor = get_cursor()
-    cursor.execute(
-            'SELECT b.*, a.type, a.description, a.image, a.price_per_night FROM booking b INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id WHERE b.customer_id = %s AND b.status = "confirmed"', 
-            (customer_id,))
+    cursor.execute('''
+        SELECT b.*, a.type, a.description, a.image, a.price_per_night 
+        FROM booking b 
+        INNER JOIN accommodation a ON b.accommodation_id = a.accommodation_id 
+        WHERE b.customer_id = %s 
+          AND b.status = 'confirmed'
+          AND b.end_date >= %s
+    ''', (customer_id, today))
     bookings = cursor.fetchall()
     cursor.close()
     connection.close()
@@ -730,6 +758,10 @@ def add_cart():
         if key.startswith('option_id_') and request.form.get(key):
             options.append(int(request.form.get(key)))
     
+    if quantity > 10:
+        flash('You cannot order more than 10 items.', 'danger')
+        return redirect(url_for('customer.product'))
+    
     email = session.get('email')
     customer_info = get_customer_info(email)
     
@@ -739,8 +771,9 @@ def add_cart():
         flash('Failed to add product to cart. Out of stock or insufficient quantity.', 'danger')
     return redirect(url_for('customer.product'))
 
+
 # Showing Cart
-@customer_blueprint.route('/cart', methods=["GET"])
+@customer_blueprint.route('/cart', methods=["GET", "POST"])
 @role_required(['customer'])
 def cart():
     email = session.get('email')
@@ -751,6 +784,9 @@ def cart():
         return redirect(url_for('customer_dashboard'))
 
     customer_id = customer_info['customer_id']
+    promo_code = request.form.get('promo_code', '')
+    discount = Decimal(request.args.get('discount', '0.00'))
+
     connection, cursor = get_cursor()
     cursor.execute("""
         SELECT 
@@ -792,9 +828,12 @@ def cart():
         gst = Decimal('0.00')
         subtotal = Decimal('0.00')
 
+    total -= discount
+
     cursor.close()
     connection.close()
-    return render_template('customer/customer_cart.html', cart_items=cart_items, total=total, gst=gst, subtotal=subtotal, customer_info=customer_info)
+    return render_template('customer/customer_cart.html', cart_items=cart_items, total=total, gst=gst, 
+                           subtotal=subtotal, customer_info=customer_info, discount=discount, promo_code=promo_code)
 
 # Remove from cart
 @customer_blueprint.route('/remove_from_cart', methods=["POST"])
@@ -820,7 +859,97 @@ def remove_from_cart():
     return redirect(url_for('customer.cart'))
 
 
+def validate_promo_code(code, total_amount):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT promotion_id, discount_value, usage_limit, minimum_amount, valid_from, valid_until, is_active
+        FROM promotion 
+        WHERE code = %s 
+        AND valid_from <= CURDATE() 
+        AND valid_until >= CURDATE() 
+        AND is_active = TRUE
+        AND minimum_amount <= %s
+        AND usage_limit > 0
+    """, (code, total_amount))
+    promo_code = cursor.fetchone()
+    print(f"Query: SELECT promotion_id, discount_value, usage_limit, minimum_amount, valid_from, valid_until, is_active FROM promotion WHERE code = {code} AND valid_from <= CURDATE() AND valid_until >= CURDATE() AND is_active = TRUE AND minimum_amount <= {total_amount} AND usage_limit > 0")
+    print(f"Promo code validation result: {promo_code}")
+    cursor.close()
+    connection.close()
+    return promo_code
 
+@customer_blueprint.route('/apply_promo_code', methods=['POST'])
+@role_required(['customer'])
+def apply_promo_code():
+    email = session.get('email')
+    customer_info = get_customer_info(email)
+    if not customer_info:
+        flash("Customer information not found.", "error")
+        return redirect(url_for('customer.cart'))
+
+    customer_id = customer_info['customer_id']
+    promo_code = request.form.get('promo_code', '')
+    discount = Decimal('0.00')
+
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT 
+            ci.cart_item_id, 
+            ci.quantity, 
+            p.product_id, 
+            p.unit_price, 
+            GROUP_CONCAT(po.additional_cost SEPARATOR ', ') AS option_costs
+        FROM cart_item ci
+        JOIN product p ON ci.product_id = p.product_id
+        LEFT JOIN cart_item_option cio ON ci.cart_item_id = cio.cart_item_id
+        LEFT JOIN product_option po ON cio.option_id = po.option_id
+        WHERE ci.customer_id = %s
+        GROUP BY ci.cart_item_id
+    """, (customer_id,))
+    cart_items = cursor.fetchall()
+    
+    total_amount = Decimal('0.00')
+    for item in cart_items:
+        unit_price = item['unit_price']
+        quantity = item['quantity']
+        option_cost = item['option_costs'].split(', ') if item['option_costs'] else []
+        option_costs = sum([Decimal(cost) for cost in option_cost])
+        total_amount += (unit_price + option_costs) * quantity
+
+    if promo_code:
+        promo_code_info = validate_promo_code(promo_code, total_amount)
+        if promo_code_info:
+            discount = total_amount * (promo_code_info['discount_value'] / 100)
+            flash(f"Promotional code applied successfully. Discount: ${discount:.2f}", "success")
+        else:
+            connection, cursor = get_cursor()
+            cursor.execute("""
+                SELECT promotion_id, discount_value, usage_limit, minimum_amount, valid_from, valid_until, is_active
+                FROM promotion 
+                WHERE code = %s 
+            """, (promo_code,))
+            promo_code_check = cursor.fetchone()
+            if promo_code_check:
+                if promo_code_check['valid_from'] > datetime.now().date() or promo_code_check['valid_until'] < datetime.now().date():
+                    flash("The promotional code is not currently valid.", "danger")
+                elif not promo_code_check['is_active']:
+                    flash("The promotional code is not active.", "danger")
+                elif promo_code_check['usage_limit'] <= 0:
+                    flash("The promotional code usage limit has been reached.", "danger")
+                elif total_amount < promo_code_check['minimum_amount']:
+                    flash(f"The total amount does not meet the minimum amount of ${promo_code_check['minimum_amount']} required to use this promo code.", "danger")
+                else:
+                    flash("Invalid or expired promotional code.", "danger")
+            else:
+                flash("Invalid promotional code.", "danger")
+            cursor.close()
+            connection.close()
+    else:
+        flash("No promotional code provided.", "danger")
+
+    cursor.close()
+    connection.close()
+    return redirect(url_for('customer.cart', promo_code=promo_code, discount=discount))
 
 # Showing checkout page
 @customer_blueprint.route('/checkout', methods=['GET'])
@@ -832,47 +961,53 @@ def customer_checkout():
         flash("Please login to proceed to checkout.", "info")
         return redirect(url_for('customer.login'))
 
-    return render_template('customer/customer_checkout.html', customer_info=customer_info, special_requests=special_requests)
-
+    return render_template('customer/customer_checkout.html', customer_info=customer_info)
 
 
 # Handling checkout request
-
-
 @customer_blueprint.route('/checkout', methods=['POST'])
 @role_required(['customer'])
 def checkout():
     email = session.get('email')
     customer_info = get_customer_info(email)
+    print(f"Customer info: {customer_info}")
     if not customer_info:
         flash("Customer information not found.", "error")
         return redirect(url_for('customer.cart'))
-    
+
     customer_id = customer_info['customer_id']
-    special_requests = request.form.get('special_requests', '')  # 获取 special_requests 字段
-    scheduled_pickup_datetime_str = request.form.get('scheduled_pickup_time', '')  
+    special_requests = request.form.get('special_requests', '')
+
+    scheduled_pickup_datetime_str = request.form.get('scheduled_pickup_time', '').replace(' ', 'T')
+    print(f"Scheduled pickup time string: {scheduled_pickup_datetime_str}")
+
+    promo_code = request.form.get('promo_code', '')
+    discount = Decimal(request.form.get('discount', '0.00'))
 
     try:
-        # 将字符串转换为 UTC 时间
         scheduled_pickup_datetime_utc = datetime.fromisoformat(scheduled_pickup_datetime_str.replace('Z', '+00:00'))
-        # 转换为新西兰时间
         scheduled_pickup_datetime_nz = scheduled_pickup_datetime_utc.astimezone(nz_tz)
+        print(f"Scheduled pickup time (NZ): {scheduled_pickup_datetime_nz}")
     except ValueError as e:
         flash(f"Invalid scheduled pickup time: {e}", "danger")
         return redirect(url_for('customer.cart'))
 
     connection, cursor = get_cursor()
     try:
+        promotion_id = None  # 初始化 promotion_id
+
         cursor.execute("""
-            INSERT INTO orders (customer_id, total_price, status, created_at, special_requests, scheduled_pickup_time) 
-            VALUES (%s, %s, 'ordered', NOW(), %s, %s)
-        """, (customer_id, 0, special_requests, scheduled_pickup_datetime_nz))  
+            INSERT INTO orders (customer_id, total_price, status, created_at, special_requests, scheduled_pickup_time, promotion_id) 
+            VALUES (%s, %s, 'ordered', NOW(), %s, %s, %s)
+        """, (customer_id, 0, special_requests, scheduled_pickup_datetime_nz, promotion_id))
         order_id = cursor.lastrowid
+        print(f"Order ID: {order_id}")
 
         cursor.execute("""
             SELECT ci.cart_item_id, ci.product_id, ci.quantity, p.unit_price, 
                    GROUP_CONCAT(po.option_id) AS option_ids,
-                   GROUP_CONCAT(po.option_name, ' (+$', po.additional_cost, ')') AS options
+                   GROUP_CONCAT(po.option_name, ' (+$', po.additional_cost, ')') AS options,
+                   GROUP_CONCAT(po.additional_cost) AS option_costs
             FROM cart_item ci
             JOIN product p ON ci.product_id = p.product_id
             LEFT JOIN cart_item_option cio ON ci.cart_item_id = cio.cart_item_id
@@ -881,58 +1016,85 @@ def checkout():
             GROUP BY ci.cart_item_id
         """, (customer_id,))
         cart_items = cursor.fetchall()
-        
+        print(f"Cart items: {cart_items}")
+
         total_price = Decimal('0.00')
         for item in cart_items:
             product_id = item['product_id']
             quantity = item['quantity']
             unit_price = item['unit_price']
             options = item['options'] if item['options'] else ''
-            total_price += unit_price * quantity
+            option_costs = item['option_costs'].split(',') if item['option_costs'] else []
+            option_costs = [Decimal(cost) for cost in option_costs]  # 确保所有成本都是 Decimal 类型
+            total_option_cost = sum(option_costs)
+            total_price += (unit_price + total_option_cost) * quantity
 
             cursor.execute("""
                 INSERT INTO order_item (order_id, product_id, quantity, options) 
                 VALUES (%s, %s, %s, %s)
             """, (order_id, product_id, quantity, options))
+            print(f"Inserted order item: Order ID: {order_id}, Product ID: {product_id}, Quantity: {quantity}, Options: {options}")
+
             cursor.execute("""
                 INSERT INTO paid_item (customer_id, product_id, quantity, price, order_id) 
                 VALUES (%s, %s, %s, %s, %s)
             """, (customer_id, product_id, quantity, unit_price, order_id))
+            print(f"Inserted paid item: Customer ID: {customer_id}, Product ID: {product_id}, Quantity: {quantity}, Price: {unit_price}, Order ID: {order_id}")
+
             option_ids = item['option_ids'].split(',') if item['option_ids'] else []
-            if option_ids: 
+            if option_ids:
                 for option_id in option_ids:
                     cursor.execute("""
                         UPDATE inventory 
                         SET quantity = quantity - %s 
                         WHERE product_id = %s AND option_id = %s AND quantity >= %s
                     """, (quantity, product_id, option_id, quantity))
-            else:  
+                    print(f"Updated inventory: Product ID: {product_id}, Option ID: {option_id}, Quantity: {quantity}")
+            else:
                 cursor.execute("""
                     UPDATE inventory 
                     SET quantity = quantity - %s 
                     WHERE product_id = %s AND option_id IS NULL AND quantity >= %s
                 """, (quantity, product_id, quantity))
-        cursor.execute("""
-            UPDATE orders SET total_price = %s WHERE order_id = %s
-        """, (total_price, order_id))
-        
-        cursor.execute("""
-            INSERT INTO payment (customer_id, payment_type_id, order_id, paid_amount) 
-            VALUES (%s, %s, %s, %s)
-        """, (customer_id, 1, order_id, total_price))
+                print(f"Updated inventory: Product ID: {product_id}, Quantity: {quantity}")
+
+        if promo_code:
+            promo_code_info = validate_promo_code(promo_code, total_price)
+            print(f"Promo code info: {promo_code_info}")
+            if promo_code_info:
+                discount = total_price * (promo_code_info['discount_value'] / 100)
+                promotion_id = promo_code_info['promotion_id']
+                print(f"Promotion ID: {promotion_id}, Promo Code: {promo_code}")
+                cursor.execute("UPDATE promotion SET usage_limit = usage_limit - 1 WHERE promotion_id = %s", (promotion_id,))
+                print(f"Updated promotion usage limit: Promotion ID: {promotion_id}")
+            else:
+                flash("Invalid or expired promotional code.", "danger")
+
+        total_price -= discount
+        print(f"Total price after discount: {total_price}")
+
+        cursor.execute("UPDATE orders SET total_price = %s, promotion_id = %s WHERE order_id = %s", (total_price, promotion_id, order_id))
+        print(f"Updated order: Order ID: {order_id}, Total Price: {total_price}, Promotion ID: {promotion_id}")
+
+        cursor.execute("INSERT INTO payment (customer_id, payment_type_id, order_id, paid_amount, promotion_id) VALUES (%s, %s, %s, %s, %s)", (customer_id, 1, order_id, total_price, promotion_id))
+        print(f"Inserted payment: Customer ID: {customer_id}, Payment Type ID: 1, Order ID: {order_id}, Paid Amount: {total_price}, Promotion ID: {promotion_id}")
 
         cursor.execute("DELETE FROM cart_item_option WHERE cart_item_id IN (SELECT cart_item_id FROM cart_item WHERE customer_id = %s)", (customer_id,))
+        print(f"Deleted cart item options for Customer ID: {customer_id}")
+
         cursor.execute("DELETE FROM cart_item WHERE customer_id = %s", (customer_id,))
+        print(f"Deleted cart items for Customer ID: {customer_id}")
+
         connection.commit()
         flash("Payment successful and order created.", "success")
     except Exception as e:
         connection.rollback()
+        print(f"Error during checkout: {str(e)}")
         flash(f"Failed to process payment. Error: {str(e)}", "danger")
     finally:
         cursor.close()
         connection.close()
     return redirect(url_for('customer.orders'))
-
 
 
 ## View Customer Orders
@@ -1038,4 +1200,74 @@ def cancel_order(order_id):
         cursor.close()
         connection.close()
     return redirect(url_for('customer.orders'))
+
+
+
+
+# Chat room for customers
+
+@customer_blueprint.route('/chat')
+@role_required(['customer'])
+def customer_chat():
+    email = session.get('email')
+    customer_info = get_customer_info(email)
+    return render_template('customer/customer_chat.html', customer_info=customer_info)
+@socketio.on('message', namespace='/customer')
+def handle_message_customer(data):
+    user_id = data.get('user_id')
+    message = data.get('message')
+    room = data.get('room')
+    
+    customer_id = user_id
+    
+    connection, cursor = get_cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO message (customer_id, sender_type, content, sent_at) VALUES (%s, 'customer', %s, NOW())
+        """, (customer_id, message))
+        connection.commit()
+
+        cursor.execute("SELECT sent_at FROM message WHERE message_id = LAST_INSERT_ID()")
+        sent_at = cursor.fetchone()['sent_at']
+    except Exception as e:
+        print(f"Error saving message: {e}")
+        connection.rollback()
+    finally:
+        cursor.close()
+        connection.close()
+    
+    if room:
+        send({
+            'message': message,
+            'user_type': 'customer',
+            'username': 'Customer',
+            'sent_at': sent_at.strftime('%d-%m-%Y %H:%M:%S')
+        }, to=room, namespace='/customer')
+
+
+
+def get_chat_history_for_customer(customer_id):
+    connection, cursor = get_cursor()
+    cursor.execute("""
+        SELECT content, sent_at, sender_type, staff_id, manager_id
+        FROM message
+        WHERE customer_id = %s
+        ORDER BY sent_at ASC
+    """, (customer_id,))
+    messages = cursor.fetchall()
+    cursor.close()
+    connection.close()
+    return messages
+
+
+@customer_blueprint.route('/chat_history')
+@role_required(['customer'])
+def get_chat_history_customer():
+    email = session.get('email')
+    customer_info = get_customer_info(email)
+    customer_id = customer_info['customer_id']
+
+    messages = get_chat_history_for_customer(customer_id)
+
+    return jsonify(messages)
 

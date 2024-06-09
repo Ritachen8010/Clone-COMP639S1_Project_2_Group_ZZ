@@ -45,13 +45,18 @@ body {
 .navbar-nav .nav-link {
     font-size: 1rem;
     /* Reduce the font size of navbar links */
-    color: white;
+    color: rgb(0, 0, 0);
     /* Text color for navbar links */
 }
 
 .navbar-nav .nav-link:hover {
-    color: #795b35;
+    /* color: #795b35; */
+    color: #ffffff;
     /* Change color to brown when hovered */
+}
+
+.nav-text {
+    color: black !important;
 }
 
 /* dashboard side bar */
@@ -91,7 +96,7 @@ div.content {
 
 .list-group-item.list-group-item-action {
     background-color: #DAB88B !important;
-    color: rgb(255, 255, 255) !important;
+    color: rgb(0, 0, 0) !important;
 }
 
 .list-group-item.list-group-item-action:hover {
@@ -624,7 +629,7 @@ a:hover .card-img::after {
 }
 
 .btn-custom:hover {
-    background-color: #795b35; 
+    background-color: #bb9667; 
     color: white; 
 }
 
@@ -651,4 +656,8 @@ a:hover .card-img::after {
 }
 .custom-margin-top {
     margin-top: 100px; 
+}
+
+.card-container {
+    height: 100%;
 }
