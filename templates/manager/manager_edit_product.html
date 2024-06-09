@@ -40,12 +40,12 @@
                     Edit Option Type
                 </button>
 
-                <!-- Add Inventory Modal -->
+                <!-- Add Product Modal -->
                 <div class="modal fade" id="addInventoryModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
                     <div class="modal-dialog" role="document">
                         <div class="modal-content">
                             <div class="modal-header">
-                                <h5 class="modal-title" id="addInventoryModalLabel">Add Inventory</h5>
+                                <h5 class="modal-title" id="addInventoryModalLabel">Add Product</h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
                             <div class="modal-body">
@@ -59,7 +59,7 @@
                                         <select class="form-control" id="category_id" name="category_id" required>
                                             <option value="">Select a Category</option>
                                             {% for category in categories %}
-                                                <option value="{{ category.category_id }}">{{ category.name }}</option>
+                                                <option value="{{ category.category_id }}" data-category-name="{{ category.name }}">{{ category.name }}</option>
                                             {% endfor %}
                                         </select>
                                     </div>
@@ -73,7 +73,7 @@
                                         <input type="text" class="form-control" id="unit_price" name="unit_price" min="0" required oninput="validateUnitprice()">
                                         <div id="unitPriceError" style="color: red; display: none;">Unit price cannot be negative.</div>
                                     </div>
-                                    <div class="form-group">
+                                    <div class="form-group" id="quantity-field">
                                         <label for="quantity">Quantity:</label>
                                         <input type="text" class="form-control" id="quantity" name="quantity" min="0" required oninput="validateQuantity()">
                                         <div id="quantityError" style="color: red; display: none;">Quantity cannot be negative.</div>
@@ -423,6 +423,28 @@ document.addEventListener('DOMContentLoaded', function() {
             unitPriceError.style.display = 'none';
         }
     }
+
+    function toggleQuantityField() {
+        var selectedCategory = document.getElementById('category_id').selectedOptions[0].getAttribute('data-category-name');
+        var quantityField = document.getElementById('quantity-field');
+        var quantityInput = document.getElementById('quantity');
+        var hiddenCategories = ['Coffee', 'Hot Drinks', 'Milkshakes', 'Iced Teas'];
+
+        if (hiddenCategories.includes(selectedCategory)) {
+            quantityField.style.display = 'none';
+            quantityInput.removeAttribute('required'); // Remove required attribute
+            quantityInput.setAttribute('disabled', 'disabled'); // Disable intup field
+        } else {
+            quantityField.style.display = 'block';
+            quantityInput.setAttribute('required', 'required'); // Add required attribute
+            quantityInput.removeAttribute('disabled'); // Enable input field
+        }
+    }
+
+document.addEventListener('DOMContentLoaded', function() {
+    toggleQuantityField(); // Initialize the quantity field visibility based on the default selected category
+    document.getElementById('category_id').addEventListener('change', toggleQuantityField); // Add event listener for category change
+});
 
 </script>
    
