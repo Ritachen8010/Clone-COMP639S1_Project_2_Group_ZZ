@@ -880,24 +880,40 @@ def remove_from_cart():
     return redirect(url_for('customer.cart'))
 
 
-def validate_promo_code(code, total_amount):
+def validate_promo_code(promo_code, total_price):
     connection, cursor = get_cursor()
-    cursor.execute("""
-        SELECT promotion_id, discount_value, usage_limit, minimum_amount, valid_from, valid_until, is_active
-        FROM promotion 
-        WHERE code = %s 
-        AND valid_from <= CURDATE() 
-        AND valid_until >= CURDATE() 
-        AND is_active = TRUE
-        AND minimum_amount <= %s
-        AND usage_limit > 0
-    """, (code, total_amount))
-    promo_code = cursor.fetchone()
-    print(f"Query: SELECT promotion_id, discount_value, usage_limit, minimum_amount, valid_from, valid_until, is_active FROM promotion WHERE code = {code} AND valid_from <= CURDATE() AND valid_until >= CURDATE() AND is_active = TRUE AND minimum_amount <= {total_amount} AND usage_limit > 0")
-    print(f"Promo code validation result: {promo_code}")
-    cursor.close()
-    connection.close()
-    return promo_code
+    try:
+        cursor.execute("""
+            SELECT promotion_id, discount_value, usage_limit, minimum_amount, valid_from, valid_until, is_active
+            FROM promotion 
+            WHERE code = %s
+        """, (promo_code,))
+        promo_code_info = cursor.fetchone()
+        print(f"Promo code validation result: {promo_code_info}")
+
+        if not promo_code_info:
+            return None
+        
+        if not promo_code_info['is_active']:
+            return None
+        
+        if promo_code_info['usage_limit'] <= 0:
+            return None
+        
+        current_date = datetime.now().date()
+        if not (promo_code_info['valid_from'] <= current_date <= promo_code_info['valid_until']):
+            return None
+        
+        if total_price < promo_code_info['minimum_amount']:
+            return None
+        
+        return promo_code_info
+    except Exception as e:
+        print(f"Error validating promo code: {e}")
+        return None
+    finally:
+        cursor.close()
+        connection.close()
 
 @customer_blueprint.route('/apply_promo_code', methods=['POST'])
 @role_required(['customer'])
@@ -942,6 +958,7 @@ def apply_promo_code():
         if promo_code_info:
             discount = total_amount * (promo_code_info['discount_value'] / 100)
             flash(f"Promotional code applied successfully. Discount: ${discount:.2f}", "success")
+            session['promotion_id'] = promo_code_info['promotion_id']  # Store promotion_id in session
         else:
             connection, cursor = get_cursor()
             cursor.execute("""
@@ -965,30 +982,16 @@ def apply_promo_code():
                 flash("Invalid promotional code.", "danger")
             cursor.close()
             connection.close()
+            session.pop('promotion_id', None)  # Remove promotion_id from session if promo code is invalid
     else:
         flash("No promotional code provided.", "danger")
+        session.pop('promotion_id', None)  # Remove promotion_id from session if no promo code provided
 
     cursor.close()
     connection.close()
     return redirect(url_for('customer.cart', promo_code=promo_code, discount=discount))
 
 # Showing checkout page
-@customer_blueprint.route('/checkout', methods=['GET'])
-@role_required(['customer'])
-def customer_checkout():
-    email = session.get('email')
-    customer_info = get_customer_info(email)
-    unread_messages = get_unread_messages(customer_info['customer_id'])
-    unread_count = len(unread_messages)
-    if not customer_info:
-        flash("Please login to proceed to checkout.", "info")
-        return redirect(url_for('customer.login'))
-
-    return render_template('customer/customer_checkout.html', customer_info=customer_info,
-                           unread_messages=unread_messages, unread_count=unread_count)
-
-
-# Handling checkout request
 @customer_blueprint.route('/checkout', methods=['POST'])
 @role_required(['customer'])
 def checkout():
@@ -1018,12 +1021,10 @@ def checkout():
 
     connection, cursor = get_cursor()
     try:
-        promotion_id = None  # 初始化 promotion_id
-
         cursor.execute("""
             INSERT INTO orders (customer_id, total_price, status, created_at, special_requests, scheduled_pickup_time, promotion_id) 
             VALUES (%s, %s, 'ordered', NOW(), %s, %s, %s)
-        """, (customer_id, 0, special_requests, scheduled_pickup_datetime_nz, promotion_id))
+        """, (customer_id, 0, special_requests, scheduled_pickup_datetime_nz, None))
         order_id = cursor.lastrowid
         print(f"Order ID: {order_id}")
 
@@ -1082,27 +1083,25 @@ def checkout():
                 """, (quantity, product_id, quantity))
                 print(f"Updated inventory: Product ID: {product_id}, Quantity: {quantity}")
 
-        if promo_code:
-            promo_code_info = validate_promo_code(promo_code, total_price)
-            print(f"Promo code info: {promo_code_info}")
+        promotion_id = session.pop('promotion_id', None)  # Get promotion_id from session and remove it from session
+
+        if promotion_id:
+            cursor.execute("SELECT discount_value FROM promotion WHERE promotion_id = %s", (promotion_id,))
+            promo_code_info = cursor.fetchone()
             if promo_code_info:
                 discount = total_price * (promo_code_info['discount_value'] / 100)
-                promotion_id = promo_code_info['promotion_id']
-                print(f"Promotion ID: {promotion_id}, Promo Code: {promo_code}")
                 cursor.execute("UPDATE promotion SET usage_limit = usage_limit - 1 WHERE promotion_id = %s", (promotion_id,))
                 print(f"Updated promotion usage limit: Promotion ID: {promotion_id}")
-            else:
-                flash("Invalid or expired promotional code.", "danger")
 
         total_price -= discount
         print(f"Total price after discount: {total_price}")
 
         cursor.execute("UPDATE orders SET total_price = %s, promotion_id = %s WHERE order_id = %s", (total_price, promotion_id, order_id))
         print(f"Updated order: Order ID: {order_id}, Total Price: {total_price}, Promotion ID: {promotion_id}")
-
+        
         cursor.execute("INSERT INTO payment (customer_id, payment_type_id, order_id, paid_amount, promotion_id) VALUES (%s, %s, %s, %s, %s)", (customer_id, 1, order_id, total_price, promotion_id))
         print(f"Inserted payment: Customer ID: {customer_id}, Payment Type ID: 1, Order ID: {order_id}, Paid Amount: {total_price}, Promotion ID: {promotion_id}")
-
+        
         cursor.execute("DELETE FROM cart_item_option WHERE cart_item_id IN (SELECT cart_item_id FROM cart_item WHERE customer_id = %s)", (customer_id,))
         print(f"Deleted cart item options for Customer ID: {customer_id}")
 
@@ -1111,14 +1110,16 @@ def checkout():
 
         connection.commit()
         flash("Payment successful and order created.", "success")
+        return redirect(url_for('customer.orders'))
     except Exception as e:
         connection.rollback()
-        print(f"Error during checkout: {str(e)}")
-        flash(f"Failed to process payment. Error: {str(e)}", "danger")
+        print(e)
+        flash(f"An error occurred during checkout: {str(e)}", "danger")
+        return redirect(url_for('customer.cart'))
     finally:
         cursor.close()
         connection.close()
-    return redirect(url_for('customer.orders'))
+
 
 
 ## View Customer Orders

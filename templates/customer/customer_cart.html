@@ -349,7 +349,7 @@ document.getElementById('checkoutModal').addEventListener('show.bs.modal', funct
     }
 
     var promoCode = document.getElementById('promo_code').value;
-    var discount = {{ discount }};
+    var discount = "{{ discount }}"; 
     document.querySelector("input[name='promo_code']").value = promoCode;
     document.querySelector("input[name='discount']").value = discount;
 });
