@@ -212,6 +212,7 @@ CREATE TABLE `message` (
     FOREIGN KEY (`manager_id`) REFERENCES `manager` (`manager_id`),
     FOREIGN KEY (`staff_id`) REFERENCES `staff` (`staff_id`)
 ) AUTO_INCREMENT=1;
+
 -- 17. loyalty_point
 CREATE TABLE `loyalty_point` (
 	`loyalty_point_id`INT AUTO_INCREMENT,
@@ -353,20 +354,62 @@ CREATE TABLE `paid_item` (
 
 -- 1. Insert into account
 INSERT INTO `account` (`account_id`, `email`, `password`, `role`) VALUES 
-(1, 'aa@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'manager'),
-(2, 'bb@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'staff'),
-(3, 'cc@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'customer'),
-(4, 'Emma@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'customer'),
-(5, 'Dasiy@gmail.com', '0b92ecb984a4976d442762ef7831aacaa205f1ebacc2a617fe8225fff71d7fb6', 'customer');
+(1, 'aa@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'manager'),
+(2, 'bb@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'staff'),
 
+(3, 'cc@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(4, 'Emma@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(5, 'Dasiy@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(6, 'robin@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+
+(7, 'bob@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'staff'),
+(8, 'alice@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'staff'),
+(9, 'bob1@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'staff'),
+
+(10, 'Charlie9@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(11, 'David10@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(12, 'Emma11@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(13, 'Frank@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(14, 'Grace@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(15, 'Hannah@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(16, 'Ivan@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(17, 'Jack@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(18, 'Kelly@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(19, 'Liam@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(20, 'Mia@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(21, 'Noah@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(22, 'Olivia@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(23, 'Paul@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(24, 'Quincy@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(25, 'Rita@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(26, 'Sam@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer'),
+(27, 'Tina@gmail.com', '031874e6cc56e1edd42eb19c75e62783b745b58811a4d247cc0c370b2f315fe6', 'customer');
 
 -- 2. Insert into customer
 INSERT INTO `customer` (`customer_id`, `account_id`, `first_name`, `last_name`, `phone_number`, `date_of_birth`, `gender`, `id_num`, `created_at`, `profile_image`, `status`) 
 VALUES  
 (1000, 3, 'Charlie', 'Collins', '1234567890', '1985-10-25', 'Male', 'AB1234567', CURRENT_TIMESTAMP, 'cc.jpg', 'active'),
 (1001, 4, 'Emma', 'Anderson', '1234567891', '1991-02-14', 'Female', 'AB1234568', CURRENT_TIMESTAMP, 'cc.jpg', 'active'),
-(1002, 5, 'Daisy', 'Adams', '1234567892', '1987-08-22', 'Male', 'AB1234569', CURRENT_TIMESTAMP, 'cc.jpg', 'active');
-
+(1002, 5, 'Daisy', 'Adams', '1234567892', '1987-08-22', 'Male', 'AB1234569', CURRENT_TIMESTAMP, 'cc.jpg', 'active'),
+(1003, 6, 'Robin', 'Smith', '1234567894', '1987-01-22', 'Male', 'AB1234561', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1004, 10, 'Charlie', 'Lee', '123456784', '1985-10-25', 'Male', 'AB1234567', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1005, 11, 'David', 'Anderson', '1234567855', '1990-02-02', 'Male', 'AB1234562', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1006, 12, 'Emma', 'Brown', '123456782', '1991-02-14', 'Female', 'AB1234563', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1007, 13, 'Frank', 'Collins', '123456722', '1992-01-01', 'Male', 'AB1234564', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1008, 14, 'Grace', 'Davis', '123456723', '1993-02-02', 'Female', 'AB1234565', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1009, 15, 'Hannah', 'Evans', '123456712', '1994-03-01', 'Female', 'AB1234566', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1010, 16, 'Ivan', 'Fisher', '123456713', '1995-04-02', 'Male', 'AB1234567', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1011, 17, 'Jack', 'Garcia', '123456714', '1990-01-01', 'Male', 'AB1234568', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1012, 18, 'Kelly', 'Harris', '123456715', '1998-03-02', 'Female', 'AB1234569', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1013, 19, 'Liam', 'Irwin', '123456716', '1994-09-07', 'Male', 'AB1234561', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1014, 20, 'Mia', 'Johnson', '123456717', '1997-01-02', 'Female', 'AB1234562', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1015, 21, 'Noah', 'Khan', '123456718', '1996-02-02', 'Male', 'AB1234563', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1016, 22, 'Olivia', 'Lee', '123456719', '1995-03-11', 'Female', 'AB1234564', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1017, 23, 'Paul', 'Morgan', '123456720', '1995-04-02', 'Male', 'AB1234565', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1018, 24, 'Quincy', 'Nelson', '123456721', '1994-05-02', 'Male', 'AB1234566', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1019, 25, 'Rita', 'Owen', '123456722', '2005-06-01', 'Female', 'AB1234567', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1020, 26, 'Sam', 'Parker', '123456723', '2001-07-02', 'Male', 'AB1234568', CURRENT_TIMESTAMP, '123.jpg', 'active'),
+(1021, 27, 'Tina', 'Quinn', '123456724', '2005-08-02', 'Female', 'AB1234569', CURRENT_TIMESTAMP, '123.jpg', 'active');
 
 -- 3. Insert into manager
 INSERT INTO `manager` (`manager_id`, `account_id`, `first_name`, `last_name`, `phone_number`, `date_of_birth`, `gender`, `position`, `profile_image`, `status`) 
@@ -374,10 +417,11 @@ VALUES (1, 1, 'Ava', 'Anderson', '5551234567', '1975-08-30', 'Female', 'General 
 
 -- 4. Insert into staff
 INSERT INTO `staff` (`staff_id`, `account_id`, `first_name`, `last_name`, `phone_number`, `date_of_birth`, `gender`, `position`, `profile_image`, `status`) 
-VALUES 
-(1, 2, 'Bob', 'Brown', '9876543210', '1990-05-15', 'Female', 'Reception', 'bb.jpg', 'active'),
-(2, 4, 'Alice', 'Johnson', '9876543211', '1985-07-20', 'Female', 'Manager', 'alice.jpg', 'active'),
-(3, 5, 'Bob', 'Smith', '9876543212', '1982-12-05', 'Male', 'Engineer', 'bob.jpg', 'active');
+VALUES
+(1, 2, 'Bob', 'Brown', '9876543210', '1990-05-15', 'Male', 'Reception', 'bb.jpg', 'active'),
+(2, 7, 'Bobbie', 'Kaye', '9876543210', '1990-05-15', 'Male', 'Staff', 'bb.jpg', 'inactive'),
+(3, 8, 'Alice', 'Johnson', '9876543211', '1985-07-20', 'Female', 'Staff', 'alice.jpg', 'active'),
+(4, 9, 'Bobo', 'Smith', '9876543212', '1982-12-05', 'Male', 'Staff', 'bob.jpg', 'inactive');
 
 -- 5. Insert into product_category
 INSERT INTO `product_category` (`name`, `description`)
@@ -745,7 +789,7 @@ VALUES
 
 -- 9. promotion
 INSERT INTO `promotion` (`code`, `description`, `discount_value`,  `valid_from`, `valid_until`, `usage_limit`, `is_active`, `minimum_amount`)
-VALUES ('SUMMER2024', 'Summer 2024 discount - 10% off', 10.00, '2024-06-01', '2024-08-31', 100, TRUE, 20.00);
+VALUES ('WINTER2024', 'Winter 2024 discount - 10% off', 10.00, '2024-06-01', '2024-08-31', 100, TRUE, 20.00);
 
 -- 11. Insert into orders
 INSERT INTO `orders` (`customer_id`, `total_price`, `special_requests`, `scheduled_pickup_time`, `status`, `created_at`) VALUES 
@@ -890,10 +934,13 @@ VALUES
 (9, 1002, 9, 2, '2024-06-12', '2024-06-13', 1, 1, 1, 1, 'checked in', '2024-01-16'),
 (10, 1002, 10, 3, '2024-06-12', '2024-06-14', 2, 0, 1, 1, 'confirmed', '2024-01-17');
 
-
 -- 16. insert message table--
-INSERT INTO `message` (`message_id`, `customer_id`, `manager_id`, `staff_id`, `content`)
-VALUES (1, 1000, NULL, NULL, 'This is a test message.');
+INSERT INTO `message` (`message_id`, `customer_id`, `manager_id`, `staff_id`, `sender_type`, `content`)
+VALUES 
+(1, 1000, 1, NULL, 'manager',
+'Hi, You have received a seaonal promotion! This promotion can be used during the winter season between 01/06/2024 and 31/08/2024. When you spend over $20 on our food, drinks, and products, you will get 10% off. Please use our code:Winter2024'),
+(2, 1001, 1, 1, 'customer', 'Hi, Can you please confirm my booking for the 13th of June?'),
+(3, 1001, 1, NULL, 'manager', 'Hi, I am Ava, hope you are doing well. I have check that you have been booked for the 13th of June');
 
 -- 18. insert into payment_type
 INSERT INTO `payment_type` (`payment_type_id`, `payment_type`)VALUES
