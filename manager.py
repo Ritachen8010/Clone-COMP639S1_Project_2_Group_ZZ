@@ -638,7 +638,7 @@ def add_inventory():
     cursor.close()
     connection.close()
 
-    flash('Product successfully added to inventory')
+    flash('You have added new product successfully.')
     return redirect(url_for('manager.manage_products'))
 
 
@@ -954,8 +954,12 @@ def manage_accounts():
     manager_info = get_manager_info(email)
     unread_messages = get_unread_messages_for_manager(manager_info['manager_id'])
     role = request.args.get('role', 'customer')  # Default role set to 'customer'
+    page = request.args.get('page', 1, type=int)
+    per_page = 5
+    offset = (page - 1) * per_page
+
     connection, cursor = get_cursor()
-    
+
     base_query = """
          SELECT 'customer' as role, customer.customer_id AS id, customer.first_name, customer.last_name, customer.phone_number, 
              customer.date_of_birth, customer.gender, customer.id_num, customer.created_at, 
@@ -974,16 +978,16 @@ def manage_accounts():
              manager.profile_image, manager.status, account.email, manager.position
          FROM manager
          JOIN account ON manager.account_id = account.account_id
-         WHERE account.email != %s
+         WHERE account.email != %(email)s
         """
-    filters = [email]
+    filters = {'email': email}
 
     # Filter by role
     if role != 'all':
         base_query = f"""
-            SELECT * FROM ({base_query}) AS all_roles WHERE role = %s
+            SELECT * FROM ({base_query}) AS all_roles WHERE role = %(role)s
         """
-        filters.append(role)
+        filters['role'] = role
 
     # Search and filter accounts
     if request.method == 'POST':
@@ -992,12 +996,24 @@ def manage_accounts():
 
         if search_query:
             search_query = f"%{search_query}%"
-            base_query += " AND (first_name LIKE %s OR last_name LIKE %s OR email LIKE %s OR phone_number LIKE %s)"
-            filters.extend([search_query, search_query, search_query, search_query])
+            base_query += " AND (first_name LIKE %(search_query)s OR last_name LIKE %(search_query)s OR email LIKE %(search_query)s OR phone_number LIKE %(search_query)s)"
+            filters['search_query'] = search_query
 
         if status:
-            base_query += " AND status = %s"
-            filters.append(status)
+            base_query += " AND status = %(status)s"
+            filters['status'] = status
+
+    # Calculate total accounts for pagination
+    count_query = "SELECT COUNT(*) AS total FROM (" + base_query + ") AS total"
+    cursor.execute(count_query, filters)
+    result = cursor.fetchone()
+    total_accounts = result['total'] if result else 0
+    total_pages = (total_accounts + per_page - 1) // per_page
+
+    # Pagination limit and offset
+    base_query += " LIMIT %(per_page)s OFFSET %(offset)s"
+    filters['per_page'] = per_page
+    filters['offset'] = offset
 
     cursor.execute(base_query, filters)
     accounts = cursor.fetchall()
@@ -1010,9 +1026,9 @@ def manage_accounts():
     min_date = (today - timedelta(days=365 * 100)).strftime('%Y-%m-%d')
     max_date = (today - timedelta(days=365 * 16)).strftime('%Y-%m-%d')
 
-    return render_template('manager/manage_accounts.html', accounts=accounts, title=f"Manage {role.capitalize()}s", 
+    return render_template('manager/manage_accounts.html', accounts=accounts, title=f"Manage {role.capitalize()}s",
                            manager_info=manager_info, role=role, min_date=min_date, max_date=max_date, 
-                           unread_messages=unread_messages)
+                           unread_messages=unread_messages, total_pages=total_pages, current_page=page)
 
 # Manage edit account
 @manager_blueprint.route('/edit_account/<account_id>/<role>', methods=['GET', 'POST'])
@@ -1436,14 +1452,26 @@ def manager_chat(customer_id):
 @manager_blueprint.route('/customers')
 @role_required(['manager'])
 def list_customers():
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  
+    offset = (page - 1) * per_page
+
     connection, cursor = get_cursor()
-    cursor.execute("SELECT customer_id, first_name, last_name FROM customer")
+    cursor.execute("SELECT COUNT(*) FROM customer WHERE status = 'active'")
+    result = cursor.fetchone()
+    total_customers = result['COUNT(*)'] if result else 0
+    total_pages = (total_customers + per_page - 1) // per_page
+
+    cursor.execute("SELECT customer_id, first_name, last_name FROM customer WHERE status = 'active' ORDER BY customer_id LIMIT %s OFFSET %s", (per_page, offset))
     customers = cursor.fetchall()
     cursor.close()
     connection.close()
+
     return render_template('manager/manager_list_customers.html', customers=customers, 
                            manager_info=get_manager_info(session.get('email')), 
-                           unread_messages=get_unread_messages_for_manager(session.get('id')))
+                           unread_messages=get_unread_messages_for_manager(session.get('id')),
+                           page=page, total_pages=total_pages)
+
 @socketio.on('message', namespace='/manager')
 def handle_message_manager(data):
     user_id = data.get('user_id')
