@@ -105,23 +105,29 @@ def login():
             cursor.execute('SELECT * FROM account WHERE email = %s', (email,))
             account = cursor.fetchone()
             if account:
-                # Check if account status 'inactive' or not
-                cursor.execute('SELECT status FROM customer WHERE account_id = %s', (account['account_id'],))
+                # Check status based on role
+                if account['role'] == 'customer':
+                    cursor.execute('SELECT status FROM customer WHERE account_id = %s', (account['account_id'],))
+                elif account['role'] == 'staff':
+                    cursor.execute('SELECT status FROM staff WHERE account_id = %s', (account['account_id'],))
+                elif account['role'] == 'manager':
+                    cursor.execute('SELECT status FROM manager WHERE account_id = %s', (account['account_id'],))
                 status = cursor.fetchone()
+
                 if status and status['status'] == 'inactive':
                     flash('Your account is inactive. Please contact support.', 'error')
                     return redirect(url_for('auth.login'))
-
-                stored_password = account['password']
-                if hashing.check_value(stored_password, user_password, salt='S1#e2!r3@t4$'):
-                    session['loggedin'] = True
-                    session['id'] = account['account_id']
-                    session['email'] = email
-                    session['role'] = account['role']
-                    flash('You have successfully logged in!', 'success') 
-                    return redirect(url_for('auth.user'))  
                 else:
-                    flash('Invalid email or password.', 'error')  
+                    stored_password = account['password']
+                    if hashing.check_value(stored_password, user_password, salt='S1#e2!r3@t4$'):
+                        session['loggedin'] = True
+                        session['id'] = account['account_id']
+                        session['email'] = email
+                        session['role'] = account['role']
+                        flash('You have successfully logged in!', 'success') 
+                        return redirect(url_for('auth.user'))  
+                    else:
+                        flash('Invalid email or password.', 'error')  
             else:
                 flash('Invalid email or password.', 'error')
         finally:
