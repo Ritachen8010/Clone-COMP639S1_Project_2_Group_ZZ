@@ -16,12 +16,23 @@
 
         <!-- Navigation links start here -->
         <div class="list-group list-group-flush mx-3 mt-4">
-            <!-- Link to the order page -->
-            <a href="{{ url_for('customer.orders') }}" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
+            <!-- Link to the make order -->
+            <a href="{{ url_for('customer.product') }}" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
                 <i class="bi bi-cart-check me-2"></i>
-                <span class="ms-1 nav-text d-sm-inline">My Orders</span>
+                <span class="ms-1 nav-text d-sm-inline">Order Now</span>
             </a>
 
+            <!-- Link to the make order -->
+            <a href="{{ url_for('customer.booking_room') }}" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
+                <i class="bi bi-book me-2"></i>
+                <span class="ms-1 nav-text d-sm-inline">Book Now</span>
+            </a>
+
+            <!-- Link to the order page -->
+            <a href="{{ url_for('customer.orders') }}" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
+                <i class="bi bi-card-checklist me-2"></i>
+                <span class="ms-1 nav-text d-sm-inline">My Orders</span>
+            </a>
 
             <!-- Link to the booking page -->
             <li class="list-group-item list-group-item-action py-2 ripple">
@@ -35,5 +46,11 @@
                     <li><a class="dropdown-item" href="{{ url_for('customer.customer_viewallbookings') }}">View all bookings</a></li>
                 </ul>
             </li>
+
+            <!-- Link to the chat page -->
+            <a href="{{ url_for('customer.customer_chat', staff_id=staff_id) }}" class="list-group-item list-group-item-action py-2 ripple d-flex align-items-center">
+                <i class="bi bi-chat-dots me-2"></i>
+                <span class="ms-1 nav-text d-sm-inline">Chat with Staff</span>
+            </a>
         </div>
     </nav>

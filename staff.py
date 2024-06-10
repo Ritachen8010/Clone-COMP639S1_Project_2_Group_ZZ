@@ -1054,13 +1054,25 @@ def staff_chat(customer_id):
 @staff_blueprint.route('/customers')
 @role_required(['staff'])
 def list_customers():
+    page = request.args.get('page', 1, type=int)
+    per_page = 10  
+    offset = (page - 1) * per_page
+
     connection, cursor = get_cursor()
-    cursor.execute("SELECT customer_id, first_name, last_name FROM customer")
+    cursor.execute("SELECT COUNT(*) FROM customer WHERE status = 'active'")
+    result = cursor.fetchone()
+    total_customers = result['COUNT(*)'] if result else 0
+    total_pages = (total_customers + per_page - 1) // per_page
+
+    cursor.execute("SELECT customer_id, first_name, last_name FROM customer WHERE status = 'active' ORDER BY customer_id LIMIT %s OFFSET %s", (per_page, offset))
     customers = cursor.fetchall()
     cursor.close()
     connection.close()
+
     return render_template('staff/staff_list_customers.html', customers=customers, staff_info=get_staff_info(session.get('email')),
-                           unread_messages=get_unread_messages_for_staff(get_staff_info(session.get('email'))['staff_id']))
+                           unread_messages=get_unread_messages_for_staff(get_staff_info(session.get('email'))['staff_id']),
+                           page=page, total_pages=total_pages)
+
 @socketio.on('message', namespace='/staff')
 def handle_message_staff(data):
     user_id = data.get('user_id')

@@ -12,13 +12,13 @@
                 <div class="align-items-center justify-content-between mb-4">
                     <h1 class="mb-4">Manage Accounts</h1>
                     {% if role == 'staff' %}
-                        <!-- Button to Open the Add Staff Modal -->
-                        <button class="btn btn-theme" data-bs-toggle="modal" data-bs-target="#addStaffModal">
-                            Add New Staff</button>
+                    <!-- Button to Open the Add Staff Modal -->
+                    <button class="btn btn-theme" data-bs-toggle="modal" data-bs-target="#addStaffModal">
+                        Add New Staff</button>
                     {% elif role == 'manager' %}
-                        <!-- Button to Open the Manager Home Page -->
-                        <button class="btn btn-theme" data-bs-toggle="modal" data-bs-target="#addManagerModal">
-                            Add New Manager</button>
+                    <!-- Button to Open the Manager Home Page -->
+                    <button class="btn btn-theme" data-bs-toggle="modal" data-bs-target="#addManagerModal">
+                        Add New Manager</button>
                     {% endif %}
                 </div>
                 <ul class="nav nav-tabs mb-4" id="accountTabs" role="tablist">
@@ -100,39 +100,68 @@
                                 <td>
                                     {% if role != 'manager' %}
                                     <button class="btn btn-sm btn-primary mb-2" data-bs-toggle="modal"
-                                        data-bs-target="#editAccountModal" 
-                                        data-account-id="{{ account.id }}"
+                                        data-bs-target="#editAccountModal" data-account-id="{{ account.id }}"
                                         data-first-name="{{ account.first_name }}"
                                         data-last-name="{{ account.last_name }}"
                                         data-phone-number="{{ account.phone_number }}"
                                         data-date-of-birth="{{ account.date_of_birth }}"
-                                        data-gender="{{ account.gender }}"
-                                        {% if role == 'customer' %}
-                                        data-id-num="{{ account.id_num }}"
-                                        {% elif role == 'staff' %}
-                                        data-position="{{ account.position }}"
-                                        {% endif %}
+                                        data-gender="{{ account.gender }}" {% if role=='customer' %}
+                                        data-id-num="{{ account.id_num }}" {% elif role=='staff' %}
+                                        data-position="{{ account.position }}" {% endif %}
                                         data-role="{{ role }}">Edit</button>
                                     {% endif %}
-                                    <form action="{{ url_for('manager.reset_password') }}" method="post" class="d-inline">
+                                    <form action="{{ url_for('manager.reset_password') }}" method="post"
+                                        class="d-inline">
                                         <input type="hidden" name="account_id" value="{{ account.id }}">
                                         <input type="hidden" name="role" value="{{ role }}">
-                                        <button type="submit" class="btn btn-sm btn-warning mb-2">Reset Password</button>
+                                        <button type="submit" class="btn btn-sm btn-warning mb-2">Reset
+                                            Password</button>
                                     </form>
-                                    <form action="{{ url_for('manager.toggle_status') }}" method="post" class="d-inline">
+                                    <form action="{{ url_for('manager.toggle_status') }}" method="post"
+                                        class="d-inline">
                                         <input type="hidden" name="account_id" value="{{ account.id }}">
                                         <input type="hidden" name="role" value="{{ role }}">
-                                        <button type="submit" class="btn btn-sm mb-2 {{ 'btn-danger' if account.status == 'active' else 'btn-success' }}">{{ 'Deactivate' if account.status == 'active' else 'Activate' }}</button>
+                                        <button type="submit"
+                                            class="btn btn-sm mb-2 {{ 'btn-danger' if account.status == 'active' else 'btn-success' }}">{{
+                                            'Deactivate' if account.status == 'active' else 'Activate' }}</button>
                                     </form>
-                                </td>                                
+                                </td>
                             </tr>
-                        {% endfor %}
+                            {% endfor %}
                         </tbody>
                     </table>
                     {% else %}
                     <p>No accounts found.</p>
                     {% endif %}
                 </div>
+                <!-- Pagination Controls -->
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-center">
+                        {% if current_page > 1 %}
+                        <li class="page-item">
+                            <a class="page-link"
+                                href="{{ url_for('manager.manage_accounts', role=role, page=current_page-1) }}"
+                                aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>
+                        {% endif %}
+                        {% for i in range(1, total_pages + 1) %}
+                        <li class="page-item {% if i == current_page %}active{% endif %}">
+                            <a class="page-link" href="{{ url_for('manager.manage_accounts', role=role, page=i) }}">{{ i
+                                }}</a>
+                        </li>
+                        {% endfor %}
+                        {% if current_page < total_pages %} <li class="page-item">
+                            <a class="page-link"
+                                href="{{ url_for('manager.manage_accounts', role=role, page=current_page+1) }}"
+                                aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                            </li>
+                            {% endif %}
+                    </ul>
+                </nav>
             </div>
         </div>
     </div>
@@ -154,23 +183,23 @@
                     <!-- Fields common to both account types -->
                     <div class="mb-3">
                         <label for="edit_first_name" class="form-label">First Name</label>
-                        <input type="text" class="form-control" id="edit_first_name" name="first_name" 
-                        pattern="[A-Za-z]+" title="Name must be a letter" maxlength="50" required>
+                        <input type="text" class="form-control" id="edit_first_name" name="first_name"
+                            pattern="[A-Za-z]+" title="Name must be a letter" maxlength="50" required>
                     </div>
                     <div class="mb-3">
                         <label for="edit_last_name" class="form-label">Last Name</label>
-                        <input type="text" class="form-control" id="edit_last_name" name="last_name" 
-                        pattern="[A-Za-z]+" title="Name must be a letter" maxlength="50" required>
+                        <input type="text" class="form-control" id="edit_last_name" name="last_name" pattern="[A-Za-z]+"
+                            title="Name must be a letter" maxlength="50" required>
                     </div>
                     <div class="mb-3">
                         <label for="edit_phone_number" class="form-label">Phone Number</label>
-                        <input type="text" class="form-control" id="edit_phone_number" name="phone_number" 
-                        pattern="[0-9]{8,15}" title="Phone number must be between 8 and 11 digits" required>
+                        <input type="text" class="form-control" id="edit_phone_number" name="phone_number"
+                            pattern="[0-9]{8,15}" title="Phone number must be between 8 and 11 digits" required>
                     </div>
                     <div class="mb-3">
                         <label for="edit_date_of_birth" class="form-label">Date of Birth</label>
-                        <input type="date" class="form-control" id="edit_date_of_birth" name="date_of_birth" 
-                        min="{{ min_date }}" max="{{ max_date }}" title="You must be over 16" required>
+                        <input type="date" class="form-control" id="edit_date_of_birth" name="date_of_birth"
+                            min="{{ min_date }}" max="{{ max_date }}" title="You must be over 16" required>
                     </div>
                     <div class="mb-3">
                         <label for="edit_gender" class="form-label">Gender</label>
@@ -184,15 +213,15 @@
                     <!-- Fields specific to customer accounts -->
                     <div class="mb-3" id="customer_fields">
                         <label for="edit_id_num" class="form-label">ID Number</label>
-                        <input type="text" class="form-control" id="edit_id_num" name="id_num"
-                        pattern="[A-Za-z0-9]+" maxlength="10" title="Please enter a valid driver's license or passport">
+                        <input type="text" class="form-control" id="edit_id_num" name="id_num" pattern="[A-Za-z0-9]+"
+                            maxlength="10" title="Please enter a valid driver's license or passport">
                     </div>
 
                     <!-- Fields specific to staff accounts -->
                     <div class="mb-3" id="staff_fields">
                         <label for="edit_position" class="form-label">Position</label>
-                        <input type="text" class="form-control" id="edit_position" name="position"
-                        maxlength="50" pattern="[A-Za-z ]+">
+                        <input type="text" class="form-control" id="edit_position" name="position" maxlength="50"
+                            pattern="[A-Za-z ]+">
                     </div>
 
                     <button type="submit" class="btn btn-theme">Update Account</button>
@@ -218,30 +247,30 @@
                     </div>
                     <div class="mb-3">
                         <label for="add_password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="add_password" name="password" 
-                        pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}" placeholder="Plese enter your New Password*" 
-                        title="Password must be at least 8 characters long, including an uppercase letter, 
-                        a lowercase letter, a number, and a special character."required>
+                        <input type="password" class="form-control" id="add_password" name="password"
+                            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}"
+                            placeholder="Plese enter your New Password*" title="Password must be at least 8 characters long, including an uppercase letter, 
+                        a lowercase letter, a number, and a special character." required>
                     </div>
                     <div class="mb-3">
                         <label for="add_first_name" class="form-label">First Name</label>
-                        <input type="text" class="form-control" id="add_first_name" name="first_name" 
-                        pattern="[A-Za-z]+" title="Name must be a letter" maxlength="50" required>
+                        <input type="text" class="form-control" id="add_first_name" name="first_name"
+                            pattern="[A-Za-z]+" title="Name must be a letter" maxlength="50" required>
                     </div>
                     <div class="mb-3">
                         <label for="add_last_name" class="form-label">Last Name</label>
-                        <input type="text" class="form-control" id="add_last_name" name="last_name" 
-                        pattern="[A-Za-z]+" title="Name must be a letter" maxlength="50" required>
+                        <input type="text" class="form-control" id="add_last_name" name="last_name" pattern="[A-Za-z]+"
+                            title="Name must be a letter" maxlength="50" required>
                     </div>
                     <div class="mb-3">
                         <label for="add_phone_number" class="form-label">Phone Number</label>
-                        <input type="text" class="form-control" id="add_phone_number" name="phone_number" 
-                        pattern="[0-9]{8,15}" title="Phone number must be between 8 and 11 digits" required>
+                        <input type="text" class="form-control" id="add_phone_number" name="phone_number"
+                            pattern="[0-9]{8,15}" title="Phone number must be between 8 and 11 digits" required>
                     </div>
                     <div class="mb-3">
                         <label for="add_date_of_birth" class="form-label">Date of Birth</label>
-                        <input type="date" class="form-control" id="add_date_of_birth" name="date_of_birth" 
-                        min="{{ min_date }}" max="{{ max_date }}" title="You must be over 16" required>
+                        <input type="date" class="form-control" id="add_date_of_birth" name="date_of_birth"
+                            min="{{ min_date }}" max="{{ max_date }}" title="You must be over 16" required>
                     </div>
                     <div class="mb-3">
                         <label for="add_gender" class="form-label">Gender</label>
@@ -253,8 +282,8 @@
                     </div>
                     <div class="mb-3">
                         <label for="add_position" class="form-label">Position</label>
-                        <input type="text" class="form-control" id="add_position" name="position" 
-                        maxlength="50" pattern="[A-Za-z ]+"required>
+                        <input type="text" class="form-control" id="add_position" name="position" maxlength="50"
+                            pattern="[A-Za-z ]+" required>
                     </div>
                     <button type="submit" class="btn btn-theme">Add Staff</button>
                 </form>
@@ -279,30 +308,30 @@
                     </div>
                     <div class="mb-3">
                         <label for="add_manager_password" class="form-label">Password</label>
-                        <input type="password" class="form-control" id="add_manager_password" name="password" 
-                        pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}" placeholder="Please enter your New Password*" 
-                        title="Password must be at least 8 characters long, including an uppercase letter, 
+                        <input type="password" class="form-control" id="add_manager_password" name="password"
+                            pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z])(?=.*\W).{8,}"
+                            placeholder="Please enter your New Password*" title="Password must be at least 8 characters long, including an uppercase letter, 
                         a lowercase letter, a number, and a special character." required>
                     </div>
                     <div class="mb-3">
                         <label for="add_manager_first_name" class="form-label">First Name</label>
-                        <input type="text" class="form-control" id="add_manager_first_name" name="first_name" 
-                        pattern="[A-Za-z]+" title="Name must be a letter" required>
+                        <input type="text" class="form-control" id="add_manager_first_name" name="first_name"
+                            pattern="[A-Za-z]+" title="Name must be a letter" required>
                     </div>
                     <div class="mb-3">
                         <label for="add_manager_last_name" class="form-label">Last Name</label>
-                        <input type="text" class="form-control" id="add_manager_last_name" name="last_name" 
-                        pattern="[A-Za-z]+" title="Name must be a letter" required>
+                        <input type="text" class="form-control" id="add_manager_last_name" name="last_name"
+                            pattern="[A-Za-z]+" title="Name must be a letter" required>
                     </div>
                     <div class="mb-3">
                         <label for="add_manager_phone_number" class="form-label">Phone Number</label>
-                        <input type="text" class="form-control" id="add_manager_phone_number" name="phone_number" 
-                        pattern="[0-9]{8,15}" title="Phone number must be between 8 and 15 digits" required>
+                        <input type="text" class="form-control" id="add_manager_phone_number" name="phone_number"
+                            pattern="[0-9]{8,15}" title="Phone number must be between 8 and 15 digits" required>
                     </div>
                     <div class="mb-3">
                         <label for="add_manager_date_of_birth" class="form-label">Date of Birth</label>
-                        <input type="date" class="form-control" id="add_manager_date_of_birth" name="date_of_birth" 
-                        min="{{ min_date }}" max="{{ max_date }}" title="You must be over 16" required>
+                        <input type="date" class="form-control" id="add_manager_date_of_birth" name="date_of_birth"
+                            min="{{ min_date }}" max="{{ max_date }}" title="You must be over 16" required>
                     </div>
                     <div class="mb-3">
                         <label for="add_manager_gender" class="form-label">Gender</label>
@@ -314,8 +343,8 @@
                     </div>
                     <div class="mb-3">
                         <label for="add_manager_position" class="form-label">Position</label>
-                        <input type="text" class="form-control" id="add_manager_position" name="position" 
-                        maxlength="50" pattern="[A-Za-z ]+" required>
+                        <input type="text" class="form-control" id="add_manager_position" name="position" maxlength="50"
+                            pattern="[A-Za-z ]+" required>
                     </div>
                     <button type="submit" class="btn btn-theme">Add Manager</button>
                 </form>
@@ -339,7 +368,7 @@
             var gender = button.getAttribute('data-gender');
             var idNum = button.getAttribute('data-id-num');
             var position = button.getAttribute('data-position');
-    
+
             var modal = this;
             modal.querySelector('#edit_account_id').value = accountId;
             modal.querySelector('#edit_role').value = role;
@@ -348,7 +377,7 @@
             modal.querySelector('#edit_phone_number').value = phoneNumber;
             modal.querySelector('#edit_date_of_birth').value = dateOfBirth;
             modal.querySelector('#edit_gender').value = gender;
-    
+
             // Show/hide fields based on role
             if (role === 'customer') {
                 modal.querySelector('#customer_fields').style.display = 'block';
@@ -365,17 +394,17 @@
                 modal.querySelector('#edit_id_num').value = '';
                 modal.querySelector('#edit_position').value = position;
             }
-    
+
             // Log accountId and role for debugging
             console.log('Account ID:', accountId);
             console.log('Role:', role);
-    
+
             // Set form action
             var formAction = "/manager/edit_account/ACCOUNT_ID/ROLE";
             formAction = formAction.replace('ACCOUNT_ID', accountId).replace('ROLE', role);
             modal.querySelector('form').setAttribute('action', formAction);
         });
-    
+
         // Remove the required attribute from hidden fields on form submit
         document.getElementById('editAccountForm').addEventListener('submit', function () {
             var role = document.getElementById('edit_role').value;
@@ -386,7 +415,7 @@
             }
         });
     });
-    </script>
-      
-    
+</script>
+
+
 {% endblock %}
