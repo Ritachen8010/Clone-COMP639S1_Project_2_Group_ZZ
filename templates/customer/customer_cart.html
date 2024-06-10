@@ -98,25 +98,18 @@
                 <!-- Start Cart-payment Section -->
                 <div class="row">
                     <div class="col-md-6">
-                        <div class="row custom-margin">
-                            <div class="col-md-12">
-                                <label for="special_requests" class="text-black">Special Requests</label>
-                                <textarea class="form-control" id="special_requests" name="special_requests" rows="3">{{ special_requests }}</textarea>
-                            </div>
-                        </div>
+
                         <div class="row">
-                            <form id="promo-code-form" action="{{ url_for('customer.apply_promo_code') }}" method="post">
-                                <div class="col-md-12">
-                                    <p>Enter your promotion code if you have one.</p>
-                                </div>
+                            <form id="promo-code-form" action="{{ url_for('customer.apply_promo_code') }}" method="post" class="d-flex">
                                 <div class="col-md-8 mb-3 mb-md-0">
                                     <input type="text" class="form-control py-3" id="promo_code" name="promo_code" placeholder="Promotion Code">
                                 </div>
-                                <div class="col-md-4 mb-3">
-                                    <button type="submit" id="apply_promo" class="btn btn-custom">Apply Promotion Code</button>
+                                <div class="col-md-4 mb-3 d-flex align-items-center">
+                                    <button type="submit" id="apply_promo" class="btn btn-custom ms-2">Apply Promotion Code</button>
                                 </div>
                             </form>
                         </div>
+                        
                         <div class="row custom-margin">
                             <div class="col-md-6">
                                 <label for="scheduled_pickup_date" class="form-label">Pick Up Date</label>
@@ -127,6 +120,12 @@
                                 <select class="form-control" id="scheduled_pickup_time" name="scheduled_pickup_time" required>
                                     <!-- Options will be populated by JavaScript -->
                                 </select>
+                            </div>
+                        </div>
+                        <div class="row custom-margin">
+                            <div class="col-md-12">
+                                <label for="special_requests" class="text-black">Special Requests</label>
+                                <textarea class="form-control" id="special_requests" name="special_requests" rows="3">{{ special_requests }}</textarea>
                             </div>
                         </div>
                     </div>
@@ -211,9 +210,9 @@
                     </div>
                     <div class="mb-3">
                         <label for="card_holder" class="form-label">Name on card:<span class="require-star">*</span></label>
-                        <input type="text" class="form-control" id="card_holder" name="card_holder" required>
+                        <input type="text" class="form-control" id="card_holder" name="card_holder" pattern="[A-Za-z\s]+" required>
                         <div class="invalid-feedback text-start">
-                            Please enter the credit card holder name.
+                            Please enter the credit card holder name. Only letters and spaces are allowed.
                         </div>
                     </div>
                     <div class="mb-3 row justify-content-between">
@@ -236,6 +235,7 @@
                                         Please select expire year.
                                     </div>
                                 </div>
+                                
                             </div>
                         </div>
                         <div class="col-3">
@@ -283,7 +283,18 @@
     });
 })();
 
-document.addEventListener("DOMContentLoaded", function() {
+document.addEventListener('DOMContentLoaded', function() {
+    const cardHolderInput = document.getElementById('card_holder');
+    cardHolderInput.addEventListener('input', function() {
+        const value = cardHolderInput.value;
+        const regex = /^[A-Za-z\s]+$/;
+        if (regex.test(value)) {
+            cardHolderInput.classList.remove('is-invalid');
+        } else {
+            cardHolderInput.classList.add('is-invalid');
+        }
+    });
+
     const cardNumberInput = document.getElementById('card_number');
     const feedbackElement = cardNumberInput.nextElementSibling;
 
@@ -334,6 +345,8 @@ document.addEventListener("DOMContentLoaded", function() {
         populateExpiryMonths(parseInt(this.value)); // Use current year
     });
 });
+
+
 
 document.getElementById('checkoutModal').addEventListener('show.bs.modal', function (event) {
     var specialRequests = document.getElementById('special_requests').value;

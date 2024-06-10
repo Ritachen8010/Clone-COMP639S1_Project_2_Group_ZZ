@@ -206,48 +206,68 @@
         });
     })();
 
-    document.addEventListener("DOMContentLoaded", function () {
-        const cardNumberInput = document.getElementById('card_number');
-        const feedbackElement = cardNumberInput.nextElementSibling;
+    document.addEventListener('DOMContentLoaded', function() {
+    const cardHolderInput = document.getElementById('card_holder');
+    cardHolderInput.addEventListener('input', function() {
+        const value = cardHolderInput.value;
+        const regex = /^[A-Za-z\s]+$/;
+        if (regex.test(value)) {
+            cardHolderInput.classList.remove('is-invalid');
+        } else {
+            cardHolderInput.classList.add('is-invalid');
+        }
+    });
 
-        cardNumberInput.addEventListener('input', function () {
-            const value = cardNumberInput.value.replace(/\D/g, '');
-            if (value.length === 16) {
-                cardNumberInput.classList.remove('is-invalid');
-                cardNumberInput.classList.add('is-valid');
-                feedbackElement.textContent = 'Valid card number';
-                feedbackElement.style.color = 'green';
-            } else {
-                cardNumberInput.classList.remove('is-valid');
-                cardNumberInput.classList.add('is-invalid');
-                feedbackElement.textContent = 'Invalid card number';
-                feedbackElement.style.color = 'red';
-            }
-        });
+    const cardNumberInput = document.getElementById('card_number');
+    const feedbackElement = cardNumberInput.nextElementSibling;
 
-        var today = new Date();
-        var currentMonth = today.getMonth() + 2; // Months are zero-based
-        var currentYear = today.getFullYear();
+    cardNumberInput.addEventListener('input', function() {
+        const value = cardNumberInput.value.replace(/\D/g, '');
+        if (value.length === 16) {
+            cardNumberInput.classList.remove('is-invalid');
+            cardNumberInput.classList.add('is-valid');
+            feedbackElement.textContent = 'Valid card number';
+            feedbackElement.style.color = 'green';
+        } else {
+            cardNumberInput.classList.remove('is-valid');
+            cardNumberInput.classList.add('is-invalid');
+            feedbackElement.textContent = 'Invalid card number';
+            feedbackElement.style.color = 'red';
+        }
+    });
 
-        var expiryMonthSelect = document.getElementById('expiry_m');
-        var expiryYearSelect = document.getElementById('expiry_y');
+    var today = new Date();
+    var currentMonth = today.getMonth() + 2; // Current month start with 0
+    var currentYear = today.getFullYear();
 
-        // Populate expiry month options
-        for (var month = currentMonth; month <= 12; month++) {
+    var expiryMonthSelect = document.getElementById('expiry_m');
+    var expiryYearSelect = document.getElementById('expiry_y');
+
+    // Populate next 10 years
+    for (var year = currentYear; year <= currentYear + 10; year++) {
+        var option = document.createElement('option');
+        option.value = year; // Full year
+        option.text = year;
+        expiryYearSelect.appendChild(option);
+    }
+
+    // Poulate months
+    function populateExpiryMonths(selectedYear) {
+        expiryMonthSelect.innerHTML = ''; // Remove all options
+        var startMonth = selectedYear == currentYear ? currentMonth : 1; // Start from current month
+        for (var month = startMonth; month <= 12; month++) {
             var option = document.createElement('option');
             option.value = month < 10 ? '0' + month : month;
             option.text = month < 10 ? '0' + month : month;
             expiryMonthSelect.appendChild(option);
         }
+    }
 
-        // Populate expiry year options (next 10 years)
-        for (var year = currentYear; year <= currentYear + 10; year++) {
-            var option = document.createElement('option');
-            option.value = year % 100; // Use last two digits
-            option.text = year;
-            expiryYearSelect.appendChild(option);
-        }
+    // When the year changes, update the months
+    expiryYearSelect.addEventListener('change', function() {
+        populateExpiryMonths(parseInt(this.value)); // Use current year
     });
+});
 
     $(function () {
         $('input[name="daterange"]').daterangepicker({
