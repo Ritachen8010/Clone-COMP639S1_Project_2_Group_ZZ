@@ -303,10 +303,11 @@ def order_details(order_id):
     
     connection, cursor = get_cursor()
     cursor.execute("""
-        SELECT o.*, c.first_name, c.last_name, acc.email
+        SELECT o.*, c.first_name, c.last_name, acc.email, p.code AS promo_code
         FROM orders o
         JOIN customer c ON o.customer_id = c.customer_id
         JOIN account acc ON c.account_id = acc.account_id
+        LEFT JOIN promotion p ON o.promotion_id = p.promotion_id
         WHERE o.order_id = %s
     """, (order_id,))
     order = cursor.fetchone()
@@ -321,8 +322,12 @@ def order_details(order_id):
     
     cursor.close()
     connection.close()
+
+    # Handle display of 'None' or 'No Promotion' if promo_code is empty
+    promo_code_display = order['promo_code'] if order and order['promo_code'] else 'None'
     
-    return render_template('manager/manager_order_details.html', order=order, order_items=order_items)
+    return render_template('manager/manager_order_details.html', order=order, order_items=order_items,
+                           manager_info=manager_info, promo_code_display=promo_code_display)
 
 
 # Manager view history orders

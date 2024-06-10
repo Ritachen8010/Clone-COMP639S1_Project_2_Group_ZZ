@@ -291,9 +291,10 @@ def order_details(order_id):
         cursor.execute("SET character_set_connection=utf8mb4;")
         
         cursor.execute("""
-            SELECT o.*, c.first_name, c.last_name
+            SELECT o.*, c.first_name, c.last_name, p.code AS promo_code
             FROM orders o
             JOIN customer c ON o.customer_id = c.customer_id
+            LEFT JOIN promotion p ON o.promotion_id = p.promotion_id
             WHERE o.order_id = %s
         """, (order_id,))
         order = cursor.fetchone()
@@ -317,8 +318,12 @@ def order_details(order_id):
         cursor.close()
         connection.close()
     
+    # Handle display of 'None' or 'No Promotion' if promo_code is empty
+    promo_code_display = order['promo_code'] if order and order['promo_code'] else 'None'
+    
     return render_template('staff/staff_order_details.html', order=order, order_items=order_items, staff_info=staff_info,
-                           unread_messages=unread_messages)
+                           unread_messages=unread_messages, promo_code_display=promo_code_display)
+
 # Staff view order history
 @staff_blueprint.route('/history_orders', methods=['GET'])
 @role_required(['staff'])

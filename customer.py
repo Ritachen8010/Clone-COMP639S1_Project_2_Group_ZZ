@@ -1180,7 +1180,10 @@ def order_details(order_id):
     cursor.execute("SET CHARACTER SET utf8mb4;")
     cursor.execute("SET character_set_connection=utf8mb4;")
     cursor.execute("""
-        SELECT * FROM orders WHERE order_id = %s AND customer_id = %s
+        SELECT o.*, p.code AS promo_code
+        FROM orders o
+        LEFT JOIN promotion p ON o.promotion_id = p.promotion_id
+        WHERE o.order_id = %s AND o.customer_id = %s
     """, (order_id, customer_id))
     order = cursor.fetchone()
     if not order:
@@ -1195,8 +1198,13 @@ def order_details(order_id):
     order_items = cursor.fetchall()
     cursor.close()
     connection.close()
+
+    # Handle display of 'None' or 'No Promotion' if promo_code is empty
+    promo_code_display = order['promo_code'] if order and order['promo_code'] else 'None'
+
     return render_template('customer/customer_order_details.html', order=order, order_items=order_items, 
-                           customer_info=customer_info, unread_messages=unread_messages, unread_count=unread_count)
+                           customer_info=customer_info, unread_messages=unread_messages, unread_count=unread_count,
+                           promo_code_display=promo_code_display)
 
 @customer_blueprint.route('/cancel_order/<int:order_id>', methods=['POST'])
 @role_required(['customer'])
