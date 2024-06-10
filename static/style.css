@@ -661,3 +661,15 @@ a:hover .card-img::after {
 .card-container {
     height: 100%;
 }
+
+.card-custom {
+    width: 150px; 
+    margin: 5px; 
+}
+.cancelled {
+    color: red;
+}
+
+.collected {
+    color: green;
+}

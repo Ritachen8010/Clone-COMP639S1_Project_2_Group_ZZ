@@ -1123,13 +1123,12 @@ def checkout():
 
 
 ## View Customer Orders
+
 @customer_blueprint.route('/orders', methods=['GET'])
 @role_required(['customer'])
 def orders():
     email = session.get('email')
     customer_info = get_customer_info(email)
-    unread_messages = get_unread_messages(customer_info['customer_id'])
-    unread_count = len(unread_messages)
     if not customer_info:
         flash("Customer information not found.", "error")
         return redirect(url_for('customer_dashboard'))
@@ -1153,15 +1152,27 @@ def orders():
             ORDER BY o.created_at DESC
         """, (customer_id,))
         history_orders = cursor.fetchall()
+
+        # Get order items and feedback for historical orders
+        cursor.execute("""
+            SELECT oi.*, p.name AS product_name, p.image AS product_image, f.rate, f.description, f.created_at AS feedback_created_at
+            FROM order_item oi
+            JOIN product p ON oi.product_id = p.product_id
+            LEFT JOIN order_feedback f ON oi.order_item_id = f.order_item_id
+            WHERE oi.order_id IN (
+                SELECT o.order_id FROM orders o WHERE o.customer_id = %s AND o.status IN ('collected', 'cancelled')
+            )
+        """, (customer_id,))
+        history_order_items = cursor.fetchall()
     except Exception as e:
         flash(f"Failed to retrieve orders. Error: {str(e)}", "danger")
         orders = []
         history_orders = []
+        history_order_items = []
     finally:
         cursor.close()
         connection.close()
-    return render_template('customer/customer_orders.html', orders=orders, history_orders=history_orders, 
-                           customer_info=customer_info, unread_messages=unread_messages, unread_count=unread_count)
+    return render_template('customer/customer_orders.html', orders=orders, history_orders=history_orders, history_order_items=history_order_items, customer_info=customer_info)
 
 # View Customer Order Details
 @customer_blueprint.route('/order_details/<int:order_id>', methods=['GET'])
@@ -1238,6 +1249,42 @@ def cancel_order(order_id):
     finally:
         cursor.close()
         connection.close()
+    return redirect(url_for('customer.orders'))
+
+@customer_blueprint.route('/submit_feedback', methods=['POST'])
+@role_required(['customer'])
+def submit_feedback():
+    data = request.form
+    order_item_id = data.get('order_item_id')
+    rate = data.get('rate')
+    description = data.get('description')
+    
+    email = session.get('email')
+    if not email:
+        flash("Customer not logged in.", "danger")
+        return redirect(url_for('auth.login'))
+    
+    customer_info = get_customer_info(email)
+    if not customer_info:
+        flash("Customer information not found.", "danger")
+        return redirect(url_for('customer_dashboard'))
+
+    customer_id = customer_info['customer_id']
+
+    connection, cursor = get_cursor()
+    try:
+        cursor.execute("""
+            INSERT INTO order_feedback (order_item_id, customer_id, rate, description) 
+            VALUES (%s, %s, %s, %s)
+        """, (order_item_id, customer_id, rate, description))
+        connection.commit()
+        flash("Feedback submitted successfully.", "success")
+    except Exception as e:
+        flash(f"Failed to submit feedback. Error: {str(e)}", "danger")
+    finally:
+        cursor.close()
+        connection.close()
+    
     return redirect(url_for('customer.orders'))
 
 
