@@ -1017,4 +1017,6 @@ VALUES
 (1002, 2, NULL, 10, 410.00);
 
 
+INSERT INTO blocked_dates (block_id, accommodation_id, start_date, end_date, is_active, manager_id)
+VALUES ('1', '2', '2024-06-17', '2024-06-18', '1', '1');
 
