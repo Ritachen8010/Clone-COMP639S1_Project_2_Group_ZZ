@@ -794,23 +794,46 @@ VALUES ('WINTER2024', 'Winter 2024 discount - 10% off', 10.00, '2024-06-01', '20
 -- 11. Insert into orders
 INSERT INTO `orders` (`customer_id`, `total_price`, `special_requests`, `scheduled_pickup_time`, `status`, `created_at`) VALUES 
 (1000, 25.00, 'Add whipped cream to the coffee.', '2024-06-01 10:00', 'collected', '2024-06-01 09:00'), -- Order 1
-(1000, 18.50, 'No onions in the burger, please.', '2024-06-01 12:00', 'collected', '2024-06-01 11:00'), -- Order 2
-(1000, 15.00, 'Extra cheese on the pizza.', '2024-05-31 14:00', 'cancelled', '2024-05-31 13:00'), -- Order 3
-(1000, 22.50, 'No ice in the lemonade.', '2024-05-30 16:00', 'cancelled', '2024-05-30 15:00'), -- Order 4
-(1000, 30.00, 'Add extra napkins.', '2024-06-04 20:00', 'ordered', '2024-06-04 16:00'), -- Order 5
+(1000, 18.50, 'Less ice, please.', '2024-06-01 12:00', 'cancelled', '2024-06-01 11:00'), -- Order 2
+(1000, 15.00, 'Less ice, please.', '2024-06-13 14:00', 'ordered', '2024-06-12 13:00'), -- Order 3
+(1000, 22.50, 'Add extra napkins.', '2024-06-13 10:00', 'ordered', '2024-06-13 07:00'), -- Order 4
+(1000, 30.00, 'Add extra napkins.', '2024-06-04 20:00', 'collected', '2024-06-04 16:00'), -- Order 5
+
 (1001, 20.00, 'Extra hot, please.', '2024-05-28 10:00', 'collected', '2024-05-28 09:00'), -- Order 6
 (1001, 15.00, 'No sugar in the coffee.', '2024-05-27 12:00', 'collected', '2024-05-27 11:00'), -- Order 7
-(1001, 12.50, 'Add extra cream.', '2024-05-26 14:00', 'cancelled', '2024-05-26 13:00'), -- Order 8
-(1002, 18.00, 'Less ice.', '2024-05-25 10:00', 'collected', '2024-05-25 09:00'), -- Order 9
-(1002, 22.00, 'Extra spicy.', '2024-06-04 20:00', 'ordered', '2024-06-03 11:00'), -- Order 10
-(1002, 19.50, 'No dairy.', '2024-06-05 14:00', 'ordered', '2024-06-05 12:00'), -- Order 11
-(1000, 20.00, 'Add extra sugar.', '2024-06-06 09:00', 'ordered', '2024-06-03 10:00'), -- Order 12
-(1000, 22.50, 'No ice.', '2024-06-06 14:00', 'ordered', '2024-06-03 11:00'), -- Order 13
-(1001, 18.00, 'Less salt.', '2024-06-06 10:00', 'ordered', '2024-06-03 12:00'), -- Order 14
-(1001, 25.00, 'Add extra cheese.', '2024-06-06 15:00', 'ordered', '2024-06-03 13:00'), -- Order 15
-(1002, 19.00, 'More napkins.', '2024-06-06 11:00', 'ordered', '2024-06-03 14:00'), -- Order 16
-(1002, 21.50, 'No pickles.', '2024-06-06 16:00', 'ordered', '2024-06-03 15:00'); -- Order 17
+(1001, 12.50, 'Add extra cream.', '2024-06-13 10:00', 'ordered', '2024-06-13 07:00'), -- Order 8
 
+(1002, 18.00, 'Less ice.', '2024-05-25 10:00', 'collected', '2024-05-25 09:00'), -- Order 9
+(1002, 22.00, 'Extra spicy.', '2024-06-13 20:00', 'cancelled', '2024-06-03 11:00'), -- Order 10
+(1002, 19.50, 'No dairy.', '2024-06-13 14:00', 'ordered', '2024-06-12 12:00'), -- Order 11
+
+(1003, 20.00, 'Add extra sugar.', '2024-06-06 09:00', 'collected', '2024-06-03 10:00'), -- Order 12
+(1003, 22.50, 'No cream.', '2024-06-13 09:30', 'ordered', '2024-06-13 08:00'), -- Order 13
+
+(1004, 18.00, 'Extra hot, please.', '2024-06-06 10:00', 'cancelled', '2024-06-03 12:00'), -- Order 14
+(1004, 25.00, 'Extra hot for my coffee, please.', '2024-06-13 09:30', 'ordered', '2024-06-13 07:00'), -- Order 15
+
+(1005, 19.00, 'More napkins.', '2024-06-13 11:00', 'ordered', '2024-06-13 7:00'), -- Order 16
+(1005, 21.50, 'Extra hot, please.', '2024-06-06 16:00', 'cancelled', '2024-06-03 15:00'), -- Order 17
+
+(1006, 6.00, 'Extra hot, please.', '2024-06-13 15:00', 'ordered', '2024-06-12 10:00'), -- Order 18
+(1006, 6.00, 'Extra hot, please.', '2024-06-06 15:00', 'collected', '2024-06-06 10:00'), -- Order 23
+
+(1007, 6.00, 'Extra hot, please.', '2024-06-13 18:00', 'ordered', '2024-06-13 14:00'), -- Order 19
+(1007, 6.00, 'Extra hot, please.', '2024-06-01 18:00', 'collected', '2024-06-01 14:00'), -- Order 24
+
+(1008, 12.00, 'Extra hot, please.', '2024-06-13 16:00', 'ordered', '2024-06-13 14:00'), -- Order 20
+(1008, 12.00, 'Extra hot, please.', '2024-06-04 16:00', 'collected', '2024-06-03 14:00'), -- Order 25
+
+(1009, 06.00, 'Extra hot, please.', '2024-06-13 17:00', 'ordered', '2024-06-13 15:00'), -- Order 21
+(1009, 06.00, 'Extra hot, please.', '2024-06-05 17:00', 'collected', '2024-06-05 15:00'), -- Order 26
+
+(1010, 06.00, 'Extra hot, please.', '2024-06-13 19:00', 'ordered', '2024-06-13 17:00'), -- Order 22
+(1010, 06.00, 'Extra hot, please.', '2024-06-03 19:00', 'collected', '2024-06-02 17:00'), -- Order 27
+
+(1011, 20.00, 'Add extra sugar.', '2024-06-14 09:00', 'ordered', '2024-06-13 07:00'), -- Order 28
+
+(1012, 20.00, 'Add extra sugar.', '2024-06-14 09:00', 'ordered', '2024-06-13 07:00'); -- Order 29
 
 -- 11. Insert into order_item
 -- Insert into order_item
@@ -820,16 +843,16 @@ INSERT INTO `order_item` (`order_id`, `product_id`, `quantity`) VALUES
 (1, 6, 1), -- Hot Chocolate
 (1, 9, 2), -- Coca-Cola
 -- Add-ons for Order 1
-(1, 22, 1), -- Gluten-Free Bun
-(1, 23, 1), -- Sesame Bun
+(1, 22, 1), -- Peach Iced Tea
+(1, 23, 1), -- Raspberry Iced Tea
 
 -- Order 2 items
 (2, 4, 1), -- Flat White
 (2, 10, 1), -- Sprite
 (2, 11, 1), -- Fanta
 -- Add-ons for Order 2
-(2, 24, 1), -- Extra Cheese
-(2, 25, 1), -- Bacon
+(2, 24, 1), -- Green Iced Tea
+(2, 25, 1), -- Hibiscus Iced Tea
 
 -- Order 3 items
 (3, 2, 1), -- Latte
@@ -910,8 +933,23 @@ INSERT INTO `order_item` (`order_id`, `product_id`, `quantity`) VALUES
 (16, 5, 1), -- Mocha
 (16, 19, 1), -- Cookies and Cream Milkshake
 (17, 6, 1), -- Hot Chocolate
-(17, 20, 1); -- Seasonal Berry Milkshake
-
+(17, 20, 1), -- Seasonal Berry Milkshake
+(18, 3, 1), -- Cappuccino
+(19, 3, 1), -- Cappuccino
+(20, 17, 1), -- Caramel Swirl Milkshake
+(20, 3, 1), -- Cappuccino
+(21, 17, 1), -- Caramel Swirl Milkshake
+(22, 3, 1), -- Cappuccino
+(23, 3, 1), -- Cappuccino
+(24, 3, 1), -- Cappuccino
+(25, 3, 1), -- Cappuccino
+(25, 17, 1), -- Caramel Swirl Milkshake
+(26, 3, 1), -- Cappuccino
+(27, 3, 1), -- Cappuccino
+(28, 1, 1), -- Espresso
+(28, 15, 1), -- Rich Chocolate Milkshake
+(29, 1, 1), -- Espresso
+(29, 15, 1); -- Rich Chocolate Milkshake
 
 -- 13. insert accommodation
 INSERT INTO accommodation (accommodation_id, type, description, capacity, space, price_per_night, is_available, image)
