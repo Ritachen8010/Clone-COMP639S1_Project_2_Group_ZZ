@@ -13,15 +13,30 @@
                 
                 <!-- Category Filter -->
                 <form method="GET" action="{{ url_for('manager.manage_products') }}">
-                    <select id="category_filter" name="category_id">
-                        <option value="">All</option>
-                        {% for category in categories %}
-                            <option value="{{ category.category_id }}" {% if request.args.get('category_id') == category.category_id %}selected{% endif %}>
-                                {{ category.name }}
-                            </option>
-                        {% endfor %}
-                    </select>
-                    <button class="btn-theme mb-4">Filter</button>
+                    <div class="row">
+                        <div class="col-md-5 mb-3 d-flex align-items-center">
+                            <select name="category_id" class="form-select form-control">
+                                <option value="">All Categories</option>
+                                {% for category in categories %}
+                                    <option value="{{ category.category_id }}" {% if category_filter and category.category_id == category_filter|int %}selected{% endif %}>
+                                        {{ category.name }}
+                                    </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-5 mb-3 d-flex align-items-center"> 
+                            <select name="status" class="form-select form-control">
+                                <option value="">All Statuses</option>
+                                <option value="1" {% if status_filter == '1' %}selected{% endif %}>Available</option>
+                                <option value="0" {% if status_filter == '0' %}selected{% endif %}>Unavailable</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2 mb-3 d-flex align-items-center">
+                            <button type="submit" class="btn btn-custom btn-block form-control">
+                                <i class="fa fa-search"></i>
+                                Filter</button>
+                        </div>
+                    </div>
                 </form>
             
                 <!-- Add Inventory -->
@@ -210,7 +225,7 @@
                             {% if page > 1 %}
                             <li class="page-item">
                                 <a class="page-link"
-                                    href="{{ url_for('manager.manage_products', page=page-1) }}"
+                                    href="{{ url_for('manager.manage_products', page=page-1, category_id=category_filter, status=status_filter) }}"
                                     aria-label="Previous">
                                     <span aria-hidden="true">&laquo;</span>
                                 </a>
@@ -220,7 +235,7 @@
                             {% if products|length >= items_per_page %}
                             <li class="page-item">
                                 <a class="page-link"
-                                    href="{{ url_for('manager.manage_products', page=page+1) }}"
+                                    href="{{ url_for('manager.manage_products', page=page+1, category_id=category_filter, status=status_filter) }}"
                                     aria-label="Next">
                                     <span aria-hidden="true">&raquo;</span>
                                 </a>

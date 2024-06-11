@@ -653,11 +653,13 @@ def manage_products():
     items_per_page = 10
     offset = (page - 1) * items_per_page
     category_filter = request.args.get('category_id')
+    status_filter = request.args.get('status')
 
     connection, cursor = get_cursor()
 
     cursor.execute("SELECT * FROM product_category")
     categories = cursor.fetchall()
+
     query = """
         SELECT
             product_category.name AS category,
@@ -679,10 +681,19 @@ def manage_products():
     """
 
     params = []
-    if category_filter:
-        query += " WHERE product.category_id = %s"
-        params.append(category_filter)
+    conditions = []
 
+    if category_filter:
+        conditions.append("product.category_id = %s")
+        params.append(category_filter)
+    
+    if status_filter:
+        conditions.append("product.is_available = %s")
+        params.append(status_filter)
+
+    if conditions:
+        query += " WHERE " + " AND ".join(conditions)
+    
     query += " GROUP BY product.product_id ORDER BY product.name LIMIT %s OFFSET %s"
     params.extend([items_per_page, offset])
 
@@ -697,7 +708,11 @@ def manage_products():
                            categories=categories, 
                            manager_info=manager_info, 
                            page=page, 
-                           items_per_page=items_per_page, unread_messages=unread_messages)
+                           items_per_page=items_per_page, 
+                           category_filter=category_filter, 
+                           status_filter=status_filter, 
+                           unread_messages=unread_messages)
+
 
 
 #option type
