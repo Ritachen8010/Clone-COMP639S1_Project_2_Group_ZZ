@@ -44,22 +44,22 @@
                             <td>${{ booking.paid_amount }}</td>
                             <td>{{ booking.booking_date.date() | format_date}}</td>
                             <td>
-                                <form id="cancelForm"
+                                <form id="cancelForm-{{ booking.booking_id }}"
                                     action="{{ url_for('staff.cancel_booking', booking_id=booking.booking_id) }}"
                                     method="post">
                                     <input type="hidden" name="confirm_cancel" value="yes">
                                     <button type="button" class="btn btn-danger btn-sm"
-                                        onclick="confirmCancel()">Cancel</button>
+                                        onclick="confirmCancel('{{ booking.booking_id }}')">Cancel</button>
                                 </form>
                                 <script>
-                                    function confirmCancel() {
+                                    function confirmCancel(bookingId) {
                                         if (confirm('Are you sure to cancel?')) {
-                                            document.getElementById('cancelForm').submit();
+                                            document.getElementById('cancelForm-' + bookingId).submit();
                                         }
                                     }
                                 </script>
-
                             </td>
+                                                        
                         </tr>
                         {% endfor %}
                     </tbody>

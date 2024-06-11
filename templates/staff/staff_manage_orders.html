@@ -69,7 +69,46 @@
                                     <td>{{ order.first_name | capitalize }} {{ order.last_name | capitalize }}</td>
                                     <td>{{ order.email }}</td>
                                     <td>${{ order.total_price }}</td>
-                                    <td>{{ order.status | capitalize }}</td>
+                                    <td>
+                                        <div class="progress" style="height: 30px;">
+                                            <div class="progress-bar 
+                                                {% if order.status == 'ordered' %}
+                                                    bg-info
+                                                {% elif order.status == 'preparing' %}
+                                                    bg-warning
+                                                {% elif order.status == 'ready for collection' %}
+                                                    bg-success
+                                                {% elif order.status == 'cancelled' %}
+                                                    bg-danger
+                                                {% else %}
+                                                    bg-secondary
+                                                {% endif %}"
+                                                role="progressbar"
+                                                style="width: 
+                                                {% if order.status == 'ordered' %}
+                                                    25%
+                                                {% elif order.status == 'preparing' %}
+                                                    50%
+                                                {% elif order.status == 'ready for collection' %}
+                                                    75%
+                                                {% elif order.status == 'cancelled' %}
+                                                    100%
+                                                {% else %}
+                                                    100%
+                                                {% endif %}; 
+                                                display: flex; 
+                                                align-items: center; 
+                                                justify-content: center; 
+                                                font-size: 0.8rem; 
+                                                white-space: nowrap;"
+                                                aria-valuenow="{% if order.status == 'ordered' %}25{% elif order.status == 'preparing' %}50{% elif order.status == 'ready for collection' %}75{% elif order.status == 'cancelled' %}100{% else %}100{% endif %}" 
+                                                aria-valuemin="0" 
+                                                aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                    </td>
+                                    
+                                    
                                     <td>{{ order.scheduled_pickup_time | format_time }}</td>
                                     <td><button class="btn btn-custom btn-sm" onclick="showOrderDetails({{ order.order_id }})">View Details</button></td>
                                     

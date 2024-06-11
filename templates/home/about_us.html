@@ -281,24 +281,24 @@
         </div>
         
       </div>
-      <div class="col-lg-6">
-        <div class="contact-title text-center">
-          <h2>Get in Touch</h2>
-        </div>
-        <form class="form-contact contact_form" action="{{ url_for('guest.contact') }}" method="post" id="contactForm">
-          <div class="form-group">
-            <input class="form-control" name="name" id="name" type="text" placeholder="Enter your name" required aria-label="Name">
+        <div class="col-lg-6">
+          <div class="contact-title text-center">
+            <h2>Get in Touch</h2>
           </div>
-          <div class="form-group">
-            <input class="form-control" name="email" id="email" type="email" placeholder="Enter email address" required aria-label="Email">
-          </div>
-          <div class="form-group">
-            <textarea class="form-control w-100" name="message" id="message" cols="30" rows="9" placeholder="Enter Message" required aria-label="Message"></textarea>
-          </div>
-          <div class="form-group text-center mt-3">
-            <button type="submit" class="btn btn-theme">Send</button>
-          </div>
-        </form>
+          <form class="form-contact contact_form" action="{{ url_for('guest.contact') }}" method="post" id="contactForm">
+            <div class="form-group">
+              <input class="form-control" name="name" id="name" type="text" placeholder="Enter your name" required aria-label="Name">
+            </div>
+            <div class="form-group">
+              <input class="form-control" name="email" id="email" type="email" placeholder="Enter email address" required aria-label="Email">
+            </div>
+            <div class="form-group">
+              <textarea class="form-control w-100" name="message" id="message" cols="30" rows="9" placeholder="Enter Message" required aria-label="Message"></textarea>
+            </div>
+            <div class="form-group text-center mt-3">
+              <button type="submit" class="btn btn-theme">Send</button>
+            </div>
+          </form>
       </div>
     </section>
 

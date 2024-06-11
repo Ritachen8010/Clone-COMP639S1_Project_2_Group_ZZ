@@ -1,4 +1,4 @@
-from flask import Flask, render_template, Blueprint, request, flash, jsonify
+from flask import Flask, render_template, Blueprint, flash, jsonify
 from auth import auth_blueprint
 from config import get_cursor
 from flask_wtf import FlaskForm
@@ -66,31 +66,16 @@ def about_us():
 class ContactForm(FlaskForm):
     name = StringField("Name", validators=[DataRequired(message="Please enter your name.")])
     email = StringField("Email", validators=[DataRequired(message="Please enter your email address"), Email()])
-    subject = StringField("Subject", validators=[DataRequired(message="Please enter a subject.")])
     message = TextAreaField("Message", validators=[DataRequired(message="Please enter a message.")])
     submit = SubmitField("Send")
-
 
 @guest_blueprint.route('/contact', methods=['GET', 'POST'])
 def contact():
     form = ContactForm()
-    if request.method == 'POST' and form.validate_on_submit():
-
-        msg = Message(form.subject.data, sender='bright.tech.ap@gmail.com', recipients=['bright.tech.ap@gmail.com'])
-        msg.body = f"""
-        From: {form.name.data} <{form.email.data}>
-        {form.message.data}
-        """
-        print("Subject:", msg.subject)  
-        print("Body:", msg.body)       
-        mail.send(msg)
-        
-        flash('Your message has been sent successfully!', 'success')
-
-
-        return render_template('contact_success.html', form=form, success=True)
-    
-    return render_template('home/about_us.html', form=form, success=False)
+    manager_info = get_manager()
+    staff_info = get_all_staff()
+    flash('Your message has been sent successfully!', 'success')
+    return render_template('home/about_us.html', manager=manager_info, staff=staff_info, form=form)
 
 @guest_blueprint.route('/get-coffee-and-hot-drinks')
 def get_coffee_and_hot_drinks():
