@@ -1321,6 +1321,7 @@ def manage_accommodation():
                     SELECT * FROM booking 
                     WHERE accommodation_id = %s 
                     AND (start_date BETWEEN %s AND %s OR end_date BETWEEN %s AND %s OR (%s BETWEEN start_date AND end_date))
+                    AND status != 'cancelled'
                 """, (accommodation_id, start_date, end_date, start_date, end_date, start_date))
                 existing_bookings = cursor.fetchall()
 
