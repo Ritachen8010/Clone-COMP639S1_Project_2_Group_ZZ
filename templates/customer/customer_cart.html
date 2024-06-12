@@ -368,8 +368,15 @@ document.getElementById('checkoutModal').addEventListener('show.bs.modal', funct
 
 document.addEventListener("DOMContentLoaded", function() {
     var today = new Date();
-    var minDate = today.toISOString().split('T')[0]; 
-    var maxDate = new Date(today.getTime() + 48 * 60 * 60 * 1000).toISOString().split('T')[0]; 
+    var tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 1);
+    var dayAfterTomorrow = new Date(today);
+    dayAfterTomorrow.setDate(dayAfterTomorrow.getDate() + 2);
+    var threeDaysFromNow = new Date(today);
+    threeDaysFromNow.setDate(threeDaysFromNow.getDate() + 3);
+
+    var minDate = tomorrow.toISOString().split('T')[0]; 
+    var maxDate = threeDaysFromNow.toISOString().split('T')[0]; 
 
     var scheduledPickupDateInput = document.getElementById('scheduled_pickup_date');
     scheduledPickupDateInput.min = minDate;
@@ -377,7 +384,6 @@ document.addEventListener("DOMContentLoaded", function() {
     scheduledPickupDateInput.value = minDate; 
 
     var scheduledPickupTimeInput = document.getElementById('scheduled_pickup_time');
-
 
     var generateTimeSlots = function(selectedDate) {
         var availableTimeSlots = [];
@@ -387,15 +393,19 @@ document.addEventListener("DOMContentLoaded", function() {
         startTime.setHours(7, 0, 0, 0); 
         endTime.setHours(22, 0, 0, 0); 
 
+
         if (selectedDate.toDateString() === today.toDateString()) {
+
             if (currentTime.getHours() >= 22) {
                 scheduledPickupDateInput.value = ""; 
                 scheduledPickupTimeInput.innerHTML = "";
                 return;
             }
-            currentTime.setMinutes(Math.ceil(currentTime.getMinutes() / 15) * 15, 0, 0); 
+
+            currentTime.setMinutes(Math.ceil(currentTime.getMinutes() / 15) * 15, 0, 0);
+
             if (currentTime.getHours() < 7) {
-                currentTime.setHours(7, 0, 0, 0); 
+                currentTime.setHours(7, 0, 0, 0);
             }
         } else {
             currentTime = startTime; 
@@ -418,8 +428,12 @@ document.addEventListener("DOMContentLoaded", function() {
         scheduledPickupTimeInput.innerHTML = generateTimeSlots(selectedDate);
     });
 
-    scheduledPickupTimeInput.innerHTML = generateTimeSlots(today);
+    var defaultSelectedDate = new Date(scheduledPickupDateInput.value);
+    scheduledPickupTimeInput.innerHTML = generateTimeSlots(defaultSelectedDate);
 });
+
+
+
 
 document.getElementById('proceed-to-checkout-form').addEventListener('submit', function() {
     var specialRequests = document.getElementById('special_requests').value;
