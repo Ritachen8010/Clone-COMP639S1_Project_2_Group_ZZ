@@ -111,6 +111,7 @@ def search():
                EXISTS (
                     SELECT 1 FROM booking b WHERE b.accommodation_id = a.accommodation_id
                     AND b.start_date < %s AND b.end_date > %s
+                    AND status != 'cancelled'
                 ) AS is_booked
         FROM accommodation a
         WHERE a.room_status = 'Open'
@@ -130,6 +131,7 @@ def search():
                     SELECT SUM(adults + children) AS total_booked
                     FROM booking
                     WHERE accommodation_id = %s
+                    AND status != 'cancelled'           
                     AND start_date <= %s AND end_date >= %s
                 """, (room['accommodation_id'], start_date, end_date))
                 total_booked = cursor.fetchone()['total_booked'] or 0
