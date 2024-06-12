@@ -42,19 +42,19 @@
                                         <td>${{ booking.paid_amount }}</td>
                                         <td>{{ booking.status | title }}</td>
                                         <td>
-                                            <form id="checkoutForm" action="{{ url_for('manager.checkout_booking', booking_id=booking.booking_id) }}" method="post">
+                                            <form id="checkoutForm-{{ booking.booking_id }}" action="{{ url_for('manager.checkout_booking', booking_id=booking.booking_id) }}" method="post">
                                                 <input type="hidden" name="confirm_checkout" value="yes">
-                                                <button type="button" class="btn btn-danger btn-sm" onclick="confirmCheckout()">Check Out</button>
+                                                <button type="button" class="btn btn-danger btn-sm" onclick="confirmCheckout({{ booking.booking_id }})">Check Out</button>
                                             </form>
                                             
                                             <script>
-                                                function confirmCheckout() {
+                                                function confirmCheckout(bookingID) {
                                                     if (confirm('Are you sure to check out?')) {
-                                                        document.getElementById('checkoutForm').submit();
+                                                        document.getElementById('checkoutForm-' + bookingID).submit();
                                                     }
                                                 }
                                             </script>
-                                        </td>
+                                        </td>                                        
                                     </tr>
                                 {% endfor %}
                             </tbody>
