@@ -513,20 +513,20 @@ VALUES
 INSERT INTO `product_option` (`product_id`, `option_type`, `option_name`, `additional_cost`)
 VALUES
 -- Coffee Options (Milk Type, Size, Syrup Type)
-(1, 'Milk Type', 'Soy Milk', 0.50), (1, 'Milk Type', 'Almond Milk', 0.50), (1, 'Milk Type', 'Oat Milk', 0.50), 
-(1, 'Size', 'Small', 0.00), (1, 'Size', 'Medium', 0.50), (1, 'Size', 'Large', 1.00),
+(1, 'Milk Type', 'Standard Milk', 0.00), (1, 'Milk Type', 'Light Milk', 0.00), (1, 'Milk Type', 'Soy Milk', 0.50), (1, 'Milk Type', 'Almond Milk', 0.50), (1, 'Milk Type', 'Oat Milk', 0.50), 
+(1, 'Size', 'Small', 0.00), (1, 'Size', 'Medium', 0.50), (1, 'Size', 'Large', 0.80), (1, 'Size', 'Extra Large', 1.00),
 (1, 'Syrup Type', 'Vanilla Syrup', 0.50), (1, 'Syrup Type', 'Caramel Syrup', 0.50), (1, 'Syrup Type', 'Hazelnut Syrup', 0.50),
-(2, 'Milk Type', 'Soy Milk', 0.50), (2, 'Milk Type', 'Almond Milk', 0.50), (2, 'Milk Type', 'Oat Milk', 0.50), 
-(2, 'Size', 'Small', 0.00), (2, 'Size', 'Medium', 0.50), (2, 'Size', 'Large', 1.00),
+(2, 'Milk Type', 'Standard Milk', 0.00), (2, 'Milk Type', 'Light Milk', 0.00), (2, 'Milk Type', 'Soy Milk', 0.50), (2, 'Milk Type', 'Almond Milk', 0.50), (2, 'Milk Type', 'Oat Milk', 0.50), 
+(2, 'Size', 'Small', 0.00), (2, 'Size', 'Medium', 0.50), (2, 'Size', 'Large', 0.80), (2, 'Size', 'Extra Large', 1.00),
 (2, 'Syrup Type', 'Vanilla Syrup', 0.50), (2, 'Syrup Type', 'Caramel Syrup', 0.50), (2, 'Syrup Type', 'Hazelnut Syrup', 0.50),
-(3, 'Milk Type', 'Soy Milk', 0.50), (3, 'Milk Type', 'Almond Milk', 0.50), (3, 'Milk Type', 'Oat Milk', 0.50), 
-(3, 'Size', 'Small', 0.00), (3, 'Size', 'Medium', 0.50), (3, 'Size', 'Large', 1.00),
+(3, 'Milk Type', 'Standard Milk', 0.00), (3, 'Milk Type', 'Light Milk', 0.00), (3, 'Milk Type', 'Soy Milk', 0.50), (3, 'Milk Type', 'Almond Milk', 0.50), (3, 'Milk Type', 'Oat Milk', 0.50), 
+(3, 'Size', 'Small', 0.00), (3, 'Size', 'Medium', 0.50), (3, 'Size', 'Large', 0.80), (3, 'Size', 'Extra Large', 1.00),
 (3, 'Syrup Type', 'Vanilla Syrup', 0.50), (3, 'Syrup Type', 'Caramel Syrup', 0.50), (3, 'Syrup Type', 'Hazelnut Syrup', 0.50),
-(4, 'Milk Type', 'Soy Milk', 0.50), (4, 'Milk Type', 'Almond Milk', 0.50), (4, 'Milk Type', 'Oat Milk', 0.50), 
-(4, 'Size', 'Small', 0.00), (4, 'Size', 'Medium', 0.50), (4, 'Size', 'Large', 1.00),
+(4, 'Milk Type', 'Standard Milk', 0.00), (4, 'Milk Type', 'Light Milk', 0.00), (4, 'Milk Type', 'Soy Milk', 0.50), (4, 'Milk Type', 'Almond Milk', 0.50), (4, 'Milk Type', 'Oat Milk', 0.50), 
+(4, 'Size', 'Small', 0.00), (4, 'Size', 'Medium', 0.50), (4, 'Size', 'Large', 0.80), (4, 'Size', 'Extra Large', 1.00),
 (4, 'Syrup Type', 'Vanilla Syrup', 0.50), (4, 'Syrup Type', 'Caramel Syrup', 0.50), (4, 'Syrup Type', 'Hazelnut Syrup', 0.50),
-(5, 'Milk Type', 'Soy Milk', 0.50), (5, 'Milk Type', 'Almond Milk', 0.50), (5, 'Milk Type', 'Oat Milk', 0.50), 
-(5, 'Size', 'Small', 0.00), (5, 'Size', 'Medium', 0.50), (5, 'Size', 'Large', 1.00),
+(5, 'Milk Type', 'Standard Milk', 0.00), (5, 'Milk Type', 'Light Milk', 0.00), (5, 'Milk Type', 'Soy Milk', 0.50), (5, 'Milk Type', 'Almond Milk', 0.50), (5, 'Milk Type', 'Oat Milk', 0.50), 
+(5, 'Size', 'Small', 0.00), (5, 'Size', 'Medium', 0.50), (5, 'Size', 'Large', 0.80), (5, 'Size', 'Extra Large', 1.00),
 (5, 'Syrup Type', 'Vanilla Syrup', 0.50), (5, 'Syrup Type', 'Caramel Syrup', 0.50), (5, 'Syrup Type', 'Hazelnut Syrup', 0.50),
 
 
@@ -814,23 +814,15 @@ INSERT INTO `orders` (`customer_id`, `total_price`, `special_requests`, `schedul
 (1005, 21.50, 'Extra hot, please.', '2024-06-06 16:00', 'cancelled', '2024-06-03 15:00'), -- Order 17
 
 (1006, 6.00, 'Extra hot, please.', '2024-06-13 15:00', 'ordered', '2024-06-12 10:00'), -- Order 18
-(1006, 6.00, 'Extra hot, please.', '2024-06-06 15:00', 'collected', '2024-06-06 10:00'), -- Order 23
 
 (1007, 6.00, 'Extra hot, please.', '2024-06-13 18:00', 'ordered', '2024-06-13 14:00'), -- Order 19
-(1007, 6.00, 'Extra hot, please.', '2024-06-01 18:00', 'collected', '2024-06-01 14:00'), -- Order 24
 
 (1008, 12.00, 'Extra hot, please.', '2024-06-13 16:00', 'ordered', '2024-06-13 14:00'), -- Order 20
-(1008, 12.00, 'Extra hot, please.', '2024-06-04 16:00', 'collected', '2024-06-03 14:00'), -- Order 25
 
 (1009, 06.00, 'Extra hot, please.', '2024-06-13 17:00', 'ordered', '2024-06-13 15:00'), -- Order 21
-(1009, 06.00, 'Extra hot, please.', '2024-06-05 17:00', 'collected', '2024-06-05 15:00'), -- Order 26
 
-(1010, 06.00, 'Extra hot, please.', '2024-06-13 19:00', 'ordered', '2024-06-13 17:00'), -- Order 22
-(1010, 06.00, 'Extra hot, please.', '2024-06-03 19:00', 'collected', '2024-06-02 17:00'), -- Order 27
+(1010, 06.00, 'Extra hot, please.', '2024-06-13 19:00', 'ordered', '2024-06-13 17:00'); -- Order 22
 
-(1011, 20.00, 'Add extra sugar.', '2024-06-14 09:00', 'ordered', '2024-06-13 07:00'), -- Order 28
-
-(1012, 20.00, 'Add extra sugar.', '2024-06-14 09:00', 'ordered', '2024-06-13 07:00'); -- Order 29
 
 -- 11. Insert into order_item
 -- Insert into order_item
@@ -936,17 +928,7 @@ INSERT INTO `order_item` (`order_id`, `product_id`, `quantity`) VALUES
 (20, 17, 1), -- Caramel Swirl Milkshake
 (20, 3, 1), -- Cappuccino
 (21, 17, 1), -- Caramel Swirl Milkshake
-(22, 3, 1), -- Cappuccino
-(23, 3, 1), -- Cappuccino
-(24, 3, 1), -- Cappuccino
-(25, 3, 1), -- Cappuccino
-(25, 17, 1), -- Caramel Swirl Milkshake
-(26, 3, 1), -- Cappuccino
-(27, 3, 1), -- Cappuccino
-(28, 1, 1), -- Espresso
-(28, 15, 1), -- Rich Chocolate Milkshake
-(29, 1, 1), -- Espresso
-(29, 15, 1); -- Rich Chocolate Milkshake
+(22, 3, 1); -- Cappuccino
 
 -- 13. insert accommodation
 INSERT INTO accommodation (accommodation_id, type, description, capacity, space, price_per_night, is_available, image)
