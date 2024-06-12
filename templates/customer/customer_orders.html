@@ -74,7 +74,7 @@
                                                     {% if item.rate %}
                                                     <p class="card-text"><strong>Rating:</strong> {{ item.rate }}</p>
                                                     <p class="card-text"><strong>Description:</strong> {{ item.description }}</p>
-                                                    <p class="card-text"><strong>Submitted on:</strong> {{ item.feedback_created_at }}</p>
+                                                    <p class="card-text"><strong>Submitted on:</strong> {{ item.feedback_created_at.strftime('%d-%m-%Y') }}</p>
                                                     {% else %}
                                                     <p class="card-text text-muted">No feedback yet.</p>
                                                     {% endif %}
