@@ -38,8 +38,8 @@
     - `/dashboard`
         - `xxx.html`
             (....)
-        - `/manager`
-            - `xxx.html`
+    - `/manager`
+        - `xxx.html`
             (....)
         - (for more please refer to our templates folder, additional directories and templates for other views)
     - `/static`: This directory contains static files such as CSS stylesheets and images.
