@@ -1,7 +1,7 @@
 # COMP639S1_Group_ZZ - Bruce Bay Beans Bunks
 - COMP639 Assignment 3 - Group Project 2
 - Our team: Alex Zhao, Jun Su, Yingyue(Rita) Chen, Yiding(Ivy) Yang, Lily Chen
-- Student ID: 1156956, 1126418 ...
+- Student ID: 1156956, 1126418 ..., ..., 1158162
 
 ## Project Description
 - Client: Bruce Bay Beans Bunks
