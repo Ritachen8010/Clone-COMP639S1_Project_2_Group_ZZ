@@ -11,24 +11,24 @@
 
 ## Assumptions and design decisions:
 - General: 
-    1. Visitors can visit the homepage to browse foods and accommodation options, but need to register and login to order drinks or book rooms. They then become our customers.
-    2. The promotion code 'WINTER2024' can be used for orders but does not apply to accommodation bookings.
-    3. All paid food items are non-refundable
+1. Visitors can visit the homepage to browse foods and accommodation options, but need to register and login to order drinks or book rooms. They then become our customers.
+2. The promotion code 'WINTER2024' can be used for orders but does not apply to accommodation bookings.
+3. All paid food items are non-refundable
 
 - Customer Bookings:
-    1. Accommodation fee need to be fully prepaid upon booking.
-    2. Bookings canceled within 24 hours of check-in will be charged in full. A full refund is provided for bookings canceled 24 hours or more prior to arrival.
-    3. Database: If a customer cancels a booking, a new payment record will be inserted to the payment table with a negative amount to ensure the account balance.
-    4. Confirmed bookings where the customer does not show up until the check-out date will be marked as no-shows.
+1. Accommodation fee need to be fully prepaid upon booking.
+2. Bookings canceled within 24 hours of check-in will be charged in full. A full refund is provided for bookings canceled 24 hours or more prior to arrival.
+3. Database: If a customer cancels a booking, a new payment record will be inserted to the payment table with a negative amount to ensure the account balance.
+4. Confirmed bookings where the customer does not show up until the check-out date will be marked as no-shows.
 
 - Staff and manager check-in Bookings:
-    1. If the check-in date is not today, check-in is not allowed.
-    2. Customer must bring ID to check in, staff/manager should be able to update customer's name, birthday, and ID number upon check in.
-    3. The check-in date can be postponed within the booked period in case of a late check-in as the accommodation fee has been fully paid, however Check-out date cannot be changed. Customers can make a new booking if they want to extend the stay.
-    4. Staff/manager can select a future date to view bookings or update customer information prior to customer's arrival, but the check-in tick box is hidden for future bookings. 
+1. If the check-in date is not today, check-in is not allowed.
+2. Customer must bring ID to check in, staff/manager should be able to update customer's name, birthday, and ID number upon check in.
+3. The check-in date can be postponed within the booked period in case of a late check-in as the accommodation fee has been fully paid, however Check-out date cannot be changed. Customers can make a new booking if they want to extend the stay.
+4. Staff/manager can select a future date to view bookings or update customer information prior to customer's arrival, but the check-in tick box is hidden for future bookings. 
 
 - Manager block rooms:
-    1. Rooms with confirmed bookings cannot be blocked.
+1. Rooms with confirmed bookings cannot be blocked.
 
 
 ## Our ERD:
