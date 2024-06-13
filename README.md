@@ -35,8 +35,8 @@
 ## Web Application Structure
 1. The Web structure used blueprint by 'auth', 'guest', 'manager', 'staff' and 'customer'.
 2. `/templates`: This directory contains HTML templates for rendering views. It is organized by role or function.
-        - `/dashboard`
-            - `xxx.html`
+    - `/dashboard`
+        - `xxx.html`
             (....)
         - `/manager`
             - `xxx.html`
