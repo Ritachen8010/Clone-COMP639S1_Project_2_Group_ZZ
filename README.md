@@ -21,7 +21,7 @@
 3. Database: If a customer cancels a booking, a new payment record will be inserted to the payment table with a negative amount to ensure the account balance.
 4. Confirmed bookings where the customer does not show up until the check-out date will be marked as no-shows.
 
-- Staff and manager check-in Bookings:
+- Staff/manager check-in Bookings:
 1. If the check-in date is not today, check-in is not allowed.
 2. Customer must bring ID to check in, staff/manager should be able to update customer's name, birthday, and ID number upon check in.
 3. The check-in date can be postponed within the booked period in case of a late check-in as the accommodation fee has been fully paid, however Check-out date cannot be changed. Customers can make a new booking if they want to extend the stay.
