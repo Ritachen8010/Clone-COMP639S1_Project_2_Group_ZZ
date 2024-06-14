@@ -9,7 +9,7 @@
 - Vison and Misson of this project: 
     - An online system for managing food and drink orders and accommodation bookings. 
 
-## Assumptions and design decisions:
+## Assumptions and design decisions
 - General: 
     1. Visitors can visit the homepage to browse foods and accommodation options, but need to register and login to order drinks or book rooms. They then become our customers.
     2. The promotion code 'WINTER2024' can be used for orders but does not apply to accommodation bookings.
@@ -32,7 +32,7 @@
     1. Rooms with confirmed bookings cannot be blocked.
 
 
-## Our ERD:
+## Our ERD
 ![Project Diagram](project_diagram_for_github_readme/03.jpg "Project Diagram")
 
 ## GUI Decision
